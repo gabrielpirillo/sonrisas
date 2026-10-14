@@ -463,30 +463,36 @@ function UseCases() {
 }
 
 /* ---------------- Métricas ---------------- */
+/* ---------------- Métricas — banda oscura con micro-gráficos ---------------- */
 function Metrics() {
   const stats = [
-  { pre: "+", val: 38, suf: "%", label: "de visitante a lead" },
-  { pre: "+", val: 65, suf: "%", label: "de esos leads agenda cita" },
-  { pre: "x", val: 3, suf: "", label: "planes de estética cerrados" },
-  { pre: "", val: 3, suf: " min", label: "de integración, sin desarrollo" }];
-  const [ref, inview] = useInview(0.35);
+  { pre: "+", val: 38, suf: "%", label: "de visitante a lead", viz: "bars", a: 1, b: 1.38 },
+  { pre: "+", val: 65, suf: "%", label: "de esos leads agenda cita", viz: "ring", pct: 65 },
+  { pre: "x", val: 3, suf: "", label: "planes de estética cerrados", viz: "bars", a: 1, b: 3 },
+  { pre: "", val: 3, suf: " min", label: "de integración, sin desarrollo", viz: "clock" }];
+  const [ref, inview] = useInview(0.3);
   return (
-    <section className={"metrics-bar" + (inview ? " in" : "")} ref={ref} style={{ padding: "80px 0", borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)" }}>
-      <div className="wrap" style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 32 }}>
-        {stats.map((s, i) => <MetricStat key={i} s={s} i={i} inview={inview} />)}
+    <section className={"mx" + (inview ? " mx-on" : "")} ref={ref}>
+      <div className="wrap">
+        <div className="mx-head">
+          <span className="mono mx-eyebrow"><span className="mx-live" />RESULTADOS EN CLÍNICAS</span>
+          <h2 className="display mx-title">Lo que cambia cuando tus visitantes <span className="mx-dim">se ven antes de agendar</span></h2>
+        </div>
+        <div className="mx-grid">
+          {stats.map((s, i) => <MetricStat key={i} s={s} i={i} inview={inview} />)}
+        </div>
       </div>
     </section>);
 
 }
-
 function MetricStat({ s, i, inview }) {
   const [n, setN] = React.useState(0);
   const [landed, setLanded] = React.useState(false);
-  const reduced = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   React.useEffect(() => {
     if (!inview) return;
+    const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced) { setN(s.val); setLanded(true); return; }
-    const dur = 2000, delay = i * 150, t0 = performance.now() + delay;
+    const dur = 1800, t0 = performance.now() + 250 + i * 180;
     let raf;
     const tick = (now) => {
       const t = Math.min(1, Math.max(0, (now - t0) / dur));
@@ -498,22 +504,67 @@ function MetricStat({ s, i, inview }) {
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
   }, [inview]);
-  const shown = s.val % 1 === 0 ? Math.round(n) : n.toFixed(0);
   return (
-    <div className="metric-stat" style={{ flex: "1 1 180px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
-      <div className={"metric-num display" + (landed ? " landed" : "")} style={{ fontSize: "clamp(40px, 5vw, 60px)" }}>
-        <span className="metric-shine">{s.pre}{shown}{s.suf}</span>
+    <div className={"mx-card" + (landed ? " mx-landed" : "")} style={{ "--i": i }}>
+      <div className="mx-viz" aria-hidden="true">
+        {s.viz === "bars" && <MxBars a={s.a} b={s.b} />}
+        {s.viz === "ring" && <MxRing pct={s.pct} />}
+        {s.viz === "clock" && <MxClock />}
       </div>
-      <div className="metric-label" style={{ fontSize: 14.5, color: "var(--ink-2)", marginTop: 8, maxWidth: 200 }}>{s.label}</div>
+      <div className="mx-num display">{s.pre}{Math.round(n)}{s.suf}</div>
+      <div className="mx-label">{s.label}</div>
+    </div>);
+
+}
+function MxBars({ a, b }) {
+  const max = Math.max(a, b);
+  return (
+    <div className="mx-bars">
+      <div className="mx-bar-col"><span className="mx-bar mx-bar-a" style={{ "--h": a / max }} /><span className="mono">ANTES</span></div>
+      <div className="mx-bar-col"><span className="mx-bar mx-bar-b" style={{ "--h": b / max }} /><span className="mono">CON SF</span></div>
+    </div>);
+
+}
+function MxRing({ pct }) {
+  return (
+    <svg className="mx-ring" viewBox="0 0 80 80" width="80" height="80">
+      <circle cx="40" cy="40" r="32" pathLength="100" className="mx-ring-bg" />
+      <circle cx="40" cy="40" r="32" pathLength="100" className="mx-ring-fg" style={{ "--p": pct }} />
+    </svg>);
+
+}
+function MxClock() {
+  return (
+    <div className="mx-clock">
+      <svg viewBox="0 0 80 80" width="80" height="80">
+        <circle cx="40" cy="40" r="32" pathLength="100" className="mx-ring-bg" />
+        <circle cx="40" cy="40" r="32" pathLength="100" className="mx-clock-sweep" />
+        <line x1="40" y1="40" x2="40" y2="16" className="mx-clock-hand" />
+        <circle cx="40" cy="40" r="3" fill="#fff" />
+      </svg>
+      <span className="mx-clock-done mono">✓ LISTO</span>
     </div>);
 
 }
 
-/* ---------------- Cara a cara: sin vs con Smile Fast ---------------- */
+/* ---------------- Embudo — visitantes que se pierden vs. que agendan ---------------- */
+const FX_ICONS = {
+  user: <><circle cx="12" cy="8" r="4" /><path d="M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6" /></>,
+  doubt: <><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6V14" /><path d="M12 17.5h.01" /></>,
+  leave: <><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" /><path d="M10 17l-5-5 5-5" /><path d="M5 12h11" /></>,
+  calX: <><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /><path d="M10 13.5l4 4M14 13.5l-4 4" /></>,
+  lost: <><circle cx="12" cy="12" r="9" /><path d="M9 9l6 6M15 9l-6 6" /></>,
+  scan: <><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3" /><path d="M8.5 13.5c1 1.3 2.2 2 3.5 2s2.5-.7 3.5-2" /></>,
+  smile: <><circle cx="12" cy="12" r="9" /><path d="M8 14c1 1.5 2.4 2.2 4 2.2s3-.7 4-2.2" /><path d="M9 9.5h.01M15 9.5h.01" /></>,
+  mail: <><rect x="3" y="5.5" width="18" height="13" rx="2" /><path d="M3.5 7l8.5 6 8.5-6" /></>,
+  calOk: <><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /><path d="M9 14.5l2 2 4-4" /></>,
+  star: <path d="M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z" />
+};
+
 function ClinicFunnel() {
   const [ref, inview] = useInview(0.22);
-  const oldSteps = ["Visitante anónimo", "Duda del resultado", "Abandona la web", "No agenda", "Lead perdido"];
-  const newSteps = ["Se simula en tu web", "Ve su resultado", "Deja sus datos", "Agenda con intención", "Paciente nuevo"];
+  const oldSteps = [["Visitante anónimo", "user"], ["Duda del resultado", "doubt"], ["Abandona la web", "leave"], ["No agenda", "calX"], ["Lead perdido", "lost"]];
+  const newSteps = [["Se simula en tu web", "scan"], ["Ve su resultado", "smile"], ["Deja sus datos", "mail"], ["Agenda con intención", "calOk"], ["Paciente nuevo", "star"]];
   return (
     <section className={"funnel" + (inview ? " in" : "")} ref={ref} style={{ padding: "100px 0" }}>
       <div className="wrap" style={{ textAlign: "center", marginBottom: 60 }}>
@@ -526,40 +577,51 @@ function ClinicFunnel() {
         </p>
       </div>
       <div className="wrap" style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-        <TimelineRow title="Sin Smile Fast" steps={oldSteps} dark={false} inview={inview} baseDelay={0.30} />
-        <TimelineRow title="Con Smile Fast" steps={newSteps} dark={true} inview={inview} baseDelay={0.30 + 5 * 0.12 + 0.2} />
+        <FunnelRow title="Sin Smile Fast" steps={oldSteps} win={false} baseDelay={0.3}
+          result={<><span className="fx-res-big">Clic pagado,<br />sin cita</span><span className="fx-res-small">Pagaste el anuncio y el visitante se fue con la duda.</span></>} />
+        <FunnelRow title="Con Smile Fast" steps={newSteps} win={true} baseDelay={1.1}
+          result={<><span className="fx-res-big"><b>+38%</b> leads<br /><b>65%</b> agenda</span><span className="fx-res-small">Cada simulación termina en tu agenda.</span></>} />
       </div>
     </section>);
 
 }
 
-function TimelineRow({ title, steps, dark, inview, baseDelay }) {
-  const fg = dark ? "#fff" : "var(--ink)";
-  const dim = dark ? "rgba(255,255,255,0.55)" : "var(--ink-3)";
+function FunnelRow({ title, steps, win, baseDelay, result }) {
+  // puntos = visitantes recorriendo el embudo; sin Smile Fast caen antes del final
+  const dots = win ? [4, 4, 4, 4, 4, 4] : [1, 2, 1, 3, 2, 1];
   return (
-    <div className={"tl-row" + (dark ? " tl-dark" : " tl-light")}>
-      <div className="tl-label">
-        <span className="tl-badge">
-          {dark ? <LogoMark size={20} dark={false} /> : <span className="tl-x"></span>}
-        </span>
-        <div className="tl-title" style={{ color: fg }}>{title}</div>
+    <div className={"fx-row" + (win ? " fx-win" : " fx-lose")}>
+      <div className="fx-label">
+        <span className="fx-badge">{win ? <LogoMark size={20} dark={false} /> : <span className="fx-x"></span>}</span>
+        <div className="fx-title">{title}</div>
       </div>
-      <div className="tl-track">
-        <span className="tl-line" aria-hidden="true"></span>
-        <span className="tl-line-fill" aria-hidden="true" style={{ transitionDelay: baseDelay + "s" }}></span>
-        {steps.map((s, i) => {
+      <div className="fx-track">
+        <span className="fx-line" aria-hidden="true"><span className="fx-line-fill" style={{ transitionDelay: baseDelay + "s" }} /></span>
+        <div className="fx-dots" aria-hidden="true">
+          {dots.map((stop, i) =>
+          <span key={i} className="fx-dot" style={{ "--stop": stop, "--delay": (i * 0.75) + "s" }} />
+          )}
+        </div>
+        {steps.map(([label, icon], i) => {
           const last = i === steps.length - 1;
           return (
-            <div key={i} className="tl-step" style={{ transitionDelay: (baseDelay + i * 0.12) + "s" }}>
-              <span className={"tl-node" + (last ? (dark ? " tl-node-win" : " tl-node-lost") : "")}></span>
-              <div className="mono tl-step-lbl" style={{ color: dim }}>PASO {i + 1}</div>
-              <div className="tl-step-title" style={{ color: fg }}>{s}</div>
+            <div key={i} className={"fx-step" + (last ? " fx-end" : "")} style={{ transitionDelay: (baseDelay + i * 0.14) + "s" }}>
+              <span className="fx-node">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{FX_ICONS[icon]}</svg>
+              </span>
+              <div className="mono fx-step-lbl">PASO {i + 1}</div>
+              <div className="fx-step-title">{label}</div>
             </div>);
         })}
+      </div>
+      <div className="fx-result" style={{ transitionDelay: (baseDelay + 0.8) + "s" }}>
+        <span className="mono fx-res-tag">RESULTADO</span>
+        {result}
       </div>
     </div>);
 
 }
+
 
 /* ---------------- FAQ (enfocado a dueños de clínicas) ---------------- */
 function FAQItem({ q, a, open, onToggle }) {
@@ -619,7 +681,7 @@ function FAQ() {
 }
 
 /* ---------------- Testimonios (dueños de clínicas) ---------------- */
-function Testimonios() {
+function Testimonios({ onStart }) {
   const [ref, inview] = useInview(0.12);
   const clients = [
     { src: RES.r18_logo_nobel_jpg, name: "Clínicas Nobel" },
@@ -632,10 +694,6 @@ function Testimonios() {
     { quote: "Los pacientes llegan a la primera visita ya informados y decididos. La aceptación de tratamientos subió de forma notable.", name: "Dr. Andrés Salcedo", role: "Dirección Médica", company: "Clínicas Nobel", stat: "+45%", statLbl: "aceptación de tratamientos", initials: "AS" },
     { quote: "Los leads llegan calificados y con contexto. Nuestros agentes cierran más y en menos visitas.", name: "José Miguel", role: "Broker Owner", company: "RE/MAX Exclusive", stat: "+38%", statLbl: "más leads calificados", avatar: RES.r24_avatar_josemiguel_jpg },
     { quote: "Pasamos de responder en horas a responder en minutos, sin sumar una sola persona al equipo.", name: "Lucía Fernández", role: "Coordinación", company: "Templo del Masaje", stat: "24/7", statLbl: "atención automatizada", initials: "LF" }];
-  const openBrand = () => {
-    const b = document.querySelector("brandboost-badge");
-    if (b && b.shadowRoot) b.shadowRoot.querySelector(".bb").click();
-  };
   const Stars = () =>
     <div style={{ display: "flex", gap: 3 }}>
       {[0, 1, 2, 3, 4].map((s) => <svg key={s} width="14" height="14" viewBox="0 0 24 24" fill="var(--sage-deep)"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z" /></svg>)}
@@ -752,7 +810,7 @@ function Testimonios() {
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px 20px", marginTop: 40 }}>
-          <button className="btn btn-primary" onClick={openBrand} style={{ padding: "14px 28px", fontSize: 14 }}>Agendar Reunión</button>
+          <button className="btn btn-primary" onClick={onStart} style={{ padding: "14px 28px", fontSize: 14 }}>Agendar Reunión</button>
           <span style={{ fontSize: 16, fontWeight: 600, letterSpacing: "-0.01em", color: "var(--sage-deep)" }}>Tu socio en la evolución tecnológica.</span>
         </div>
       </div>
@@ -915,7 +973,7 @@ function Landing({ onStart }) {
       <UseCases />
       <Metrics />
       <ClinicFunnel />
-      <Testimonios />
+      <Testimonios onStart={onStart} />
       <FAQ />
       <CTAFooter onStart={onStart} />
     </div>);

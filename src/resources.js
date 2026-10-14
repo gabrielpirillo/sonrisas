@@ -58,8 +58,3 @@ export const RES = {
   r27_trans_2_before_jpg: r27_trans_2_before_jpg,
   r28_trans_2_after_jpg: r28_trans_2_after_jpg,
 };
-
-// El badge de Brandboost (script clásico) lee window.__resources.
-if (typeof window !== "undefined") {
-  window.__resources = Object.assign(window.__resources || {}, RES);
-}

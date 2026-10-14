@@ -35,7 +35,6 @@ src/
     Plans.jsx             variantes de planes (no usadas en la landing actual)
   lib/
     image-slot.js         web component <image-slot> de Claude Design
-    brandboost-badge.js   badge + popup de Brandboost
   styles/
     fonts.css             General Sans + JetBrains Mono (self-hosted)
     qoves.css             sistema visual Qoves
