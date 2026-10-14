@@ -890,6 +890,13 @@ function CTAFooter({ onStart }) {
 }
 
 /* ---------------- Compose ---------------- */
+const TF_ICONS = [
+  <><path d="M6 3h12l3 6-9 12L3 9z" /><path d="M3 9h18M12 21L8 9l4-6 4 6" /></>,
+  <><circle cx="12" cy="9" r="6" /><path d="M8.5 13.5L7 21l5-3 5 3-1.5-7.5" /></>,
+  <><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" /><path d="M14 3v6h6" /><path d="M9 15l2 2 4-4" /></>,
+  <><path d="M3 7l6 6 4-4 8 8" /><path d="M15 17h6v-6" /></>,
+  <path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z" />];
+
 function Transformations() {
   const benefits = [
     "Más pacientes de estética de alto valor",
@@ -897,31 +904,39 @@ function Transformations() {
     "Más planes aceptados, menos «lo voy a pensar»",
     "Menos dependencia de la publicidad pagada",
     "Refuerzas el prestigio y justificas tu precio"];
+  const [ref, inview] = useInview(0.2);
+  const [touched, setTouched] = useState(false);
 
   return (
-    <section id="transformaciones" style={{ padding: "100px 0", borderTop: "1px solid var(--line)" }}>
-      <div className="wrap trans-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.12fr", gap: 40, alignItems: "stretch" }}>
-        {/* Columna izquierda: encabezado + lista */}
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ marginBottom: 26 }}><MonoPill>NUEVO ENFOQUE</MonoPill></div>
-          <h2 className="display" style={{ fontSize: "clamp(36px, 4vw, 56px)" }}>
+    <section id="transformaciones" ref={ref} className={"tf" + (inview ? " tf-on" : "")} style={{ padding: "100px 0", borderTop: "1px solid var(--line)" }}>
+      <div className="wrap trans-grid tf-grid">
+        {/* Columna izquierda: encabezado + beneficios */}
+        <div className="tf-left">
+          <div className="tf-rise" style={{ marginBottom: 26 }}><MonoPill>NUEVO ENFOQUE</MonoPill></div>
+          <h2 className="display tf-rise" style={{ fontSize: "clamp(36px, 4vw, 56px)", transitionDelay: "0.06s" }}>
             Transformaciones<br /><span className="dim">que cambian vidas</span>
           </h2>
-          <p className="lead" style={{ fontSize: 16.5, margin: "18px 0 0", maxWidth: 380 }}>
+          <p className="lead tf-rise" style={{ fontSize: 16.5, margin: "18px 0 0", maxWidth: 400, transitionDelay: "0.12s" }}>
             La demanda de estética dental crece: convierte ese interés en pacientes que agendan y elevan la facturación de tu clínica.
           </p>
-          <ul style={{ listStyle: "none", margin: "auto 0 0", padding: 0, display: "flex", flexDirection: "column" }}>
+          <ul className="tf-list">
             {benefits.map((b, i) =>
-            <li key={i} style={{ display: "flex", gap: 22, alignItems: "center", padding: "16px 0", borderTop: "1px solid var(--line)" }}>
-                <span className="mono" style={{ fontSize: 12, color: "var(--ink-3)" }}>[{i + 1}]</span>
-                <span style={{ fontSize: 17, letterSpacing: "-0.01em" }}>{b}</span>
+            <li key={i} className="tf-item" style={{ "--i": i }}>
+                <span className="tf-ic" aria-hidden="true">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{TF_ICONS[i]}</svg>
+                </span>
+                <span className="tf-txt">{b}</span>
+                <span className="tf-arrow" aria-hidden="true">→</span>
               </li>
             )}
           </ul>
         </div>
         {/* Comparador antes/proyección */}
-        <div className="trans-card" style={{ minHeight: 560 }}>
-          <BeforeAfter beforeId="trans-2m-before" afterId="trans-2m-after" beforeSrc={RES.r27_trans_2_before_jpg} afterSrc={RES.r28_trans_2_after_jpg} imgPos="58% 30%" height="100%" radius={22} />
+        <div className="trans-card tf-media" onPointerDown={() => setTouched(true)}>
+          <BeforeAfter beforeId="trans-2m-before" afterId="trans-2m-after" beforeSrc={RES.r27_trans_2_before_jpg} afterSrc={RES.r28_trans_2_after_jpg} imgPos="58% 30%" height="100%" radius={22} intro />
+          <span className={"tf-hint mono" + (touched ? " hide" : "")} aria-hidden="true">
+            <span className="tf-hint-arr">←</span> ARRASTRA PARA COMPARAR <span className="tf-hint-arr">→</span>
+          </span>
         </div>
       </div>
     </section>);

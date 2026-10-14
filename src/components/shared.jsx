@@ -34,7 +34,7 @@ function MonoPill({ children }) {
    Two stacked <image-slot>s; the "before" layer is clipped to
    the divider position. Drag the handle to compare.
    ============================================================ */
-function BeforeAfter({ height = "100%", radius = 22, beforeId, afterId, beforeSrc, afterSrc, labelA = "ANTES", labelB = "PROYECCIÓN", compact = false, sync = true, afterTransform, beforeTransform, imgPos, beforePos, afterPos }) {
+function BeforeAfter({ height = "100%", radius = 22, beforeId, afterId, beforeSrc, afterSrc, labelA = "ANTES", labelB = "PROYECCIÓN", compact = false, sync = true, afterTransform, beforeTransform, imgPos, beforePos, afterPos, intro = false }) {
   const [pos, setPos] = useState(50);
   // En modo sync (por defecto) ambas mitades usan la MISMA imagen → siempre alineadas.
   // La mitad «proyección» recibe una mejora estética sutil para distinguirse.
@@ -78,7 +78,38 @@ function BeforeAfter({ height = "100%", radius = 22, beforeId, afterId, beforeSr
     };
   }, [move]);
 
+  // intro: al entrar en pantalla, el divisor recorre la foto una vez para invitar a arrastrar
+  const touched = useRef(false);
+  useEffect(() => {
+    if (!intro) return;
+    const el = ref.current;
+    if (!el || !("IntersectionObserver" in window)) return;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let raf, timer;
+    const keys = [[0, 50], [0.32, 24], [0.7, 76], [1, 50]];
+    const ease = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    const run = () => {
+      const dur = 2800, t0 = performance.now();
+      const tick = (now) => {
+        if (touched.current) return;
+        const t = Math.min(1, (now - t0) / dur);
+        let k = 0;
+        while (k < keys.length - 2 && t > keys[k + 1][0]) k++;
+        const [ta, pa] = keys[k], [tb, pb] = keys[k + 1];
+        setPos(pa + (pb - pa) * ease((t - ta) / (tb - ta)));
+        if (t < 1) raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    };
+    const io = new IntersectionObserver((es) => {
+      if (es.some((e) => e.isIntersecting)) { io.disconnect(); timer = setTimeout(run, 450); }
+    }, { threshold: 0.55 });
+    io.observe(el);
+    return () => { io.disconnect(); clearTimeout(timer); cancelAnimationFrame(raf); };
+  }, [intro]);
+
   const start = (e) => {
+    touched.current = true;
     dragging.current = true;
     document.body.style.userSelect = "none";
     move(e.touches ? e.touches[0].clientX : e.clientX);
