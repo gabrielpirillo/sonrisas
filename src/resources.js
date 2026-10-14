@@ -15,7 +15,7 @@ import r12_logo_sf_black_png from "./assets/img/logo-sf-black.png";
 import r14_trans_1_before_jpg from "./assets/img/trans-1-before.jpg";
 import r15_trans_1_after_jpg from "./assets/img/trans-1-after.jpg";
 import r16_preview_before_png from "./assets/img/preview-before.webp";
-import r17_preview_after_png from "./assets/img/preview-after.webp";
+import r17_preview_after_png from "./assets/img/preview-after.jpg";
 import r18_logo_nobel_jpg from "./assets/img/logo-nobel.jpg";
 import r19_logo_bracamonte_png from "./assets/img/logo-bracamonte.png";
 import r20_logo_templo_png from "./assets/img/logo-templo.png";

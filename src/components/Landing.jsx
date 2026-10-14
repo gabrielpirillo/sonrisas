@@ -785,7 +785,7 @@ function Transformations() {
         </div>
         {/* Comparador antes/proyección */}
         <div className="trans-card" style={{ minHeight: 560 }}>
-          <BeforeAfter beforeId="trans-2m-before" afterId="trans-2m-after" beforeSrc={RES.r27_trans_2_before_jpg} afterSrc={RES.r28_trans_2_after_jpg} beforePos="58% 30%" afterPos="58% 24%" height="100%" radius={22} />
+          <BeforeAfter beforeId="trans-2m-before" afterId="trans-2m-after" beforeSrc={RES.r27_trans_2_before_jpg} afterSrc={RES.r28_trans_2_after_jpg} imgPos="58% 30%" height="100%" radius={22} />
         </div>
       </div>
     </section>);
