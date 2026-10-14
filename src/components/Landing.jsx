@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { RES } from "../resources";
-import { useInview, LogoMark, MonoPill, BeforeAfter, VitaFeature, InventarioFeature, MacroesteticaFeature, ProporcionesFeature, ArcoSonrisaFeature, ArqGingivalFeature } from "./shared";
+import { useInview, LogoMark, MonoPill, BeforeAfter, AnalysisExplorer } from "./shared";
 import { AppJourney } from "./AppJourney";
 
 /* ============================================================
@@ -404,12 +404,7 @@ function Analysis() {
           En cada lead se analizan <b>6 parámetros clínicos de su sonrisa</b> para obtener el resultado más natural posible.
         </p>
       </div>
-      <VitaFeature />
-      <InventarioFeature />
-      <MacroesteticaFeature />
-      <ProporcionesFeature />
-      <ArcoSonrisaFeature />
-      <ArqGingivalFeature />
+      <AnalysisExplorer />
     </section>);
 
 }

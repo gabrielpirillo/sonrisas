@@ -5,6 +5,7 @@ import "./styles/fonts.css";
 import "./styles/qoves.css";
 import "./styles/how-it-works.css";
 import "./styles/funnel-metrics.css";
+import "./styles/analysis.css";
 
 import "./resources";
 import "./lib/image-slot.js";

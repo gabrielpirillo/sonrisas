@@ -622,21 +622,6 @@ function ArqGingival({ title = "ARQUITECTURA GINGIVAL" }) {
 /* ============================================================
    Tono VITA — banda destacada con render real + barrido "scan"
    ============================================================ */
-function VitaFeature() {
-  return (
-    <AnalysisSplit
-      img={RES.r0_vita_shade_jpg}
-      alt="Escala de color dental VITA con la referencia B1 seleccionada"
-      eyebrow={<><b>TONO VITA</b> · ESCALA CLÍNICA</>}
-      title="El color exacto de una sonrisa real"
-      copy={<>Medimos el tono base sobre la escala VITA y fijamos el objetivo, aquí <b>B1</b>, para lograr un blanco natural, nunca artificial. El resultado parte del <b>color real de sus dientes</b>, no de un blanco genérico.</>} />);
-
-}
-
-/* ============================================================
-   Banda split — diagrama clínico (imagen cuadrada + caption)
-   Reutilizable para los parámetros de análisis con diagrama.
-   ============================================================ */
 function useInview(threshold = 0.3) {
   const ref = useRef(null);
   const [inview, setInview] = useState(false);
@@ -653,82 +638,107 @@ function useInview(threshold = 0.3) {
   return [ref, inview];
 }
 
-function AnalysisSplit({ img, alt, eyebrow, title, copy, flip = false, imgStyle }) {
-  const [ref, inview] = useInview(0.3);
+/* ============================================================
+   Explorador de análisis — 6 parámetros clínicos en un solo módulo
+   Lista (acordeón) + visor cuadrado; avanza solo cada 6s mientras
+   la sección está en pantalla, se pausa al pasar el mouse.
+   ============================================================ */
+const ANALYSIS_PARAMS = [
+  {
+    name: "Tono VITA", tag: "ESCALA CLÍNICA",
+    title: "El color exacto de una sonrisa real",
+    copy: <>Medimos el tono base sobre la escala VITA y fijamos el objetivo, aquí <b>B1</b>, para lograr un blanco natural, nunca artificial. El resultado parte del <b>color real de sus dientes</b>, no de un blanco genérico.</>,
+    img: RES.r0_vita_shade_jpg, alt: "Escala de color dental VITA con la referencia B1 seleccionada", zoom: 1.2, origin: "50% 34%"
+  },
+  {
+    name: "Inventario dental", tag: "NOTACIÓN FDI",
+    title: "Cada pieza, identificada",
+    copy: <>Antes de simular, la IA reconoce y numera cada diente con la notación FDI internacional: qué pieza es cuál, cuáles faltan y cuáles entran en el tratamiento, para que la propuesta encaje con <b>la anatomía real del paciente.</b></>,
+    img: RES.r1_inventario_jpg, alt: "Arcada dental completa con cada pieza numerada según la notación FDI", zoom: 1.5, origin: "50% 43%"
+  },
+  {
+    name: "Macroestética", tag: "ARMONÍA FACIAL",
+    title: "La sonrisa dentro del rostro",
+    copy: <>La sonrisa no se diseña aislada. Cruzamos línea media, plano incisal y el equilibrio del tercio inferior con los ejes del rostro, para que el resultado <b>se integre con la cara</b>, no solo con los dientes.</>,
+    img: RES.r2_macroestetica_jpg, alt: "Rostro con líneas de construcción de armonía facial", zoom: 1, origin: "50% 50%"
+  },
+  {
+    name: "Proporciones", tag: "PROPORCIÓN ÁUREA",
+    title: "Cada diente en su medida",
+    copy: <>Anchos y alturas de las piezas anteriores se calculan según la proporción áurea. Así cada diente guarda la relación exacta con el de al lado y con el conjunto, <b>la base de una sonrisa que se percibe natural.</b></>,
+    img: RES.r3_proporciones_jpg, alt: "Rostro con trazos de proporción sobre labios y sonrisa", zoom: 1.1, origin: "50% 60%"
+  },
+  {
+    name: "Arco de sonrisa", tag: "DETALLE NATURAL",
+    title: "La curva que vuelve natural una sonrisa",
+    copy: <>El borde de los dientes superiores debe seguir la curva del labio inferior al sonreír. Ese arco, ni recto ni invertido, es <b>el detalle que distingue una sonrisa diseñada de una artificial.</b></>,
+    img: RES.r4_arco_sonrisa_jpg, alt: "Sonrisa con la curva del arco marcada sobre el borde de los dientes superiores", zoom: 1, origin: "50% 50%"
+  },
+  {
+    name: "Arquitectura gingival", tag: "CONTORNO",
+    title: "La encía también dibuja la sonrisa",
+    copy: <>El festón de la encía, sus picos y valles sobre cada diente, define cuánto se ve de cada pieza. Un contorno gingival simétrico y a la altura correcta es lo que hace que <b>los dientes se perciban proporcionados.</b></>,
+    img: RES.r5_gingival_jpg, alt: "Encía superior con el contorno gingival festoneado marcado sobre cada diente", zoom: 1, origin: "50% 50%"
+  }
+];
+
+function AnalysisExplorer() {
+  const [ref, inview] = useInview(0.25);
+  const [active, setActive] = useState(0);
+  const [hover, setHover] = useState(false);
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    setReduced(!!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches));
+  }, []);
+  const total = ANALYSIS_PARAMS.length;
+  const next = () => setActive((a) => (a + 1) % total);
+  const playing = inview && !hover && !reduced;
+  const cur = ANALYSIS_PARAMS[active];
+  const pad = (n) => String(n).padStart(2, "0");
+
+  const onKey = (e) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowRight") { e.preventDefault(); setActive((a) => (a + 1) % total); }
+    if (e.key === "ArrowUp" || e.key === "ArrowLeft") { e.preventDefault(); setActive((a) => (a - 1 + total) % total); }
+  };
+
   return (
-    <figure ref={ref} className={"asplit" + (flip ? " asplit-flip" : "") + (inview ? " in" : "")}>
-      <div className="asplit-media">
-        <img className="asplit-img" src={img} alt={alt} style={imgStyle} />
-        <span className="asplit-scan" aria-hidden="true"></span>
+    <div ref={ref} className={"ax" + (inview ? " in" : "")} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+      <div className="ax-viewer" aria-live="polite">
+        {ANALYSIS_PARAMS.map((p, i) =>
+        <img key={i} className={"ax-img" + (i === active ? " on" : "")} src={p.img} alt={i === active ? p.alt : ""}
+          aria-hidden={i !== active} style={{ "--zoom": p.zoom, transformOrigin: p.origin }} />
+        )}
+        <span key={"scan" + active} className="ax-scan" aria-hidden="true" />
+        <span className="ax-corner tl" /><span className="ax-corner tr" /><span className="ax-corner bl" /><span className="ax-corner br" />
+        <span className="ax-chip mono"><b>{pad(active + 1)}</b> / {pad(total)} · {cur.name.toUpperCase()}</span>
       </div>
-      <figcaption className="asplit-caption">
-        <span className="mono asplit-eyebrow">{eyebrow}</span>
-        <h3 className="asplit-title">{title}</h3>
-        <p className="asplit-copy">{copy}</p>
-      </figcaption>
-    </figure>);
+
+      <div className="ax-list" role="tablist" aria-orientation="vertical" onKeyDown={onKey}>
+        {ANALYSIS_PARAMS.map((p, i) => {
+          const on = i === active;
+          return (
+            <div key={i} className={"ax-item" + (on ? " on" : "")}>
+              <button className="ax-btn" role="tab" aria-selected={on} tabIndex={on ? 0 : -1} onClick={() => setActive(i)}>
+                <span className="ax-num mono">{pad(i + 1)}</span>
+                <span className="ax-name">{p.name}</span>
+                <span className="ax-tag mono">{p.tag}</span>
+              </button>
+              <div className="ax-detail" role="tabpanel" aria-hidden={!on}>
+                <div className="ax-detail-in">
+                  <h3 className="ax-title">{p.title}</h3>
+                  <p className="ax-copy">{p.copy}</p>
+                </div>
+              </div>
+              {on && !reduced &&
+              <span className="ax-bar" aria-hidden="true">
+                  <span key={active} className="ax-bar-fill" style={{ animationPlayState: playing ? "running" : "paused" }} onAnimationEnd={next} />
+                </span>
+              }
+            </div>);
+        })}
+      </div>
+    </div>);
 
 }
 
-function InventarioFeature() {
-  return (
-    <AnalysisSplit
-      flip
-      img={RES.r1_inventario_jpg}
-      imgStyle={{ width: "930px", height: "1162px", top: "-316px", left: "-100px", position: "absolute" }}
-      alt="Arcada dental completa con cada pieza numerada según la notación FDI"
-      eyebrow={<><b>INVENTARIO DENTAL</b> · NOTACIÓN FDI</>}
-      title="Cada pieza, identificada"
-      copy={<>Antes de simular, la IA reconoce y numera cada diente con la notación FDI internacional.<br /><br />El plan parte de un mapa exacto de la boca, qué pieza es cuál, cuáles faltan y cuáles entran en el tratamiento, para que la propuesta encaje con <b>la anatomía real del paciente.</b></>} />);
-
-}
-
-function MacroesteticaFeature() {
-  return (
-    <AnalysisSplit
-      img={RES.r2_macroestetica_jpg}
-      alt="Rostro con líneas de construcción de armonía facial"
-      eyebrow={<><b>MACROESTÉTICA</b> · ARMONÍA FACIAL</>}
-      title="La sonrisa dentro del rostro"
-      copy={<>La sonrisa no se diseña aislada. Cruzamos línea media, plano incisal y el equilibrio del tercio inferior con los ejes del rostro, para que el resultado se integre con la cara, no solo con los dientes.</>} />);
-
-}
-
-function ProporcionesFeature() {
-  return (
-    <AnalysisSplit
-      flip
-      img={RES.r3_proporciones_jpg}
-      imgStyle={{ width: "599px", height: "694px", top: "-154px", position: "absolute" }}
-      alt="Rostro con trazos de proporción sobre labios y sonrisa"
-      eyebrow={<><b>PROPORCIONES</b> · PROPORCIÓN ÁUREA</>}
-      title="Cada diente en su medida"
-      copy={<>Anchos y alturas de las piezas anteriores se calculan según la proporción áurea. Así cada diente guarda la relación exacta con el de al lado y con el conjunto, la base de una sonrisa que se percibe natural.</>} />);
-
-}
-
-function ArcoSonrisaFeature() {
-  return (
-    <AnalysisSplit
-      img={RES.r4_arco_sonrisa_jpg}
-      imgStyle={{ width: "554px", height: "560px", top: "-13px", left: "-2px", position: "absolute" }}
-      alt="Sonrisa con la curva del arco marcada sobre el borde de los dientes superiores"
-      eyebrow={<><b>ARCO DE SONRISA</b> · DETALLE NATURAL</>}
-      title="La curva que vuelve natural una sonrisa"
-      copy={<>El borde de los dientes superiores debe seguir la curva del labio inferior al sonreír. Ese arco, ni recto ni invertido, es el detalle que distingue una sonrisa diseñada de una artificial.</>} />);
-
-}
-
-function ArqGingivalFeature() {
-  return (
-    <AnalysisSplit
-      flip
-      img={RES.r5_gingival_jpg}
-      alt="Encía superior con el contorno gingival festoneado marcado sobre cada diente"
-      eyebrow={<><b>ARQUITECTURA GINGIVAL</b> · CONTORNO</>}
-      title="La encía también dibuja la sonrisa"
-      copy={<>El festón de la encía, sus picos y valles sobre cada diente, define cuánto se ve de cada pieza y dónde. Un contorno gingival simétrico y a la altura correcta es lo que hace que los dientes se perciban proporcionados.</>} />);
-
-}
-
-export { useInview, LogoMark, Mono, MonoPill, BeforeAfter, BellCurve, Meter, MeasureRows, VitaScale, VitaFeature, AnalysisSplit, InventarioFeature, MacroesteticaFeature, ProporcionesFeature, ArcoSonrisaFeature, ArqGingivalFeature, DentalProportions, Inventario, Macroestetica, ArqGingival };
+export { useInview, LogoMark, Mono, MonoPill, BeforeAfter, BellCurve, Meter, MeasureRows, VitaScale, AnalysisExplorer, DentalProportions, Inventario, Macroestetica, ArqGingival };
