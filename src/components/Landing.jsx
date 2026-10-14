@@ -1,0 +1,842 @@
+import React, { useState } from "react";
+import { RES } from "../resources";
+import { useInview, LogoMark, MonoPill, BeforeAfter, VitaFeature, InventarioFeature, MacroesteticaFeature, ProporcionesFeature, ArcoSonrisaFeature, ArqGingivalFeature } from "./shared";
+import { AppJourney } from "./AppJourney";
+
+/* ============================================================
+   Landing — Smile Fast · B2B para CLÍNICAS DENTALES
+   Qoves visual language. Audience = la clínica (no el paciente).
+   ============================================================ */
+
+const navLink = { color: "var(--ink-2)", textDecoration: "none", fontSize: 15, fontWeight: 450, letterSpacing: "-0.01em", whiteSpace: "nowrap" };
+
+/* ---------------- Nav ---------------- */
+function Nav({ onStart }) {
+  const [scrolled, setScrolled] = React.useState(false);
+  const [hidden, setHidden] = React.useState(false);
+  React.useEffect(() => {
+    const onScroll = () => {
+      const y = window.scrollY;
+      setScrolled(y > 40);
+      const hero = document.querySelector(".hero2");
+      const h = hero ? hero.offsetHeight : window.innerHeight;
+      setHidden(y > h - 80);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  return (
+    <nav className={"navpill" + (scrolled ? " navpill-scrolled" : "") + (hidden ? " navpill-hidden" : "")}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <img className="nav-logo nav-logo-white" src={RES.r11_logo_sf_white_png} alt="Smile Fast" style={{ height: 24, width: "auto", display: "block" }} />
+        <img className="nav-logo nav-logo-black" src={RES.r12_logo_sf_black_png} alt="Smile Fast" style={{ height: 24, width: "auto", display: "block" }} />
+      </div>
+      <div className="nav-links" style={{ display: "flex", gap: 30, alignItems: "center" }}>
+        <a href="#producto" style={navLink}>Producto</a>
+        <a href="#como" style={navLink}>Cómo funciona</a>
+        <a href="#usos" style={navLink}>Casos de uso</a>
+
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <a href="#" style={{ ...navLink, fontWeight: 500 }} className="nav-login">Acceder</a>
+        <button className="btn btn-white btn-sm" onClick={onStart}>Quiero probarlo</button>
+      </div>
+    </nav>);
+
+}
+
+/* ---------------- Browser frame (widget embebido en la web de la clínica) ---------------- */
+function BrowserFrame({ children, url = "tuclinica.com" }) {
+  return (
+    <div style={{ borderRadius: 16, overflow: "hidden", border: "1px solid var(--line)", background: "#fff", boxShadow: "0 40px 90px -40px rgba(28,30,29,0.4)" }}>
+      <div style={{ height: 44, display: "flex", alignItems: "center", gap: 14, padding: "0 16px", borderBottom: "1px solid var(--line)", background: "var(--bg-soft)" }}>
+        <div style={{ display: "flex", gap: 7 }}>
+          {["#d8dad7", "#d8dad7", "#d8dad7"].map((c, i) => <span key={i} style={{ width: 11, height: 11, borderRadius: "50%", background: c }} />)}
+        </div>
+        <div style={{ flex: 1, height: 26, borderRadius: 99, background: "#fff", border: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 7, padding: "0 14px" }}>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="var(--ink-3)" strokeWidth="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="var(--ink-3)" strokeWidth="2" /></svg>
+          <span className="mono" style={{ fontSize: 10, color: "var(--ink-3)", letterSpacing: "0.06em" }}>{url}</span>
+        </div>
+      </div>
+      <div style={{ position: "relative" }}>{children}</div>
+    </div>);
+
+}
+
+/* ---------------- Hero ---------------- */
+/* ---------------- Hero (full-bleed, vídeo a la derecha) ---------------- */
+function Hero({ onStart }) {
+  const videoRef = React.useRef(null);
+
+  // garantiza silencio total (React no siempre fija el atributo muted en el DOM)
+  React.useEffect(() => {
+    const v = videoRef.current;
+    if (v) {v.muted = true;v.defaultMuted = true;v.volume = 0;v.setAttribute("muted", "");v.play().catch(() => {});}
+  }, []);
+
+  return (
+    <header className="hero2">
+
+      {/* Vídeo de fondo a la derecha — bucle, sin sonido, reproducción automática */}
+      <video
+        ref={videoRef}
+        className="hero2-video"
+        autoPlay loop muted playsInline preload="auto"
+        style={{ width: "750px", objectPosition: "0% 21%", transform: "translateX(-12%)" }}>
+        
+        <source src="https://res.cloudinary.com/dhzmkxbek/video/upload/v1781638188/0614_2_upxmh1.mp4" type="video/mp4" />
+      </video>
+
+
+      {/* Velo para legibilidad de la copy */}
+      <div className="hero2-scrim" />
+
+      <div className="wrap hero2-inner">
+        <div className="hero2-copy">
+          <span className="mono" style={{ fontSize: 12, color: "rgba(255,255,255,0.78)" }}></span>
+          <h1 className="display hero2-h1" style={{ fontSize: "clamp(38px, 4.4vw, 60px)", margin: "22px 0 24px" }}>
+            La herramienta<br />que llena tu clínica.
+          </h1>
+          <p className="hero2-lead" style={{ fontSize: 19, maxWidth: 440, textAlign: "justify" }}>
+            Smile Fast les muestra su nueva sonrisa antes de cerrar la pestaña. <b>+38% de pacientes.</b>
+          </p>
+          <div style={{ display: "flex", gap: 12, marginTop: 34, flexWrap: "wrap" }}>
+            <button className="btn btn-white" style={{ padding: "16px 30px", fontSize: 16 }} onClick={onStart}>Quiero probarlo</button>
+            <a href="#como" className="btn hero2-ghost">Cómo funciona</a>
+          </div>
+          <p className="mono" style={{ fontSize: 11, letterSpacing: "0.1em", color: "rgba(255,255,255,0.9)", marginTop: 16 }}></p>
+          <div className="hero2-stats">
+            {[
+            ["+38% de pacientes", "Mayor facturación"],
+            ["Paciente + simulación", "Datos listos en tu panel"],
+            ["10 minutos", "Fácil integración"]].
+            map(([t, d], i) =>
+            <div key={i} className="hero2-stat">
+                <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: "-0.01em", color: "#fff", textAlign: "center" }}>{t}</div>
+                <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.6)", marginTop: 4, lineHeight: 1.45, textAlign: "center" }}>{d}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </header>);
+
+}
+
+/* ---------------- Trust strip ---------------- */
+function TrustStrip() {
+  const brands = ["Clínica Aurora", "Sonríe+", "Vértice Dental", "OrtoLab", "Instituto Dental Ortega", "Sonrisas Premium"];
+  return (
+    <section style={{ padding: "34px 0", borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)", overflow: "hidden" }}>
+      <div className="wrap" style={{ display: "flex", alignItems: "center", gap: 28 }}>
+        <div className="marquee">
+          <div className="marquee-track">
+            {[...brands, ...brands].map((n, i) =>
+            <span key={i} style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--ink-3)", whiteSpace: "nowrap" }}>{n}</span>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>);
+
+}
+
+/* ---------------- Qué recibe tu clínica por cada visitante ---------------- */
+function LeadAsset({ onStart }) {
+  const [ref, inview] = useInview(0.3);
+  const reduce = React.useRef(false);
+  const [flip, setFlip] = React.useState(false);
+  React.useEffect(() => {
+    reduce.current = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce.current) setFlip(true);
+  }, []);
+  React.useEffect(() => {
+    if (!inview || reduce.current) return;
+    const t = setTimeout(() => setFlip(true), 1150);
+    return () => clearTimeout(t);
+  }, [inview]);
+  const on = inview || reduce.current;
+  const checks = [
+    "Nombre y contacto directo",
+    "WhatsApp a un clic",
+    "Su simulación de sonrisa adjunta"];
+  const mailIcon = <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-10 6L2 7" /></svg>;
+  const phoneIcon = <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" /></svg>;
+  const waIcon = <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.06L2 22l5.06-1.33A10 10 0 1 0 12 2zm0 18a8 8 0 0 1-4.08-1.12l-.29-.17-3 .79.8-2.92-.19-.3A8 8 0 1 1 12 20zm4.4-5.8c-.24-.12-1.42-.7-1.64-.78-.22-.08-.38-.12-.54.12-.16.24-.62.78-.76.94-.14.16-.28.18-.52.06a6.5 6.5 0 0 1-1.92-1.18 7.2 7.2 0 0 1-1.33-1.65c-.14-.24 0-.37.1-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.2-.47-.4-.4-.54-.41h-.46a.9.9 0 0 0-.64.3 2.68 2.68 0 0 0-.84 2 4.65 4.65 0 0 0 .98 2.48c.12.16 1.7 2.6 4.12 3.65.58.25 1.03.4 1.38.51.58.19 1.1.16 1.52.1.46-.07 1.42-.58 1.62-1.14.2-.56.2-1.04.14-1.14-.06-.1-.22-.16-.46-.28z" /></svg>;
+  return (
+    <section id="activo" ref={ref} className={"lead-asset" + (on ? " in" : "")} style={{ padding: "100px 0", background: "linear-gradient(180deg,#ffffff,#f4f6f6)" }}>
+      <div className="wrap la-grid">
+        <div className="la-copy">
+          <div style={{ marginBottom: 22 }}><MonoPill>TU ACTIVO</MonoPill></div>
+          <h2 className="display" style={{ fontSize: "clamp(34px,4.4vw,56px)", lineHeight: 1.05 }}>
+            Cada visitante te deja <span className="dim">un lead listo para cerrar</span>
+          </h2>
+          <p className="lead" style={{ fontSize: 17, margin: "20px 0 30px", maxWidth: "46ch" }}>
+            No un clic anónimo. Nombre, correo y WhatsApp junto a su simulación de sonrisa, ordenados en tu panel para <b>contactar y agendar.</b>
+          </p>
+          <ul className="la-checks">
+            {checks.map((c, i) =>
+            <li key={i} className="la-check" style={{ transitionDelay: (0.15 + i * 0.12) + "s" }}>
+                <span className="la-check-ic"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5" /></svg></span>
+                <span>{c}</span>
+              </li>
+            )}
+          </ul>
+          <button className="la-cta" onClick={onStart} style={{ padding: "15px 30px", fontSize: 15 }}>Quiero probarlo</button>
+        </div>
+        <div className="la-card-wrap">
+          <div className="la-card">
+            <div className="la-badge">Lead cualificado</div>
+            <div className="la-head">
+              <div className="la-avatar">MG</div>
+              <div className="la-head-txt">
+                <div className="la-name la-f" style={{ transitionDelay: "0.2s" }}>María Fernandez.</div>
+                <div className="la-meta"><span className="la-dot"></span>hace 2 min · <span style={{ color: "var(--sage-deep)", fontWeight: 500 }}>nuevo</span></div>
+              </div>
+            </div>
+            <div className="la-rows">
+              <div className="la-row la-f" style={{ transitionDelay: "0.4s" }}>
+                <span className="la-row-ic">{mailIcon}</span>
+                <span>maria.g@gmail.com</span>
+              </div>
+              <div className="la-row la-f" style={{ transitionDelay: "0.6s" }}>
+                <span className="la-row-ic">{phoneIcon}</span>
+                <span>+34 611 22 33 44</span>
+                <a className="la-wa" href="#" onClick={(e) => e.preventDefault()}>{waIcon} WhatsApp</a>
+              </div>
+            </div>
+            <div className="la-thumb la-f" style={{ transitionDelay: "0.8s" }}>
+              <div className={"la-flip" + (flip ? " flipped" : "")}>
+                <img className="la-face la-before" src={RES.r14_trans_1_before_jpg} alt="Antes de la simulación" />
+                <img className="la-face la-after" src={RES.r15_trans_1_after_jpg} alt="Simulación de sonrisa" />
+              </div>
+              <span className="la-thumb-tag">{flip ? "Después" : "Antes"}</span>
+            </div>
+            <div className="la-pills la-f" style={{ transitionDelay: "1s" }}>
+              {["Pendiente", "Contactado", "Convertido"].map((s, i) =>
+              <span key={i} className={"la-pill" + (i === 0 ? " active" : "")}>{s}</span>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>);
+
+}
+
+/* ---------------- Cómo funciona para tu clínica ---------------- */
+function HowItWorks() {
+  const steps = [
+  ["Integra nuestra herramienta", "Sin desarrollo, funcionando en minutos, en tu web y con tu marca."],
+  ["Tus visitantes se simulan", "Sube una selfie, ve su sonrisa nueva al instante y agenda antes de hablar con nadie."],
+  ["Recibes el lead caliente", "Sus datos de contacto y su simulación llegan a tu panel. Tu equipo agenda y cierra la cita."]];
+
+  return (
+    <section id="como" style={{ padding: "100px 0" }}>
+      <div className="wrap" style={{ textAlign: "center", marginBottom: 56 }}>
+        <div style={{ marginBottom: 24 }}><MonoPill>EN 3 PASOS</MonoPill></div>
+        <h2 className="display" style={{ fontSize: "clamp(38px, 5vw, 62px)" }}>
+          Cómo funciona <span className="dim">en tu clínica</span>
+        </h2>
+      </div>
+      <div className="wrap future-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 22 }}>
+        {steps.map((s, i) =>
+        <div key={i} className="card" style={{ padding: 32, minHeight: 240, display: "flex", flexDirection: "column" }}>
+            <span className="mono" style={{ fontSize: 11 }}>PASO {String(i + 1).padStart(2, "0")}</span>
+            <div style={{ marginTop: 28 }}>
+              <h3 style={{ fontSize: 23, fontWeight: 600, letterSpacing: "-0.02em", margin: "0 0 10px" }}>{s[0]}</h3>
+              <p style={{ fontSize: 14.5, color: "var(--ink-2)", lineHeight: 1.55, margin: 0 }}>{s[1]}</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>);
+
+}
+
+/* ---------------- Lo que verán tus pacientes (demo) ---------------- */
+function PatientPreview({ onStart }) {
+  const cards = [
+  ["Simulación realista", "Una vista previa fotorrealista de su sonrisa post-tratamiento.", "scan"],
+  ["Sin promesas vacías", "Resultados estéticos alcanzables, alineados con tu criterio clínico.", "shield"],
+  ["Con tu marca", "Colores, logo y dominio de tu clínica. El paciente nunca sale de tu web.", "tag"],
+  ["Captura el lead", "Cada simulación deja nombre, email y teléfono en tu panel.", "inbox"]];
+
+  return (
+    <section id="producto" style={{ padding: "100px 0", background: "linear-gradient(180deg,#ffffff,#f4f6f6)" }}>
+      <div className="wrap" style={{ textAlign: "center", marginBottom: 56 }}>
+        <h2 className="display" style={{ fontSize: "clamp(38px, 5vw, 64px)" }}>
+          Lo que verán <span className="dim">tus visitantes</span>
+        </h2>
+        <p className="lead" style={{ fontSize: 18, marginTop: 16 }}>Una experiencia premium que convierte la curiosidad en una cita.</p>
+      </div>
+      <div className="wrap future-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.15fr 1fr", gap: 22, alignItems: "stretch" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+          {cards.slice(0, 2).map((c, i) => <FeatureCard key={i} title={c[0]} body={c[1]} icon={c[2]} />)}
+        </div>
+        <div style={{ minHeight: 520, display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ flex: 1 }}>
+            <BeforeAfter beforeSrc={RES.r16_preview_before_png} afterSrc={RES.r17_preview_after_png} height="100%" radius={22} imgPos="center 28%" />
+          </div>
+          <button className="btn btn-primary" style={{ width: "100%" }} onClick={onStart}>Solicitar DEMO</button>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+          {cards.slice(2, 4).map((c, i) => <FeatureCard key={i} title={c[0]} body={c[1]} icon={c[2]} />)}
+        </div>
+      </div>
+    </section>);
+
+}
+
+function FeatureCard({ title, body, icon }) {
+  const paths = {
+    scan: <><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2" /><circle cx="12" cy="12" r="3" /></>,
+    shield: <><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6l7-3Z" /><path d="M9 12l2 2 4-4" /></>,
+    tag: <><path d="M3 12V5a2 2 0 0 1 2-2h7l9 9-9 9-9-9Z" /><circle cx="8" cy="8" r="1.4" /></>,
+    inbox: <><path d="M4 13h4l2 3h4l2-3h4" /><path d="M4 13V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7M4 13v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" /></>
+  }[icon];
+  return (
+    <div className="card card-hover" style={{ padding: 24, display: "flex", flexDirection: "column", justifyContent: "flex-end", flex: 1, minHeight: 230 }}>
+      <span style={{ width: 52, height: 52, borderRadius: 14, background: "var(--bg-tint)", border: "1px solid var(--line)", display: "grid", placeItems: "center", color: "var(--ink)", marginBottom: "auto" }}>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{paths}</svg>
+      </span>
+      <h3 style={{ fontSize: 21, fontWeight: 600, letterSpacing: "-0.02em", margin: "20px 0 8px" }}>{title}</h3>
+      <p style={{ fontSize: 14.5, color: "var(--ink-2)", lineHeight: 1.5, margin: 0 }}>{body}</p>
+    </div>);
+
+}
+
+/* ---------------- El análisis que recibe el paciente (viz) ---------------- */
+function Analysis() {
+  return (
+    <section className="facial-analysis">
+      <img className="analysis-blur" src={RES.r10_analysis_blur_png} alt="" aria-hidden="true" />
+      <div className="fa-head">
+        <div style={{ marginBottom: 16 }}><MonoPill>ANÁLISIS PERSONALIZADO</MonoPill></div>
+        <h2 className="display" style={{ fontSize: "clamp(34px, 4.4vw, 52px)", color: "#fff" }}>
+          Más que una foto: <span style={{ color: "rgba(255,255,255,0.55)" }}>un análisis</span>
+        </h2>
+        <p className="lead" style={{ fontSize: 16, marginTop: 14, maxWidth: 560, marginInline: "auto", color: "rgba(255,255,255,0.85)" }}>
+          En cada lead se analizan <b>6 parámetros clínicos de su sonrisa</b> para obtener el resultado más natural posible.
+        </p>
+      </div>
+      <VitaFeature />
+      <InventarioFeature />
+      <MacroesteticaFeature />
+      <ProporcionesFeature />
+      <ArcoSonrisaFeature />
+      <ArqGingivalFeature />
+    </section>);
+
+}
+
+/* ---------------- Casos de uso ---------------- */
+function UseCases() {
+  const uses = [
+  {
+    tag: "OBJETIVO PRINCIPAL",
+    title: "Captación de leads",
+    body: <>Tus visitantes se proyectan con su nueva sonrisa antes de pisar la clínica. Cada simulación es un lead cualificado, con foto y datos de contacto, <b>listo para agendar.</b></>
+  },
+  {
+    tag: "USO ADICIONAL",
+    title: "Cierre en consulta",
+    body: <>Tu equipo presenta la simulación y el vídeo personalizado durante la visita para explicar el plan de tratamiento. <b>Más claridad para el paciente, mayor aceptación.</b></>
+  },
+  {
+    tag: "USO ADICIONAL",
+    title: "Marketing y redes",
+    body: "Genera contenido before/after para anuncios, campañas de captación y redes sociales."
+  }];
+
+  return (
+    <section id="usos" style={{ padding: "100px 0", background: "linear-gradient(180deg,#ffffff,#eef1f1)" }}>
+      <div className="wrap" style={{ textAlign: "center", marginBottom: 56 }}>
+        <div style={{ marginBottom: 24 }}><MonoPill>CASOS DE USO</MonoPill></div>
+        <h2 className="display" style={{ fontSize: "clamp(36px, 4.8vw, 60px)" }}>
+          Tres formas de <span className="dim">aprovecharlo</span>
+        </h2>
+      </div>
+      <div className="uc-a-grid wrap">
+        {uses.map((u, i) =>
+        <div key={i} className={"uc-a-card" + (i === 0 ? " uc-a-dark" : "")}>
+            <div className="uc-a-media">
+              <image-slot id={"usecase-" + i} placeholder="Imagen" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", "--is-radius": "0px" }}></image-slot>
+            </div>
+            <div className="uc-a-body">
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <span className="mono" style={{ fontSize: 9, color: i === 0 ? "rgba(255,255,255,0.6)" : "var(--ink-3)" }}>{u.tag}</span>
+                <span style={{ fontSize: 30, fontWeight: 600, color: i === 0 ? "rgba(255,255,255,0.4)" : "var(--line-strong)" }}>0{i + 1}</span>
+              </div>
+              <h3 style={{ fontSize: 24, fontWeight: 600, letterSpacing: "-0.02em", margin: "16px 0 10px", color: i === 0 ? "#fff" : "var(--ink)" }}>{u.title}</h3>
+              <p style={{ fontSize: 14.5, lineHeight: 1.55, margin: 0, color: i === 0 ? "rgba(255,255,255,0.72)" : "var(--ink-2)" }}>{u.body}</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </section>);
+
+}
+
+/* ---------------- Métricas ---------------- */
+function Metrics() {
+  const stats = [
+  { pre: "+", val: 38, suf: "%", label: "de visitante a lead" },
+  { pre: "+", val: 65, suf: "%", label: "de esos leads agenda cita" },
+  { pre: "x", val: 3, suf: "", label: "planes de estética cerrados" },
+  { pre: "", val: 3, suf: " min", label: "de integración, sin desarrollo" }];
+  const [ref, inview] = useInview(0.35);
+  return (
+    <section className={"metrics-bar" + (inview ? " in" : "")} ref={ref} style={{ padding: "80px 0", borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)" }}>
+      <div className="wrap" style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 32 }}>
+        {stats.map((s, i) => <MetricStat key={i} s={s} i={i} inview={inview} />)}
+      </div>
+    </section>);
+
+}
+
+function MetricStat({ s, i, inview }) {
+  const [n, setN] = React.useState(0);
+  const [landed, setLanded] = React.useState(false);
+  const reduced = typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  React.useEffect(() => {
+    if (!inview) return;
+    if (reduced) { setN(s.val); setLanded(true); return; }
+    const dur = 2000, delay = i * 150, t0 = performance.now() + delay;
+    let raf;
+    const tick = (now) => {
+      const t = Math.min(1, Math.max(0, (now - t0) / dur));
+      const e = t <= 0 ? 0 : 1 - Math.pow(2, -10 * t); // easeOutExpo
+      setN(s.val * e);
+      if (t < 1) { raf = requestAnimationFrame(tick); }
+      else { setN(s.val); setLanded(true); }
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [inview]);
+  const shown = s.val % 1 === 0 ? Math.round(n) : n.toFixed(0);
+  return (
+    <div className="metric-stat" style={{ flex: "1 1 180px", display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+      <div className={"metric-num display" + (landed ? " landed" : "")} style={{ fontSize: "clamp(40px, 5vw, 60px)" }}>
+        <span className="metric-shine">{s.pre}{shown}{s.suf}</span>
+      </div>
+      <div className="metric-label" style={{ fontSize: 14.5, color: "var(--ink-2)", marginTop: 8, maxWidth: 200 }}>{s.label}</div>
+    </div>);
+
+}
+
+/* ---------------- Cara a cara: sin vs con Smile Fast ---------------- */
+function ClinicFunnel() {
+  const [ref, inview] = useInview(0.22);
+  const oldSteps = ["Visitante anónimo", "Duda del resultado", "Abandona la web", "No agenda", "Lead perdido"];
+  const newSteps = ["Se simula en tu web", "Ve su resultado", "Deja sus datos", "Agenda con intención", "Paciente nuevo"];
+  return (
+    <section className={"funnel" + (inview ? " in" : "")} ref={ref} style={{ padding: "100px 0" }}>
+      <div className="wrap" style={{ textAlign: "center", marginBottom: 60 }}>
+        <div className="fn-head-item" style={{ marginBottom: 24 }}><MonoPill>EL EMBUDO</MonoPill></div>
+        <h2 className="display fn-head-item" style={{ fontSize: "clamp(34px, 4.8vw, 60px)", lineHeight: 1.06, transitionDelay: "0.08s" }}>
+          Tus visitantes ya quieren agendar. <span className="dim">El problema es lo que pasa antes.</span>
+        </h2>
+        <p className="lead fn-head-item" style={{ fontSize: 18, marginTop: 20, maxWidth: 640, marginInline: "auto", transitionDelay: "0.16s" }}>
+          Captar pacientes cuesta cada vez más: ads caros y todas las clínicas ofreciendo lo mismo. La diferencia está en lo que ve el visitante antes de agendar.
+        </p>
+      </div>
+      <div className="wrap" style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+        <TimelineRow title="Sin Smile Fast" steps={oldSteps} dark={false} inview={inview} baseDelay={0.30} />
+        <TimelineRow title="Con Smile Fast" steps={newSteps} dark={true} inview={inview} baseDelay={0.30 + 5 * 0.12 + 0.2} />
+      </div>
+    </section>);
+
+}
+
+function TimelineRow({ title, steps, dark, inview, baseDelay }) {
+  const fg = dark ? "#fff" : "var(--ink)";
+  const dim = dark ? "rgba(255,255,255,0.55)" : "var(--ink-3)";
+  return (
+    <div className={"tl-row" + (dark ? " tl-dark" : " tl-light")}>
+      <div className="tl-label">
+        <span className="tl-badge">
+          {dark ? <LogoMark size={20} dark={false} /> : <span className="tl-x"></span>}
+        </span>
+        <div className="tl-title" style={{ color: fg }}>{title}</div>
+      </div>
+      <div className="tl-track">
+        <span className="tl-line" aria-hidden="true"></span>
+        <span className="tl-line-fill" aria-hidden="true" style={{ transitionDelay: baseDelay + "s" }}></span>
+        {steps.map((s, i) => {
+          const last = i === steps.length - 1;
+          return (
+            <div key={i} className="tl-step" style={{ transitionDelay: (baseDelay + i * 0.12) + "s" }}>
+              <span className={"tl-node" + (last ? (dark ? " tl-node-win" : " tl-node-lost") : "")}></span>
+              <div className="mono tl-step-lbl" style={{ color: dim }}>PASO {i + 1}</div>
+              <div className="tl-step-title" style={{ color: fg }}>{s}</div>
+            </div>);
+        })}
+      </div>
+    </div>);
+
+}
+
+/* ---------------- FAQ (enfocado a dueños de clínicas) ---------------- */
+function FAQItem({ q, a, open, onToggle }) {
+  return (
+    <div className="faq-item" onClick={onToggle}>
+      <div className="faq-q">
+        <span>{q}</span>
+        <span className={"faq-ico" + (open ? " open" : "")}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+        </span>
+      </div>
+      <div className="faq-a" style={{ maxHeight: open ? 260 : 0 }}>
+        <p>{a}</p>
+      </div>
+    </div>);
+
+}
+
+function FAQ() {
+  const [open, setOpen] = useState(0);
+  const items = [
+    ["¿Cómo se integra en la web de mi clínica?",
+     "Se añade con una sola línea de código. No necesitas tocar el diseño de tu web ni contratar a un desarrollador: lo pegas donde quieras, nosotros te ayudamos y queda funcionando en minutos, adaptado a móvil y escritorio."],
+    ["¿Los datos de los pacientes están seguros y cumplen el RGPD?",
+     "Sí. La captura incluye consentimiento explícito y confirmación de mayoría de edad, y las imágenes y datos se procesan cifrados. El paciente acepta términos y privacidad antes de generar su simulación, de modo que tu clínica capta leads de forma conforme a la normativa."],
+    ["¿Qué recibe mi clínica por cada visitante que usa el widget?",
+     "Un lead cualificado: nombre, correo y WhatsApp junto a su simulación de sonrisa. Los leads llegan a tu panel de administración, donde puedes verlos, cambiar su estado (pendiente, contactado, convertido) y contactarlos directamente por WhatsApp."],
+    ["¿La simulación es realista? ¿No genera expectativas falsas?",
+     "El resultado es una proyección estética orientativa, siempre etiquetada como tal. Sirve para motivar al paciente a agendar; la viabilidad clínica real se confirma en consulta con tu equipo. Puedes ofrecer además un vídeo personalizado que se puede generar presencialmente en consulta."],
+    ["¿Cuánto tarda en estar activo y necesito formación?",
+     "Puedes tenerlo funcionando esta misma semana. Configuramos tu marca (logo y colores), lo integramos en tu web y te damos acceso al panel. No requiere formación técnica: el equipo de recepción gestiona los leads desde una interfaz sencilla."],
+    ["¿Cómo me ayuda de verdad a conseguir más pacientes?",
+     "Convierte el tráfico anónimo de tu web en citas. En lugar de un visitante que duda y se va, la persona se ve con su nueva sonrisa, deja sus datos con intención real y agenda. Es captación proactiva desde tu propio sitio, sin depender solo de publicidad."],
+    ["¿Tengo que firmar permanencia o hacer una gran inversión inicial?",
+     "No. Ningún plan tiene permanencia: puedes cancelar cuando quieras. En el plan Esencial la inversión inicial es de 0 $, así empiezas a captar leads sin coste de arranque. Si más adelante quieres avanzar a un plan superior (más marca, vídeo o funciones), solo hay un coste mínimo de implementación, sin ataduras a largo plazo."]];
+
+  return (
+    <section id="faq" style={{ padding: "100px 0", borderTop: "1px solid var(--line)" }}>
+      <div className="wrap faq-wrap">
+        <div className="faq-head">
+          <div style={{ marginBottom: 24 }}><MonoPill>PREGUNTAS FRECUENTES</MonoPill></div>
+          <h2 className="display" style={{ fontSize: "clamp(34px, 4.5vw, 56px)" }}>
+            Todo lo que tu <span className="dim">clínica necesita saber</span>
+          </h2>
+          <p className="lead" style={{ fontSize: 17, marginTop: 18, maxWidth: 340 }}>
+            Resolvemos las dudas más habituales de directores y propietarios de clínicas dentales.
+          </p>
+        </div>
+        <div className="faq-list">
+          {items.map(([q, a], i) =>
+          <FAQItem key={i} q={q} a={a} open={open === i} onToggle={() => setOpen(open === i ? -1 : i)} />
+          )}
+        </div>
+      </div>
+    </section>);
+
+}
+
+/* ---------------- Testimonios (dueños de clínicas) ---------------- */
+function Testimonios() {
+  const [ref, inview] = useInview(0.12);
+  const clients = [
+    { src: RES.r18_logo_nobel_jpg, name: "Clínicas Nobel" },
+    { src: RES.r19_logo_bracamonte_png, name: "Comidas Bracamonte" },
+    { src: RES.r20_logo_templo_png, name: "Templo del Masaje" },
+    { src: RES.r21_logo_remax_png, name: "RE/MAX Exclusive" },
+    { src: RES.r22_logo_sanjose_png, name: "San José", dark: true },
+    { src: RES.r23_logo_innovacirco_png, name: "Innovacirco" }];
+  const T = [
+    { quote: "Los pacientes llegan a la primera visita ya informados y decididos. La aceptación de tratamientos subió de forma notable.", name: "Dr. Andrés Salcedo", role: "Dirección Médica", company: "Clínicas Nobel", stat: "+45%", statLbl: "aceptación de tratamientos", initials: "AS" },
+    { quote: "Los leads llegan calificados y con contexto. Nuestros agentes cierran más y en menos visitas.", name: "José Miguel", role: "Broker Owner", company: "RE/MAX Exclusive", stat: "+38%", statLbl: "más leads calificados", avatar: RES.r24_avatar_josemiguel_jpg },
+    { quote: "Pasamos de responder en horas a responder en minutos, sin sumar una sola persona al equipo.", name: "Lucía Fernández", role: "Coordinación", company: "Templo del Masaje", stat: "24/7", statLbl: "atención automatizada", initials: "LF" }];
+  const openBrand = () => {
+    const b = document.querySelector("brandboost-badge");
+    if (b && b.shadowRoot) b.shadowRoot.querySelector(".bb").click();
+  };
+  const Stars = () =>
+    <div style={{ display: "flex", gap: 3 }}>
+      {[0, 1, 2, 3, 4].map((s) => <svg key={s} width="14" height="14" viewBox="0 0 24 24" fill="var(--sage-deep)"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z" /></svg>)}
+    </div>;
+  const Avatar = ({ t }) => t.avatar ?
+    <img src={t.avatar} alt={t.name} style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: "1px solid var(--line)" }} /> :
+    <span style={{ width: 44, height: 44, borderRadius: "50%", flexShrink: 0, display: "grid", placeItems: "center", fontSize: 15, fontWeight: 600, letterSpacing: "-0.01em", background: "var(--bg-tint)", color: "var(--sage-deep)", border: "1px solid var(--line)" }}>{t.initials}</span>;
+  const metrics = [["+15", "empresas activas"], ["+6", "países"]];
+  const seals = [
+    { label: "Datos encriptados", icon: <><rect x="4" y="10" width="16" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></> },
+    { label: "Privacidad del paciente", icon: <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" /> },
+    { label: "Sin permanencia", icon: <><path d="M3 12a9 9 0 0 1 15-6.7L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-15 6.7L3 16" /><path d="M3 21v-5h5" /></> }];
+  return (
+    <section id="testimonios" ref={ref} className="bb-section" style={{ position: "relative", padding: "112px 0", background: "var(--bg-soft)", borderTop: "1px solid var(--line)", overflow: "hidden" }}>
+      <span className="bb-dots" aria-hidden="true"></span>
+      <div className="wrap" style={{ position: "relative", zIndex: 1 }}>
+        <div className="bb-intro" style={{ display: "grid", gridTemplateColumns: "1.05fr 0.95fr", gap: 52, alignItems: "center" }}>
+          <div>
+            <span className="mono" style={{ fontSize: 12, letterSpacing: "0.2em", color: "var(--sage-deep)", textTransform: "uppercase" }}>La agencia detrás de Smile Fast</span>
+            <h2 className="display" style={{ fontSize: "clamp(32px, 4vw, 52px)", margin: "16px 0 0", lineHeight: 1.05 }}>
+              Detrás de Smile Fast <span className="dim">está Brandboost</span>
+            </h2>
+            <p style={{ fontSize: 16.5, lineHeight: 1.6, color: "var(--ink-2)", maxWidth: "48ch", margin: "18px 0 26px" }}>
+              Smile Fast es un producto de <b>Brandboost</b>, la agencia que diseña agentes, integraciones y sistemas inteligentes para empresas.
+            </p>
+            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+              <span style={{ width: 52, height: 52, flex: "0 0 auto", display: "grid", placeItems: "center", borderRadius: 14, background: "#fff", border: "1px solid var(--line)" }}>
+                <img src={RES.r25_brandboost_mark_png} alt="Brandboost AI" style={{ width: 34, height: 34, objectFit: "contain" }} />
+              </span>
+              <div>
+                <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: "-0.01em", color: "var(--ink)" }}>Brandboost AI</div>
+                <div className="mono" style={{ fontSize: 10.5, letterSpacing: "0.16em", color: "var(--ink-3)", textTransform: "uppercase", marginTop: 3 }}>Enterprise AI Agency</div>
+              </div>
+            </div>
+          </div>
+          {/* Tarjeta oscura premium con imagen */}
+          <div style={{ position: "relative", borderRadius: "var(--r-img)", overflow: "hidden", minHeight: 340, background: "var(--ink)", boxShadow: "0 40px 90px -46px rgba(28,30,29,0.6)" }}>
+            <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=1200" alt="Infraestructura de IA global" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.42 }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(160deg, rgba(28,30,29,0.35), rgba(28,30,29,0.92))" }} />
+            <div style={{ position: "relative", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 30, color: "#fff", minHeight: 340 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <img src={RES.r25_brandboost_mark_png} alt="" style={{ width: 30, height: 30, objectFit: "contain", filter: "brightness(1.6)" }} />
+                <span className="mono" style={{ fontSize: 10, letterSpacing: "0.2em", color: "#22d3ee", textTransform: "uppercase" }}>✦ Impulsando tu empresa con IA</span>
+              </div>
+              <div>
+                <p style={{ fontSize: 20, fontWeight: 300, lineHeight: 1.4, margin: "0 0 22px", maxWidth: "24ch" }}>Escala tus operaciones <b>sin fricción humana.</b></p>
+                <div style={{ display: "flex", gap: 30, flexWrap: "wrap" }}>
+                  {[["LATAM + España", "Empresas que ya confían"], ["Soporte real", "Equipo humano detrás"]].map((m, i) =>
+                  <div key={i}>
+                      <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em", color: "#fff" }}>{m[0]}</div>
+                      <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", marginTop: 3, maxWidth: 110 }}>{m[1]}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Muro de logos */}
+        <div style={{ marginTop: 64 }}>
+          <div className="mono" style={{ fontSize: 12, letterSpacing: "0.2em", color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 20 }}>Empresas que confían en nosotros</div>
+          <div className={"bb-metrics" + (inview ? " in" : "")} style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "10px 26px", marginBottom: 30 }}>
+            {metrics.map((m, i) =>
+            <React.Fragment key={i}>
+                {i > 0 && <span style={{ color: "var(--line-strong)", fontSize: 20 }}>·</span>}
+                <span style={{ display: "inline-flex", alignItems: "baseline", gap: 9 }}>
+                  <span style={{ fontSize: 30, fontWeight: 700, letterSpacing: "-0.03em", color: "var(--ink)" }}>{m[0]}</span>
+                  <span style={{ fontSize: 13.5, color: "var(--ink-3)" }}>{m[1]}</span>
+                </span>
+              </React.Fragment>
+            )}
+          </div>
+          <div className="bb-logos" style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 12 }}>
+            {clients.map((c, i) =>
+            <div key={i} style={{ display: "grid", placeItems: "center", background: c.dark ? "var(--ink)" : "#fff", border: c.dark ? "1px solid var(--ink)" : "1px solid var(--line)", borderRadius: 14, padding: "22px 18px", minHeight: 96 }}>
+              <img src={c.src} alt={c.name} style={{ maxHeight: 48, maxWidth: 132, objectFit: "contain" }} />
+            </div>
+            )}
+          </div>
+        </div>
+
+        {/* Testimonios */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 18, marginTop: 44 }} className="bb-tst-grid">
+          {T.map((t, i) =>
+          <figure key={i} style={{ margin: 0, display: "flex", flexDirection: "column", background: "#fff", border: "1px solid var(--line)", borderRadius: "var(--r-card)", padding: 26 }}>
+              <Stars />
+              <blockquote style={{ margin: "16px 0 0", fontSize: 15.5, lineHeight: 1.55, color: "var(--ink)", flex: 1 }}>“{t.quote}”</blockquote>
+              <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, marginTop: 22, paddingTop: 18, borderTop: "1px solid var(--line)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+                  <Avatar t={t} />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 700, letterSpacing: "0.01em", color: "var(--ink)" }}>{t.name}</div>
+                    <div style={{ fontSize: 11.5, color: "var(--ink-3)", marginTop: 2 }}>{t.role} · {t.company}</div>
+                  </div>
+                </div>
+                <div style={{ textAlign: "right", flexShrink: 0 }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", color: "var(--sage-deep)", lineHeight: 1 }}>{t.stat}</div>
+                  <div style={{ fontSize: 9.5, letterSpacing: "0.04em", color: "var(--ink-3)", marginTop: 4, maxWidth: 120 }}>{t.statLbl}</div>
+                </div>
+              </div>
+            </figure>
+          )}
+        </div>
+
+        {/* Franja de seguridad de datos */}
+        <div className={"bb-seals" + (inview ? " in" : "")} style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 36 }}>
+          {seals.map((s, i) =>
+          <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 9, padding: "10px 18px", borderRadius: 999, border: "1px solid var(--line-strong)", background: "transparent", fontSize: 13, color: "var(--ink-2)" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{s.icon}</svg>
+              {s.label}
+            </span>
+          )}
+        </div>
+
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px 20px", marginTop: 40 }}>
+          <button className="btn btn-primary" onClick={openBrand} style={{ padding: "14px 28px", fontSize: 14 }}>Agendar Reunión</button>
+          <span style={{ fontSize: 16, fontWeight: 600, letterSpacing: "-0.01em", color: "var(--sage-deep)" }}>Tu socio en la evolución tecnológica.</span>
+        </div>
+      </div>
+    </section>);
+
+}
+
+/* ---------------- CTA + Footer ---------------- */
+function CTAFooter({ onStart }) {
+  const [ref, inview] = useInview(0.3);
+  const imgRef = React.useRef(null);
+  React.useEffect(() => {
+    const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) return;
+    let raf = null;
+    const onScroll = () => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = null;
+        const el = imgRef.current; if (!el) return;
+        const r = el.parentElement.getBoundingClientRect();
+        const prog = (r.top + r.height / 2 - window.innerHeight / 2) / window.innerHeight;
+        el.style.transform = "scale(1.15) translateY(" + (prog * -40) + "px)";
+      });
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  return (
+    <>
+      <section id="precios" ref={ref} className={"cta-final" + (inview ? " in" : "")} style={{ position: "relative", padding: "150px 0", textAlign: "center", overflow: "hidden" }}>
+        <img ref={imgRef} src={RES.r26_cta_smile_jpg} alt="Sonrisa tras tratamiento dental" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 35%", transform: "scale(1.15)", willChange: "transform" }} />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(16,20,18,0.35) 0%, rgba(16,20,18,0.55) 55%, rgba(16,20,18,0.82) 100%)" }} />
+        <div style={{ position: "absolute", inset: 0, boxShadow: "inset 0 0 200px 40px rgba(10,14,12,0.55)", pointerEvents: "none" }} />
+        <div className="wrap cta-final-body" style={{ position: "relative", zIndex: 1 }}>
+          <h2 className="display" style={{ fontSize: "clamp(46px, 6.4vw, 88px)", fontWeight: 700, color: "#fff", letterSpacing: "-0.02em", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: "0.26em", lineHeight: 1.05 }}>
+            <span>Lleva</span>
+            <img src={RES.r11_logo_sf_white_png} alt="Smile Fast" style={{ height: "0.9em", width: "auto", display: "inline-block", transform: "translateY(0.04em)" }} />
+            <span style={{ color: "rgba(255,255,255,0.6)" }}>a tu clínica</span>
+          </h2>
+          <p className="lead" style={{ fontSize: 19, margin: "22px auto 40px", maxWidth: 520, color: "rgba(255,255,255,0.85)" }}>
+            Solicita una demo, intégralo en tu web y generá más agendamientos de turnos.
+          </p>
+          <div style={{ display: "flex", gap: 16, justifyContent: "center", alignItems: "center", flexWrap: "wrap" }}>
+            <button className="btn btn-white cta-glow" style={{ padding: "18px 42px", fontSize: 17 }} onClick={onStart}>Quiero probarlo</button>
+          </div>
+          <p className="mono" style={{ fontSize: 11.5, letterSpacing: "0.1em", color: "rgba(255,255,255,0.6)", marginTop: 26 }}>Cada visitante, una oportunidad de agendar</p>
+        </div>
+      </section>
+      <footer style={{ background: "var(--ink)", color: "rgba(255,255,255,0.86)", padding: "70px 0 50px" }}>
+        <div className="wrap" style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 40 }}>
+          <div style={{ maxWidth: 300 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+              <img src={RES.r11_logo_sf_white_png} alt="Smile Fast" style={{ height: 26, width: "auto", display: "block" }} />
+            </div>
+            <p style={{ fontSize: 13.5, color: "rgba(255,255,255,0.55)", lineHeight: 1.6, margin: 0 }}>
+              La plataforma de simulación de sonrisa con IA para clínicas dentales. Convierte tu web en un motor de captación.
+            </p>
+          </div>
+          <div style={{ display: "flex", gap: 60, flexWrap: "wrap" }}>
+            {[
+            ["Producto", ["Cómo funciona", "Casos de uso", "Precios", "Integración"]],
+            ["Empresa", ["Sobre nosotros", "Clínicas", "Contacto"]]].
+            map(([h, items], i) =>
+            <div key={i}>
+                <div className="mono" style={{ fontSize: 9, color: "rgba(255,255,255,0.4)", marginBottom: 16 }}>{h}</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {items.map((it, j) => <a key={j} href="#" style={{ color: "rgba(255,255,255,0.78)", textDecoration: "none", fontSize: 14.5 }}>{it}</a>)}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="wrap" style={{ marginTop: 50, paddingTop: 24, borderTop: "1px solid rgba(255,255,255,0.12)", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
+          <span className="mono" style={{ fontSize: 9, color: "rgba(255,255,255,0.4)" }}>SMILE FAST © 2026 · PLATAFORMA PARA CLÍNICAS DENTALES</span>
+          <span className="mono" style={{ fontSize: 9, color: "rgba(255,255,255,0.4)" }}>HECHO PARA CRECER TU CLÍNICA</span>
+        </div>
+      </footer>
+    </>);
+
+}
+
+/* ---------------- Compose ---------------- */
+function Transformations() {
+  const benefits = [
+    "Más pacientes de estética de alto valor",
+    "Te diferencias de toda clínica de tu zona",
+    "Más planes aceptados, menos «lo voy a pensar»",
+    "Menos dependencia de la publicidad pagada",
+    "Refuerzas el prestigio y justificas tu precio"];
+
+  return (
+    <section id="transformaciones" style={{ padding: "100px 0", borderTop: "1px solid var(--line)" }}>
+      <div className="wrap trans-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.12fr", gap: 40, alignItems: "stretch" }}>
+        {/* Columna izquierda: encabezado + lista */}
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div style={{ marginBottom: 26 }}><MonoPill>NUEVO ENFOQUE</MonoPill></div>
+          <h2 className="display" style={{ fontSize: "clamp(36px, 4vw, 56px)" }}>
+            Transformaciones<br /><span className="dim">que cambian vidas</span>
+          </h2>
+          <p className="lead" style={{ fontSize: 16.5, margin: "18px 0 0", maxWidth: 380 }}>
+            La demanda de estética dental crece: convierte ese interés en pacientes que agendan y elevan la facturación de tu clínica.
+          </p>
+          <ul style={{ listStyle: "none", margin: "auto 0 0", padding: 0, display: "flex", flexDirection: "column" }}>
+            {benefits.map((b, i) =>
+            <li key={i} style={{ display: "flex", gap: 22, alignItems: "center", padding: "16px 0", borderTop: "1px solid var(--line)" }}>
+                <span className="mono" style={{ fontSize: 12, color: "var(--ink-3)" }}>[{i + 1}]</span>
+                <span style={{ fontSize: 17, letterSpacing: "-0.01em" }}>{b}</span>
+              </li>
+            )}
+          </ul>
+        </div>
+        {/* Comparador antes/proyección */}
+        <div className="trans-card" style={{ minHeight: 560 }}>
+          <BeforeAfter beforeId="trans-2m-before" afterId="trans-2m-after" beforeSrc={RES.r27_trans_2_before_jpg} afterSrc={RES.r28_trans_2_after_jpg} beforePos="58% 30%" afterPos="58% 24%" height="100%" radius={22} />
+        </div>
+      </div>
+    </section>);
+
+}
+
+/* ---------------- Vídeo en movimiento (feature aparte) ---------------- */
+function VideoFeature({ onStart }) {
+  return (
+    <section id="video" style={{ padding: "100px 0" }}>
+      <div className="wrap video-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.15fr", gap: 50, alignItems: "center" }}>
+        <div>
+          <div style={{ marginBottom: 22 }}><MonoPill>NUEVO · VÍDEO REALISTA</MonoPill></div>
+          <h2 className="display" style={{ fontSize: "clamp(34px, 4.4vw, 58px)" }}>
+            No solo una foto:<br /><span className="dim">míralo en movimiento</span>
+          </h2>
+          <p className="lead" style={{ fontSize: 17, margin: "20px 0 34px", maxWidth: 420 }}>
+            Además de la simulación estática, tu paciente puede ver su nueva sonrisa en un vídeo realista sonriendo que refuerza el deseo de agendar.
+          </p>
+          <button className="btn btn-primary" onClick={onStart}>Solicitar DEMO</button>
+        </div>
+        <div style={{ position: "relative", borderRadius: 22, overflow: "hidden", border: "1px solid var(--line)", background: "var(--photo)", aspectRatio: "16 / 10" }}>
+          <video src="https://res.cloudinary.com/dhzmkxbek/video/upload/v1781638188/0614_2_upxmh1.mp4" autoPlay loop muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}></video>
+          <span className="mono" style={{ position: "absolute", top: 16, left: 16, fontSize: 9, letterSpacing: "0.18em", color: "#fff", background: "rgba(20,24,23,0.5)", padding: "6px 12px", borderRadius: 99 }}>VÍDEO ANTES / DESPUÉS</span>
+        </div>
+      </div>
+    </section>);
+
+}
+
+function Landing({ onStart }) {
+  return (
+    <div>
+      <Nav onStart={onStart} />
+      <Hero onStart={onStart} />
+      <TrustStrip />
+      <Transformations />
+      <LeadAsset onStart={onStart} />
+      <HowItWorks />
+      <PatientPreview onStart={onStart} />
+      <AppJourney />
+      <VideoFeature onStart={onStart} />
+      <Analysis />
+      <UseCases />
+      <Metrics />
+      <ClinicFunnel />
+      <Testimonios />
+      <FAQ />
+      <CTAFooter onStart={onStart} />
+    </div>);
+
+}
+
+export { Landing };
