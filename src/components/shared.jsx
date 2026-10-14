@@ -654,7 +654,7 @@ const ANALYSIS_PARAMS = [
     name: "Inventario dental", tag: "NOTACIÓN FDI",
     title: "Cada pieza, identificada",
     copy: <>Antes de simular, la IA reconoce y numera cada diente con la notación FDI internacional: qué pieza es cuál, cuáles faltan y cuáles entran en el tratamiento, para que la propuesta encaje con <b>la anatomía real del paciente.</b></>,
-    img: RES.r1_inventario_jpg, alt: "Arcada dental completa con cada pieza numerada según la notación FDI", zoom: 1.5, origin: "50% 43%"
+    img: RES.r1_inventario_jpg, alt: "Arcada dental completa con cada pieza numerada según la notación FDI", zoom: 1.3, origin: "50% 50%"
   },
   {
     name: "Macroestética", tag: "ARMONÍA FACIAL",
@@ -666,7 +666,7 @@ const ANALYSIS_PARAMS = [
     name: "Proporciones", tag: "PROPORCIÓN ÁUREA",
     title: "Cada diente en su medida",
     copy: <>Anchos y alturas de las piezas anteriores se calculan según la proporción áurea. Así cada diente guarda la relación exacta con el de al lado y con el conjunto, <b>la base de una sonrisa que se percibe natural.</b></>,
-    img: RES.r3_proporciones_jpg, alt: "Rostro con trazos de proporción sobre labios y sonrisa", zoom: 1.1, origin: "50% 60%"
+    img: RES.r3_proporciones_jpg, alt: "Rostro con trazos de proporción sobre labios y sonrisa", zoom: 1, origin: "50% 50%"
   },
   {
     name: "Arco de sonrisa", tag: "DETALLE NATURAL",
