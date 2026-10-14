@@ -227,31 +227,114 @@ function LeadAsset({ onStart }) {
 
 /* ---------------- Cómo funciona para tu clínica ---------------- */
 function HowItWorks() {
+  const [ref, inview] = useInview(0.2);
   const steps = [
-  ["Integra nuestra herramienta", "Sin desarrollo, funcionando en minutos, en tu web y con tu marca."],
-  ["Tus visitantes se simulan", "Sube una selfie, ve su sonrisa nueva al instante y agenda antes de hablar con nadie."],
-  ["Recibes el lead caliente", "Sus datos de contacto y su simulación llegan a tu panel. Tu equipo agenda y cierra la cita."]];
+  { tag: "INTEGRACIÓN", chip: "10 MIN DE SETUP", title: "Integra nuestra herramienta", body: "Sin desarrollo, funcionando en minutos, en tu web y con tu marca.", Visual: StepIntegrate },
+  { tag: "SIMULACIÓN", chip: "SIN APPS NI DESCARGAS", title: "Tus visitantes se simulan", body: "Sube una selfie, ve su sonrisa nueva al instante y agenda antes de hablar con nadie.", Visual: StepSimulate, dark: true },
+  { tag: "CONVERSIÓN", chip: "AVISO AL INSTANTE", title: "Recibes el lead caliente", body: "Sus datos de contacto y su simulación llegan a tu panel. Tu equipo agenda y cierra la cita.", Visual: StepLead }];
 
   return (
-    <section id="como" style={{ padding: "100px 0" }}>
-      <div className="wrap" style={{ textAlign: "center", marginBottom: 56 }}>
+    <section id="como" ref={ref} className={"hiw" + (inview ? " hiw-on" : "")} style={{ padding: "100px 0" }}>
+      <div className="wrap" style={{ textAlign: "center", marginBottom: 48 }}>
         <div style={{ marginBottom: 24 }}><MonoPill>EN 3 PASOS</MonoPill></div>
         <h2 className="display" style={{ fontSize: "clamp(38px, 5vw, 62px)" }}>
           Cómo funciona <span className="dim">en tu clínica</span>
         </h2>
       </div>
-      <div className="wrap future-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 22 }}>
+
+      {/* Riel de progreso: se llena al entrar en pantalla y enciende cada paso */}
+      <div className="wrap hiw-rail" aria-hidden="true">
+        <span className="hiw-rail-line"><span className="hiw-rail-fill" /></span>
         {steps.map((s, i) =>
-        <div key={i} className="card" style={{ padding: 32, minHeight: 240, display: "flex", flexDirection: "column" }}>
-            <span className="mono" style={{ fontSize: 11 }}>PASO {String(i + 1).padStart(2, "0")}</span>
-            <div style={{ marginTop: 28 }}>
-              <h3 style={{ fontSize: 23, fontWeight: 600, letterSpacing: "-0.02em", margin: "0 0 10px" }}>{s[0]}</h3>
-              <p style={{ fontSize: 14.5, color: "var(--ink-2)", lineHeight: 1.55, margin: 0 }}>{s[1]}</p>
+        <span key={i} className="hiw-node" style={{ "--i": i }}>{String(i + 1).padStart(2, "0")}</span>
+        )}
+      </div>
+
+      <div className="wrap hiw-grid">
+        {steps.map((s, i) =>
+        <article key={i} className={"hiw-card" + (s.dark ? " hiw-dark" : "")} style={{ "--i": i }}>
+            <div className="hiw-stage"><s.Visual /></div>
+            <div className="hiw-body">
+              <div className="hiw-meta">
+                <span className="mono" style={{ fontSize: 10 }}>PASO {String(i + 1).padStart(2, "0")} · {s.tag}</span>
+                <span className="hiw-num">{String(i + 1).padStart(2, "0")}</span>
+              </div>
+              <h3 className="hiw-title">{s.title}</h3>
+              <p className="hiw-copy">{s.body}</p>
+              <span className="hiw-chip mono"><span className="hiw-chip-dot" />{s.chip}</span>
             </div>
-          </div>
+          </article>
         )}
       </div>
     </section>);
+
+}
+
+/* Paso 1 — la web de la clínica recibe el snippet y aparece el widget */
+function StepIntegrate() {
+  return (
+    <div className="hiw-browser">
+      <div className="hiw-bar"><i /><i /><i /><span className="hiw-url">tuclinica.com</span></div>
+      <div className="hiw-page">
+        <span className="hiw-sk" style={{ width: "62%" }} />
+        <span className="hiw-sk" style={{ width: "44%", opacity: 0.7 }} />
+        <span className="hiw-sk hiw-sk-btn" />
+        <div className="hiw-code">
+          <span className="hiw-typed">&lt;script src="smilefast.js"&gt;</span><span className="hiw-caret" />
+        </div>
+        <div className="hiw-widget">
+          <span className="hiw-widget-ring" />
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round"><path d="M7 14c1.5 2 3.2 3 5 3s3.5-1 5-3" /><circle cx="12" cy="12" r="10" /></svg>
+          Simula tu sonrisa
+        </div>
+      </div>
+    </div>);
+
+}
+
+/* Paso 2 — escaneo de la selfie y revelado de la sonrisa nueva */
+function StepSimulate() {
+  return (
+    <div className="hiw-sim">
+      <img className="hiw-sim-img" src={RES.r16_preview_before_png} alt="" aria-hidden="true" />
+      <img className="hiw-sim-img hiw-sim-after" src={RES.r17_preview_after_png} alt="" aria-hidden="true" />
+      <span className="hiw-sim-scan" />
+      <span className="hiw-corner tl" /><span className="hiw-corner tr" /><span className="hiw-corner bl" /><span className="hiw-corner br" />
+      <span className="hiw-sim-status mono">
+        <span className="hiw-st hiw-st-a"><span className="hiw-spin" />Analizando sonrisa</span>
+        <span className="hiw-st hiw-st-b">✓ Tu nueva sonrisa</span>
+      </span>
+    </div>);
+
+}
+
+/* Paso 3 — el lead entra al panel y se agenda la cita */
+function StepLead() {
+  return (
+    <div className="hiw-panel">
+      <div className="hiw-panel-head">
+        <span className="mono" style={{ fontSize: 9 }}>PANEL · LEADS</span>
+        <span className="hiw-count">+3 hoy</span>
+      </div>
+      <div className="hiw-lead hiw-lead-new">
+        <span className="hiw-av">MF</span>
+        <span className="hiw-lead-txt"><b>María Fernández</b><small>Simulación adjunta · WhatsApp</small></span>
+        <img className="hiw-lead-thumb" src={RES.r17_preview_after_png} alt="" aria-hidden="true" />
+        <span className="hiw-new mono">NUEVO</span>
+      </div>
+      <div className="hiw-lead hiw-lead-old">
+        <span className="hiw-av" style={{ background: "#c9d1cf" }}>JR</span>
+        <span className="hiw-lead-txt"><b>Javier Ruiz</b><small>Contactado</small></span>
+      </div>
+      <div className="hiw-lead hiw-lead-old" style={{ opacity: 0.55 }}>
+        <span className="hiw-av" style={{ background: "#dfe4e2" }}>LC</span>
+        <span className="hiw-lead-txt"><b>Laura Castro</b><small>Cita confirmada</small></span>
+      </div>
+      <div className="hiw-toast">
+        <span className="hiw-toast-ic">✓</span>
+        <span><b>Cita agendada</b><small>Jue · 10:30</small></span>
+      </div>
+    </div>);
 
 }
 

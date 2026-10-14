@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 
 import "./styles/fonts.css";
 import "./styles/qoves.css";
+import "./styles/how-it-works.css";
 
 // window.__resources debe existir antes que el badge de Brandboost.
 import "./resources";
