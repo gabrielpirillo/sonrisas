@@ -415,16 +415,19 @@ function UseCases() {
   {
     tag: "OBJETIVO PRINCIPAL",
     title: "Captación de leads",
+    img: RES.usecase_leads, alt: "Mujer sonriendo con una sonrisa natural", pos: "60% 35%",
     body: <>Tus visitantes se proyectan con su nueva sonrisa antes de pisar la clínica. Cada simulación es un lead cualificado, con foto y datos de contacto, <b>listo para agendar.</b></>
   },
   {
     tag: "USO ADICIONAL",
     title: "Cierre en consulta",
+    img: RES.usecase_consulta, alt: "Dentista explicando el plan de tratamiento a una paciente en consulta", pos: "50% 40%",
     body: <>Tu equipo presenta la simulación y el vídeo personalizado durante la visita para explicar el plan de tratamiento. <b>Más claridad para el paciente, mayor aceptación.</b></>
   },
   {
     tag: "USO ADICIONAL",
     title: "Marketing y redes",
+    img: RES.usecase_marketing, alt: "Tablet mostrando una simulación dental 3D", pos: "50% 55%",
     body: "Genera contenido before/after para anuncios, campañas de captación y redes sociales."
   }];
 
@@ -440,7 +443,7 @@ function UseCases() {
         {uses.map((u, i) =>
         <div key={i} className={"uc-a-card" + (i === 0 ? " uc-a-dark" : "")}>
             <div className="uc-a-media">
-              <image-slot id={"usecase-" + i} placeholder="Imagen" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", "--is-radius": "0px" }}></image-slot>
+              <img className="uc-a-img" src={u.img} alt={u.alt} loading="lazy" style={{ objectPosition: u.pos }} />
             </div>
             <div className="uc-a-body">
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>

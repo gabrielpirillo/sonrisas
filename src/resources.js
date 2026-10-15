@@ -27,6 +27,9 @@ import r25_brandboost_mark_png from "./assets/img/brandboost-mark.png";
 import r26_cta_smile_jpg from "./assets/img/cta-smile.jpg";
 import r27_trans_2_before_jpg from "./assets/img/trans-2-before.jpg";
 import r28_trans_2_after_jpg from "./assets/img/trans-2-after.jpg";
+import usecase_leads from "./assets/img/usecase-leads.webp";
+import usecase_consulta from "./assets/img/usecase-consulta.webp";
+import usecase_marketing from "./assets/img/usecase-marketing.webp";
 
 export const RES = {
   r0_vita_shade_jpg: r0_vita_shade_jpg,
@@ -57,4 +60,7 @@ export const RES = {
   r26_cta_smile_jpg: r26_cta_smile_jpg,
   r27_trans_2_before_jpg: r27_trans_2_before_jpg,
   r28_trans_2_after_jpg: r28_trans_2_after_jpg,
+  usecase_leads: usecase_leads,
+  usecase_consulta: usecase_consulta,
+  usecase_marketing: usecase_marketing,
 };

@@ -356,7 +356,9 @@ image-slot {
 .uc-a-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; align-items: stretch; }
 .uc-a-card { border: 1px solid var(--line); border-radius: 18px; overflow: hidden; background: #fff; display: flex; flex-direction: column; }
 .uc-a-dark { background: var(--ink); border-color: transparent; }
-.uc-a-media { position: relative; height: 160px; background: linear-gradient(150deg,#c8d0d1,#aeb9bb); flex-shrink: 0; }
+.uc-a-media { position: relative; height: 200px; overflow: hidden; background: linear-gradient(150deg,#c8d0d1,#aeb9bb); flex-shrink: 0; }
+.uc-a-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.8s cubic-bezier(.22,1,.36,1); }
+.uc-a-card:hover .uc-a-img { transform: scale(1.05); }
 .uc-a-body { padding: 22px 24px 26px; display: flex; flex-direction: column; flex: 1; }
 @media (max-width: 900px) {
   .uc-a-grid {
