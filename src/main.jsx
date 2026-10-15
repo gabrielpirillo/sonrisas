@@ -8,6 +8,8 @@ import "./styles/funnel-metrics.css";
 import "./styles/analysis.css";
 import "./styles/transformations.css";
 import "./styles/theme-blue.css";
+import "./styles/trust.css";
+import "./styles/footer.css";
 
 import "./resources";
 import "./lib/image-slot.js";

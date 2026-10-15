@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { RES } from "../resources";
 import { useInview, LogoMark, MonoPill, BeforeAfter, AnalysisExplorer } from "./shared";
 import { AppJourney } from "./AppJourney";
+import { TrustStrip } from "./TrustStrip";
 
 /* ============================================================
    Landing — Smile Fast · B2B para CLÍNICAS DENTALES
@@ -125,22 +126,6 @@ function Hero({ onStart }) {
 }
 
 /* ---------------- Trust strip ---------------- */
-function TrustStrip() {
-  const brands = ["Clínica Aurora", "Sonríe+", "Vértice Dental", "OrtoLab", "Instituto Dental Ortega", "Sonrisas Premium"];
-  return (
-    <section style={{ padding: "34px 0", borderTop: "1px solid var(--line)", borderBottom: "1px solid var(--line)", overflow: "hidden" }}>
-      <div className="wrap" style={{ display: "flex", alignItems: "center", gap: 28 }}>
-        <div className="marquee">
-          <div className="marquee-track">
-            {[...brands, ...brands].map((n, i) =>
-            <span key={i} style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--ink-3)", whiteSpace: "nowrap" }}>{n}</span>
-            )}
-          </div>
-        </div>
-      </div>
-    </section>);
-
-}
 
 /* ---------------- Qué recibe tu clínica por cada visitante ---------------- */
 function LeadAsset({ onStart }) {
@@ -403,7 +388,7 @@ function FeatureCard({ title, body, icon }) {
 /* ---------------- El análisis que recibe el paciente (viz) ---------------- */
 function Analysis() {
   return (
-    <section className="facial-analysis">
+    <section id="analisis" className="facial-analysis">
       <img className="analysis-blur" src={RES.r10_analysis_blur_png} alt="" aria-hidden="true" />
       <div className="fa-head">
         <div style={{ marginBottom: 16 }}><MonoPill>ANÁLISIS PERSONALIZADO</MonoPill></div>
@@ -480,7 +465,7 @@ function Metrics() {
   { pre: "", val: 1, suf: " día", label: "para tenerlo activo, sin desarrollo", viz: "clock" }];
   const [ref, inview] = useInview(0.3);
   return (
-    <section className={"mx" + (inview ? " mx-on" : "")} ref={ref}>
+    <section id="resultados" className={"mx" + (inview ? " mx-on" : "")} ref={ref}>
       <div className="wrap">
         <div className="mx-head">
           <span className="mono mx-eyebrow"><span className="mx-live" />RESULTADOS EN CLÍNICAS</span>
@@ -574,7 +559,7 @@ function ClinicFunnel() {
   const oldSteps = [["Visitante anónimo", "user"], ["Duda del resultado", "doubt"], ["Abandona la web", "leave"], ["No agenda", "calX"], ["Lead perdido", "lost"]];
   const newSteps = [["Se simula en tu web", "scan"], ["Ve su resultado", "smile"], ["Deja sus datos", "mail"], ["Agenda con intención", "calOk"], ["Paciente nuevo", "star"]];
   return (
-    <section className={"funnel" + (inview ? " in" : "")} ref={ref} style={{ padding: "100px 0" }}>
+    <section id="embudo" className={"funnel" + (inview ? " in" : "")} ref={ref} style={{ padding: "100px 0" }}>
       <div className="wrap" style={{ textAlign: "center", marginBottom: 48 }}>
         <div className="fn-head-item" style={{ marginBottom: 22 }}><MonoPill>EL EMBUDO</MonoPill></div>
         <h2 className="display fn-head-item" style={{ fontSize: "clamp(34px, 4.6vw, 58px)", lineHeight: 1.06, transitionDelay: "0.08s" }}>
@@ -823,6 +808,58 @@ function Testimonios({ onStart }) {
 }
 
 /* ---------------- CTA + Footer ---------------- */
+/* ---------------- Footer ---------------- */
+const FT_COLS = [
+  ["Producto", [["Cómo funciona", "#como"], ["Lo que ve tu paciente", "#producto"], ["El recorrido", "#recorrido"], ["Análisis clínico", "#analisis"], ["Vídeo realista", "#video"]]],
+  ["Para tu clínica", [["Beneficios", "#transformaciones"], ["Casos de uso", "#usos"], ["Resultados", "#resultados"], ["Preguntas frecuentes", "#faq"]]]];
+const FT_BADGES = [
+  ["Cumple RGPD", <><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6l7-3Z" /><path d="M9 12l2 2 4-4" /></>],
+  ["Datos cifrados", <><rect x="4.5" y="10.5" width="15" height="10" rx="2" /><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" /></>],
+  ["Sin permanencia", <><path d="M3 12a9 9 0 0 1 15-6.7L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-15 6.7L3 16" /><path d="M3 21v-5h5" /></>],
+  ["Activo en 1 día", <><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /><path d="M9 14.5l2 2 4-4" /></>]];
+
+function SiteFooter({ onStart }) {
+  const toTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  return (
+    <footer className="ft">
+      <div className="wrap ft-top">
+        <div className="ft-brand">
+          <img src={RES.r11_logo_sf_white_png} alt="Smile Fast" className="ft-logo" />
+          <p className="ft-tagline">La plataforma de simulación de sonrisa con IA para clínicas dentales. Convierte las visitas de tu web en citas agendadas.</p>
+          <button className="btn btn-white ft-cta" onClick={onStart}>Quiero probarlo <span aria-hidden="true">→</span></button>
+          <ul className="ft-badges">
+            {FT_BADGES.map(([t, ic], i) =>
+            <li key={i}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ic}</svg>{t}</li>
+            )}
+          </ul>
+        </div>
+        <nav className="ft-cols" aria-label="Enlaces del pie de página">
+          {FT_COLS.map(([h, links]) =>
+          <div key={h} className="ft-col">
+              <span className="mono ft-h">{h}</span>
+              {links.map(([t, href]) => <a key={href} href={href} className="ft-link">{t}<span aria-hidden="true">→</span></a>)}
+            </div>
+          )}
+          <div className="ft-col">
+            <span className="mono ft-h">Empresa</span>
+            <a href="#testimonios" className="ft-link">Brandboost<span aria-hidden="true">→</span></a>
+            <button type="button" className="ft-link ft-link-btn" onClick={onStart}>Agendar reunión<span aria-hidden="true">→</span></button>
+            <button type="button" className="ft-link ft-link-btn" onClick={onStart}>Solicitar acceso<span aria-hidden="true">→</span></button>
+          </div>
+        </nav>
+      </div>
+
+      <div className="wrap ft-wordmark" aria-hidden="true">Smile Fast</div>
+
+      <div className="wrap ft-bottom">
+        <span>© 2026 Smile Fast · Un producto de <a href="#testimonios">Brandboost</a></span>
+        <span className="mono ft-made">HECHO PARA CLÍNICAS DENTALES</span>
+        <button type="button" className="ft-top-btn" onClick={toTop}><span aria-hidden="true">↑</span> Volver arriba</button>
+      </div>
+    </footer>);
+
+}
+
 function CTAFooter({ onStart }) {
   const [ref, inview] = useInview(0.3);
   const cardsRef = React.useRef(null);
@@ -866,35 +903,7 @@ function CTAFooter({ onStart }) {
           <p className="mono ctaf-note">Cada visitante, una oportunidad de agendar</p>
         </div>
       </section>
-      <footer style={{ background: "var(--navy-3)", color: "rgba(255,255,255,0.86)", padding: "70px 0 50px" }}>
-        <div className="wrap" style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 40 }}>
-          <div style={{ maxWidth: 300 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-              <img src={RES.r11_logo_sf_white_png} alt="Smile Fast" style={{ height: 26, width: "auto", display: "block" }} />
-            </div>
-            <p style={{ fontSize: 13.5, color: "rgba(255,255,255,0.55)", lineHeight: 1.6, margin: 0 }}>
-              La plataforma de simulación de sonrisa con IA para clínicas dentales. Convierte tu web en un motor de captación.
-            </p>
-          </div>
-          <div style={{ display: "flex", gap: 60, flexWrap: "wrap" }}>
-            {[
-            ["Producto", ["Cómo funciona", "Casos de uso", "Precios", "Integración"]],
-            ["Empresa", ["Sobre nosotros", "Clínicas", "Contacto"]]].
-            map(([h, items], i) =>
-            <div key={i}>
-                <div className="mono" style={{ fontSize: 9, color: "rgba(255,255,255,0.4)", marginBottom: 16 }}>{h}</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                  {items.map((it, j) => <a key={j} href="#" style={{ color: "rgba(255,255,255,0.78)", textDecoration: "none", fontSize: 14.5 }}>{it}</a>)}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="wrap" style={{ marginTop: 50, paddingTop: 24, borderTop: "1px solid rgba(255,255,255,0.12)", display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-          <span className="mono" style={{ fontSize: 9, color: "rgba(255,255,255,0.4)" }}>SMILE FAST © 2026 · PLATAFORMA PARA CLÍNICAS DENTALES</span>
-          <span className="mono" style={{ fontSize: 9, color: "rgba(255,255,255,0.4)" }}>HECHO PARA CRECER TU CLÍNICA</span>
-        </div>
-      </footer>
+      <SiteFooter onStart={onStart} />
     </>);
 
 }
