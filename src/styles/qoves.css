@@ -911,40 +911,42 @@ image-slot {
   }
   .widget-body { overflow-y: auto; }
 
-  /* ---------- AppJourney (Dentro de la app) ---------- */
-  .journey{position:relative;background:rgb(154,174,181)}
+  /* ---------- AppJourney (Dentro de tu web) — versión clara azul acero ---------- */
+  .journey{position:relative;background:linear-gradient(180deg,#dfe8ee 0%,#edf2f6 100%)}
   .journey .jsticky{position:sticky;top:0;height:100vh;overflow:hidden;padding:0 64px;display:flex;align-items:center}
-  .journey .j-blur{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 30%;z-index:0;pointer-events:none;filter:brightness(0.8) saturate(1.05)}
-  .journey .jglow{position:absolute;inset:0;background:radial-gradient(120% 90% at 78% 34%,rgba(255,255,255,.20),transparent 60%);z-index:1;pointer-events:none}
-  .journey .jgrid{position:relative;z-index:2;display:grid;grid-template-columns:1fr 1.12fr;gap:56px;width:100%;max-width:1240px;margin:0 auto;align-items:center;color:#fff}
-  .journey .j-pill{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;border-radius:999px;padding:7px 14px;color:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.2)}
-  .journey .j-pill .dt{width:6px;height:6px;border-radius:50%;background:var(--sage)}
-  .journey .jhead h2{font-weight:600;letter-spacing:-.03em;line-height:1.02;font-size:clamp(38px,4vw,52px);margin:18px 0}
-  .journey .jhead .sub{color:rgba(255,255,255,.7)}
-  .journey .jhead>p{color:rgba(255,255,255,.9);font-size:16px;line-height:1.5;max-width:400px;margin:0 0 38px}
-  .journey .steps{position:relative;display:flex;flex-direction:column}
-  .journey .steprail{position:absolute;left:0;top:22px;bottom:22px;width:2px;background:rgba(255,255,255,.10);border-radius:2px}
-  .journey .steprail::after{content:"";position:absolute;left:0;top:0;width:100%;height:var(--fill,0%);background:var(--sage);border-radius:2px;transition:height .5s var(--ease)}
-  .journey .step{position:relative;display:flex;gap:18px;padding:16px 20px 16px 26px;border-radius:16px;cursor:pointer;border:1px solid transparent;transition:background .45s var(--ease),border-color .45s var(--ease)}
-  .journey .step .n{font-family:var(--font-mono);font-size:15px;color:rgba(255,255,255,.65);transition:color .4s var(--ease)}
-  .journey .step .st{font-size:17px;font-weight:600;letter-spacing:-.01em;color:rgba(255,255,255,.9);transition:color .4s var(--ease)}
-  .journey .step .sd{color:rgba(255,255,255,.8);font-size:13.5px;margin-top:3px;transition:color .4s var(--ease)}
-  .journey .step.active{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12)}
-  .journey .step.active .n{color:var(--sage)}
-  .journey .step.active .st{color:#fff}
-  .journey .step.active .sd{color:rgba(255,255,255,.72)}
+  .journey .j-blur{display:none}
+  .journey .jglow{position:absolute;inset:0;background:radial-gradient(55% 60% at 74% 50%,rgba(255,255,255,.95),rgba(255,255,255,0) 70%),radial-gradient(40% 50% at 10% 90%,rgba(142,164,180,.22),transparent 70%);z-index:1;pointer-events:none}
+  .journey .jgrid{position:relative;z-index:2;display:grid;grid-template-columns:1fr 1.12fr;gap:56px;width:100%;max-width:1240px;margin:0 auto;align-items:center;color:var(--ink)}
+  .journey .j-pill{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;border-radius:999px;padding:7px 14px;color:var(--blue-deep);border:1px solid var(--blue-line);background:rgba(255,255,255,.7)}
+  .journey .j-pill .dt{width:6px;height:6px;border-radius:50%;background:var(--blue-deep)}
+  .journey .jhead h2{font-weight:600;letter-spacing:-.03em;line-height:1.02;font-size:clamp(38px,4vw,52px);margin:18px 0;color:var(--ink)}
+  .journey .jhead .sub{color:var(--blue-accent)}
+  .journey .jhead>p{color:var(--ink-2);font-size:16px;line-height:1.5;max-width:400px;margin:0 0 34px}
+  .journey .steps{position:relative;display:flex;flex-direction:column;gap:6px}
+  .journey .steprail{position:absolute;left:0;top:22px;bottom:22px;width:2px;background:var(--blue-line);border-radius:2px}
+  .journey .steprail::after{content:"";position:absolute;left:0;top:0;width:100%;height:var(--fill,0%);background:var(--blue-deep);border-radius:2px;transition:height .5s var(--ease)}
+  .journey .step{position:relative;display:flex;gap:18px;padding:15px 20px 15px 26px;border-radius:16px;cursor:pointer;border:1px solid transparent;transition:background .45s var(--ease),border-color .45s var(--ease),box-shadow .45s var(--ease)}
+  .journey .step:hover:not(.active){background:rgba(255,255,255,.45)}
+  .journey .step .n{font-family:var(--font-mono);font-size:14px;color:var(--ink-3);transition:color .4s var(--ease)}
+  .journey .step .st{font-size:17px;font-weight:600;letter-spacing:-.01em;color:var(--ink-2);transition:color .4s var(--ease)}
+  .journey .step .sd{color:var(--ink-3);font-size:13.5px;margin-top:3px;transition:color .4s var(--ease)}
+  .journey .step.active{background:#fff;border-color:var(--blue-line);box-shadow:0 16px 36px -24px rgba(27,38,48,.45)}
+  .journey .step.active .n{color:var(--blue-deep)}
+  .journey .step.active .st{color:var(--ink)}
+  .journey .step.active .sd{color:var(--ink-2)}
   .journey .stage{position:relative;height:660px}
-  .journey .stage .cap{position:absolute;right:20px;bottom:-4px;color:rgba(255,255,255,.5);font-size:10px}
+  .journey .stage .cap{position:absolute;right:20px;bottom:-4px;color:var(--blue-deep);opacity:.6;font-size:10px}
   .journey .slide{position:absolute;top:50%;left:50%;width:340px;height:600px;transform:translate(-50%,-50%);opacity:0;transition:transform .8s var(--ease),opacity .6s var(--ease),filter .6s var(--ease);will-change:transform,opacity,filter}
-  .journey .jphone{position:relative;width:100%;height:100%;border-radius:32px;overflow:hidden;background:#fff;border:1px solid rgba(255,255,255,.10);box-shadow:0 40px 90px -35px rgba(0,0,0,.85)}
-  .journey .jphone img{display:block;width:100%;height:100%;object-fit:contain;object-position:center;background:#fff}
+  .journey .jphone{position:relative;width:100%;height:100%;border-radius:44px;overflow:hidden;background:#fff;border:10px solid var(--navy-2);box-shadow:0 0 0 1px rgba(27,38,48,.25),0 50px 90px -40px rgba(27,38,48,.65)}
+  .journey .jphone::before{content:"";position:absolute;top:8px;left:50%;transform:translateX(-50%);width:84px;height:22px;border-radius:99px;background:var(--navy-2);z-index:2}
+  .journey .jphone img{display:block;width:100%;height:100%;object-fit:contain;object-position:center;background:#fff;padding-top:14px}
   .journey .mcap{display:none;gap:14px;align-items:flex-start;text-align:left;max-width:320px}
-  .journey .mcap .mn{font-family:var(--font-mono);font-size:15px;color:var(--sage)}
-  .journey .mcap .mt{font-size:18px;font-weight:600;letter-spacing:-.01em;color:#fff}
-  .journey .mcap .md{color:rgba(255,255,255,.85);font-size:13.5px;margin-top:3px;line-height:1.45}
+  .journey .mcap .mn{font-family:var(--font-mono);font-size:15px;color:var(--blue-deep)}
+  .journey .mcap .mt{font-size:18px;font-weight:600;letter-spacing:-.01em;color:var(--ink)}
+  .journey .mcap .md{color:var(--ink-2);font-size:13.5px;margin-top:3px;line-height:1.45}
   .journey .mdots{display:none;gap:8px;align-items:center}
-  .journey .mdots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.22);transition:width .4s var(--ease),background .4s var(--ease)}
-  .journey .mdots i.on{width:22px;background:var(--sage);border-radius:4px}
+  .journey .mdots i{width:7px;height:7px;border-radius:50%;background:var(--blue-line);transition:width .4s var(--ease),background .4s var(--ease)}
+  .journey .mdots i.on{width:22px;background:var(--blue-deep);border-radius:4px}
   @media (max-width:860px){
     .journey .jsticky{padding:0 22px;align-items:center}
     .journey .jgrid{grid-template-columns:1fr;gap:18px;justify-items:center;text-align:center}
@@ -954,6 +956,8 @@ image-slot {
     .journey .steps{display:none}
     .journey .stage{order:2;height:430px;width:100%}
     .journey .slide{width:232px;height:410px}
+    .journey .jphone{border-width:7px;border-radius:32px}
+    .journey .jphone::before{width:60px;height:16px;top:6px}
     .journey .stage .cap{display:none}
     .journey .mcap{display:flex;order:3}
     .journey .mdots{display:flex;order:4}

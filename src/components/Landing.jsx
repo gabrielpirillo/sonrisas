@@ -110,7 +110,7 @@ function Hero({ onStart }) {
             {[
             ["+38% de pacientes", "Mayor facturación"],
             ["Paciente + simulación", "Datos listos en tu panel"],
-            ["10 minutos", "Fácil integración"]].
+            ["1 día", "Implementación completa"]].
             map(([t, d], i) =>
             <div key={i} className="hero2-stat">
                 <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: "-0.01em", color: "#fff", textAlign: "center" }}>{t}</div>
@@ -229,7 +229,7 @@ function LeadAsset({ onStart }) {
 function HowItWorks() {
   const [ref, inview] = useInview(0.2);
   const steps = [
-  { tag: "ACTIVACIÓN", chip: "SIN PROGRAMAR · 10 MIN", title: "Actívalo en tu web", body: "Se activa en minutos, con tu logo y tus colores. No necesitas saber programar ni tocar nada técnico.", Visual: StepIntegrate },
+  { tag: "ACTIVACIÓN", chip: "SIN PROGRAMAR · LISTO EN 1 DÍA", title: "Actívalo en tu web", body: "En un día queda activo, con tu logo y tus colores. No necesitas saber programar ni tocar nada técnico.", Visual: StepIntegrate },
   { tag: "SIMULACIÓN", chip: "SIN APPS NI DESCARGAS", title: "Tus visitantes se simulan", body: "Sube una selfie, ve su sonrisa nueva al instante y agenda antes de hablar con nadie.", Visual: StepSimulate, dark: true },
   { tag: "CONVERSIÓN", chip: "AVISO AL INSTANTE", title: "Recibes el lead caliente", body: "Sus datos de contacto y su simulación llegan a tu panel. Tu equipo agenda y cierra la cita.", Visual: StepLead }];
 
@@ -357,7 +357,7 @@ function PatientPreview({ onStart }) {
   ["Captura el lead", "Cada simulación deja nombre, email y teléfono en tu panel.", "inbox"]];
 
   return (
-    <section id="producto" className="accent-blue" style={{ padding: "100px 0", background: "linear-gradient(180deg,#ffffff,var(--blue-soft))" }}>
+    <section id="producto" className="accent-blue" style={{ padding: "100px 0", background: "linear-gradient(180deg,var(--blue-soft),#ffffff)" }}>
       <div className="wrap" style={{ textAlign: "center", marginBottom: 56 }}>
         <h2 className="display" style={{ fontSize: "clamp(38px, 5vw, 64px)" }}>
           Lo que verán <span className="dim">tus visitantes</span>
@@ -477,7 +477,7 @@ function Metrics() {
   { pre: "+", val: 38, suf: "%", label: "de visitante a lead", viz: "bars", a: 1, b: 1.38 },
   { pre: "+", val: 65, suf: "%", label: "de esos leads agenda cita", viz: "ring", pct: 65 },
   { pre: "x", val: 3, suf: "", label: "planes de estética cerrados", viz: "bars", a: 1, b: 3 },
-  { pre: "", val: 3, suf: " min", label: "de integración, sin desarrollo", viz: "clock" }];
+  { pre: "", val: 1, suf: " día", label: "para tenerlo activo, sin desarrollo", viz: "clock" }];
   const [ref, inview] = useInview(0.3);
   return (
     <section className={"mx" + (inview ? " mx-on" : "")} ref={ref}>
@@ -575,20 +575,17 @@ function ClinicFunnel() {
   const newSteps = [["Se simula en tu web", "scan"], ["Ve su resultado", "smile"], ["Deja sus datos", "mail"], ["Agenda con intención", "calOk"], ["Paciente nuevo", "star"]];
   return (
     <section className={"funnel" + (inview ? " in" : "")} ref={ref} style={{ padding: "100px 0" }}>
-      <div className="wrap" style={{ textAlign: "center", marginBottom: 60 }}>
-        <div className="fn-head-item" style={{ marginBottom: 24 }}><MonoPill>EL EMBUDO</MonoPill></div>
-        <h2 className="display fn-head-item" style={{ fontSize: "clamp(34px, 4.8vw, 60px)", lineHeight: 1.06, transitionDelay: "0.08s" }}>
-          Tus visitantes ya quieren agendar. <span className="dim">El problema es lo que pasa antes.</span>
+      <div className="wrap" style={{ textAlign: "center", marginBottom: 48 }}>
+        <div className="fn-head-item" style={{ marginBottom: 22 }}><MonoPill>EL EMBUDO</MonoPill></div>
+        <h2 className="display fn-head-item" style={{ fontSize: "clamp(34px, 4.6vw, 58px)", lineHeight: 1.06, transitionDelay: "0.08s" }}>
+          El problema es lo que pasa <span className="dim">antes de agendar</span>
         </h2>
-        <p className="lead fn-head-item" style={{ fontSize: 18, marginTop: 20, maxWidth: 640, marginInline: "auto", transitionDelay: "0.16s" }}>
-          Captar pacientes cuesta cada vez más: ads caros y todas las clínicas ofreciendo lo mismo. La diferencia está en lo que ve el visitante antes de agendar.
-        </p>
       </div>
       <div className="wrap" style={{ display: "flex", flexDirection: "column", gap: 22 }}>
         <FunnelRow title="Sin Smile Fast" steps={oldSteps} win={false} baseDelay={0.3}
-          result={<><span className="fx-res-big">Clic pagado,<br />sin cita</span><span className="fx-res-small">Pagaste el anuncio y el visitante se fue con la duda.</span></>} />
+          result={<span className="fx-res-big">Clic pagado,<br />sin cita</span>} />
         <FunnelRow title="Con Smile Fast" steps={newSteps} win={true} baseDelay={1.1}
-          result={<><span className="fx-res-big"><b>+38%</b> leads<br /><b>65%</b> agenda</span><span className="fx-res-small">Cada simulación termina en tu agenda.</span></>} />
+          result={<span className="fx-res-big"><b>+38%</b> leads<br /><b>65%</b> agenda</span>} />
       </div>
     </section>);
 
@@ -617,7 +614,6 @@ function FunnelRow({ title, steps, win, baseDelay, result }) {
               <span className="fx-node">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{FX_ICONS[icon]}</svg>
               </span>
-              <div className="mono fx-step-lbl">PASO {i + 1}</div>
               <div className="fx-step-title">{label}</div>
             </div>);
         })}
@@ -652,7 +648,7 @@ function FAQ() {
   const [open, setOpen] = useState(0);
   const items = [
     ["¿Cómo se integra en la web de mi clínica?",
-     "No tienes que programar nada. Nosotros lo dejamos activo en tu web, con tu logo y tus colores, sin tocar su diseño ni contratar a un desarrollador. Queda funcionando en minutos y adaptado a móvil y escritorio."],
+     "No tienes que programar nada. Nosotros lo dejamos activo en tu web, con tu logo y tus colores, sin tocar su diseño ni contratar a un desarrollador. Queda funcionando en un día y adaptado a móvil y escritorio."],
     ["¿Los datos de los pacientes están seguros y cumplen el RGPD?",
      "Sí. La captura incluye consentimiento explícito y confirmación de mayoría de edad, y las imágenes y datos se procesan cifrados. El paciente acepta términos y privacidad antes de generar su simulación, de modo que tu clínica capta leads de forma conforme a la normativa."],
     ["¿Qué recibe mi clínica por cada visitante que usa el widget?",
@@ -660,7 +656,7 @@ function FAQ() {
     ["¿La simulación es realista? ¿No genera expectativas falsas?",
      "El resultado es una proyección estética orientativa, siempre etiquetada como tal. Sirve para motivar al paciente a agendar; la viabilidad clínica real se confirma en consulta con tu equipo. Puedes ofrecer además un vídeo personalizado que se puede generar presencialmente en consulta."],
     ["¿Cuánto tarda en estar activo y necesito formación?",
-     "Puedes tenerlo funcionando esta misma semana. Configuramos tu marca (logo y colores), lo integramos en tu web y te damos acceso al panel. No requiere formación técnica: el equipo de recepción gestiona los leads desde una interfaz sencilla."],
+     "En un día lo tienes funcionando. Configuramos tu marca (logo y colores), lo integramos en tu web y te damos acceso al panel. No requiere formación técnica: el equipo de recepción gestiona los leads desde una interfaz sencilla."],
     ["¿Cómo me ayuda de verdad a conseguir más pacientes?",
      "Convierte el tráfico anónimo de tu web en citas. En lugar de un visitante que duda y se va, la persona se ve con su nueva sonrisa, deja sus datos con intención real y agenda. Es captación proactiva desde tu propio sitio, sin depender solo de publicidad."],
     ["¿Tengo que firmar permanencia o hacer una gran inversión inicial?",
@@ -829,7 +825,7 @@ function Testimonios({ onStart }) {
 /* ---------------- CTA + Footer ---------------- */
 function CTAFooter({ onStart }) {
   const [ref, inview] = useInview(0.3);
-  const imgRef = React.useRef(null);
+  const cardsRef = React.useRef(null);
   React.useEffect(() => {
     const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced) return;
@@ -838,10 +834,10 @@ function CTAFooter({ onStart }) {
       if (raf) return;
       raf = requestAnimationFrame(() => {
         raf = null;
-        const el = imgRef.current; if (!el) return;
+        const el = cardsRef.current; if (!el) return;
         const r = el.parentElement.getBoundingClientRect();
         const prog = (r.top + r.height / 2 - window.innerHeight / 2) / window.innerHeight;
-        el.style.transform = "scale(1.15) translateY(" + (prog * -40) + "px)";
+        el.style.transform = "translateY(" + (prog * -50).toFixed(1) + "px)";
       });
     };
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -850,24 +846,24 @@ function CTAFooter({ onStart }) {
   }, []);
   return (
     <>
-      <section id="precios" ref={ref} className={"cta-final" + (inview ? " in" : "")} style={{ position: "relative", padding: "150px 0", textAlign: "center", overflow: "hidden" }}>
-        <img ref={imgRef} src={RES.r26_cta_smile_jpg} alt="Sonrisa tras tratamiento dental" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 35%", transform: "scale(1.15)", willChange: "transform" }} />
-        <div className="cta-duotone" aria-hidden="true" />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(27,38,48,0.35) 0%, rgba(27,38,48,0.55) 55%, rgba(19,27,34,0.88) 100%)" }} />
-        <div style={{ position: "absolute", inset: 0, boxShadow: "inset 0 0 200px 40px rgba(12,18,24,0.55)", pointerEvents: "none" }} />
+      <section id="precios" ref={ref} className={"cta-final" + (inview ? " in" : "")}>
+        <div className="ctaf-cards" ref={cardsRef} aria-hidden="true">
+          <img className="ctaf-card c1" src={RES.r17_preview_after_png} alt="" />
+          <img className="ctaf-card c2" src={RES.r28_trans_2_after_jpg} alt="" />
+          <img className="ctaf-card c3" src={RES.r15_trans_1_after_jpg} alt="" />
+        </div>
         <div className="wrap cta-final-body" style={{ position: "relative", zIndex: 1 }}>
-          <h2 className="display" style={{ fontSize: "clamp(46px, 6.4vw, 88px)", fontWeight: 700, color: "#fff", letterSpacing: "-0.02em", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: "0.26em", lineHeight: 1.05 }}>
-            <span>Lleva</span>
-            <img src={RES.r11_logo_sf_white_png} alt="Smile Fast" style={{ height: "0.9em", width: "auto", display: "inline-block", transform: "translateY(0.04em)" }} />
-            <span style={{ color: "rgba(255,255,255,0.6)" }}>a tu clínica</span>
+          <span className="mono ctaf-eyebrow">ÚLTIMO PASO</span>
+          <h2 className="display ctaf-title">
+            Lleva <span className="ctaf-brand">Smile Fast</span><br />a tu clínica
           </h2>
-          <p className="lead" style={{ fontSize: 19, margin: "22px auto 40px", maxWidth: 520, color: "rgba(255,255,255,0.85)" }}>
+          <p className="lead ctaf-lead">
             Actívalo en tu web y convierte cada visita en una cita agendada.
           </p>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", alignItems: "center", flexWrap: "wrap" }}>
             <button className="btn btn-white cta-glow" style={{ padding: "18px 42px", fontSize: 17 }} onClick={onStart}>Quiero probarlo</button>
           </div>
-          <p className="mono" style={{ fontSize: 11.5, letterSpacing: "0.1em", color: "rgba(255,255,255,0.6)", marginTop: 26 }}>Cada visitante, una oportunidad de agendar</p>
+          <p className="mono ctaf-note">Cada visitante, una oportunidad de agendar</p>
         </div>
       </section>
       <footer style={{ background: "var(--navy-3)", color: "rgba(255,255,255,0.86)", padding: "70px 0 50px" }}>

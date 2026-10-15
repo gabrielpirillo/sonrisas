@@ -74,7 +74,7 @@ function AppJourney() {
   const sd = JOURNEY_STEPS[active];
 
   return (
-    <section className="journey" id="recorrido" ref={ref} style={{ height: "400vh" }}>
+    <section className="journey" id="recorrido" ref={ref} style={{ height: "320vh" }}>
       <div className="jsticky">
         <img className="j-blur" src={RES.r10_analysis_blur_png} alt="" aria-hidden="true" />
         <div className="jglow" />

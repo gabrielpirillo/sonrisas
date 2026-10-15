@@ -48,7 +48,7 @@
 .fx-step-lbl { font-size: 9px; letter-spacing: 0.18em; margin-top: 18px; }
 .fx-lose .fx-step-lbl { color: var(--ink-3); }
 .fx-win .fx-step-lbl { color: rgba(255, 255, 255, 0.5); }
-.fx-step-title { font-size: 16px; font-weight: 500; letter-spacing: -0.01em; margin-top: 7px; line-height: 1.25; }
+.fx-step-title { font-size: 15.5px; font-weight: 500; letter-spacing: -0.01em; margin-top: 14px; line-height: 1.25; }
 
 /* visitantes en movimiento */
 .fx-dots { position: absolute; left: 0; right: 0; top: calc(var(--node) / 2); height: 0; z-index: 1; pointer-events: none; }
@@ -112,9 +112,7 @@
   .fx-line-fill { transform: scaleY(0); transform-origin: top; }
   .funnel.in .fx-line-fill { transform: scaleY(1); }
   .fx-step { display: grid; grid-template-columns: var(--node) 1fr; column-gap: 14px; align-items: center; padding-right: 0; }
-  .fx-node { grid-row: span 2; }
-  .fx-step-lbl { margin-top: 0; align-self: end; }
-  .fx-step-title { margin-top: 2px; align-self: start; }
+  .fx-step-title { margin-top: 0; }
   .fx-dots { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
