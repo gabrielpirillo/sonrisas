@@ -355,7 +355,7 @@ function PatientPreview({ onStart }) {
         </div>
         <div style={{ minHeight: 520, display: "flex", flexDirection: "column", gap: 16 }}>
           <div style={{ flex: 1 }}>
-            <BeforeAfter beforeSrc={RES.r16_preview_before_png} afterSrc={RES.r17_preview_after_png} height="100%" radius={22} imgPos="center 28%" />
+            <BeforeAfter beforeSrc={RES.r14_trans_1_before_jpg} afterSrc={RES.r15_trans_1_after_jpg} height="100%" radius={22} imgPos="center 30%" autoplay />
           </div>
           <button className="btn btn-blue" style={{ width: "100%" }} onClick={onStart}>Quiero probarlo</button>
         </div>

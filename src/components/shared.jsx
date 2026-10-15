@@ -34,7 +34,7 @@ function MonoPill({ children }) {
    Two stacked <image-slot>s; the "before" layer is clipped to
    the divider position. Drag the handle to compare.
    ============================================================ */
-function BeforeAfter({ height = "100%", radius = 22, beforeId, afterId, beforeSrc, afterSrc, labelA = "ANTES", labelB = "PROYECCIÓN", compact = false, sync = true, afterTransform, beforeTransform, imgPos, beforePos, afterPos, intro = false }) {
+function BeforeAfter({ height = "100%", radius = 22, beforeId, afterId, beforeSrc, afterSrc, labelA = "ANTES", labelB = "PROYECCIÓN", compact = false, sync = true, afterTransform, beforeTransform, imgPos, beforePos, afterPos, intro = false, autoplay = false }) {
   const [pos, setPos] = useState(50);
   // En modo sync (por defecto) ambas mitades usan la MISMA imagen → siempre alineadas.
   // La mitad «proyección» recibe una mejora estética sutil para distinguirse.
@@ -65,7 +65,7 @@ function BeforeAfter({ height = "100%", radius = 22, beforeId, afterId, beforeSr
 
   useEffect(() => {
     const onMove = (e) => {if (dragging.current) move(e.touches ? e.touches[0].clientX : e.clientX);};
-    const onUp = () => {dragging.current = false;document.body.style.userSelect = "";};
+    const onUp = () => {if (dragging.current) lastTouch.current = performance.now();dragging.current = false;document.body.style.userSelect = "";};
     window.addEventListener("mousemove", onMove);
     window.addEventListener("touchmove", onMove, { passive: false });
     window.addEventListener("mouseup", onUp);
@@ -108,8 +108,40 @@ function BeforeAfter({ height = "100%", radius = 22, beforeId, afterId, beforeSr
     return () => { io.disconnect(); clearTimeout(timer); cancelAnimationFrame(raf); };
   }, [intro]);
 
+  // autoplay: el divisor oscila solo, de forma continua y suave, mientras está en pantalla.
+  // Si el usuario arrastra, se pausa; tras 3s sin tocarlo retoma desde donde quedó.
+  const lastTouch = useRef(0);
+  const posRef = useRef(50);
+  posRef.current = pos;
+  useEffect(() => {
+    if (!autoplay) return;
+    const el = ref.current;
+    if (!el || (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches)) return;
+    const AMP = 30, PERIOD = 7000;
+    let raf = null, visible = false, phase = 0, last = 0, resuming = true;
+    const tick = (now) => {
+      raf = requestAnimationFrame(tick);
+      const dt = last ? Math.min(now - last, 64) : 0; last = now;
+      if (dragging.current || now - lastTouch.current < 3000) { resuming = true; return; }
+      if (resuming) { // retoma sin saltos desde la posición actual
+        const v = Math.max(-1, Math.min(1, (posRef.current - 50) / AMP));
+        phase = Math.asin(v); resuming = false;
+      }
+      phase += (dt / PERIOD) * Math.PI * 2;
+      setPos(50 + AMP * Math.sin(phase));
+    };
+    const io = new IntersectionObserver((es) => {
+      visible = es.some((e) => e.isIntersecting);
+      if (visible && !raf) { last = 0; raf = requestAnimationFrame(tick); }
+      if (!visible && raf) { cancelAnimationFrame(raf); raf = null; }
+    }, { threshold: 0.2 });
+    io.observe(el);
+    return () => { io.disconnect(); if (raf) cancelAnimationFrame(raf); };
+  }, [autoplay]);
+
   const start = (e) => {
     touched.current = true;
+    lastTouch.current = performance.now();
     dragging.current = true;
     document.body.style.userSelect = "none";
     move(e.touches ? e.touches[0].clientX : e.clientX);
