@@ -31,10 +31,7 @@ src/
     shared.jsx            componentes visuales compartidos (before/after, VITA, etc.)
     AppJourney.jsx        sección "Dentro de la app, paso a paso"
     DemoModal.jsx         popup "Solicitar DEMO"
-    Widget.jsx            flujo del widget de simulación
-    Plans.jsx             variantes de planes (no usadas en la landing actual)
-  lib/
-    image-slot.js         web component <image-slot> de Claude Design
+    TrustStrip.jsx        franja de confianza bajo el hero (3 variantes)
   styles/
     fonts.css             General Sans + JetBrains Mono (self-hosted)
     qoves.css             sistema visual Qoves

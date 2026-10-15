@@ -981,7 +981,7 @@ image-slot {
   @media (max-width: 768px) {
     .video-grid { grid-template-columns: 1fr !important; gap: 30px !important; }
     /* section vertical rhythm */
-    section[id], #producto, #como, #usos, #video, #transformaciones, #testimonios, #faq, #precios { padding-top: 68px !important; padding-bottom: 68px !important; }
+    section[id], #producto, #como, #usos, #video, #transformaciones, #testimonios, #faq, #empezar { padding-top: 68px !important; padding-bottom: 68px !important; }
     /* stack hero stats vertically, drop right dividers */
     .hero2-stats { flex-direction: column; gap: 14px; margin-top: 26px; }
     .hero2-stat { border-right: none !important; padding-right: 0; margin-right: 0; max-width: none; }

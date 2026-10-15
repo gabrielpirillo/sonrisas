@@ -9,7 +9,7 @@ import r6_app_step1_png from "./assets/img/app-step1.jpg";
 import r7_app_step2_jpg from "./assets/img/app-step2.jpg";
 import r8_app_step3_jpg from "./assets/img/app-step3.jpg";
 import r9_app_step4_jpg from "./assets/img/app-step4.jpg";
-import r10_analysis_blur_png from "./assets/img/analysis-blur.webp";
+import r10_analysis_blur_png from "./assets/img/analysis-blur.jpg";
 import r11_logo_sf_white_png from "./assets/img/logo-sf-white.png";
 import r12_logo_sf_black_png from "./assets/img/logo-sf-black.png";
 import r14_trans_1_before_jpg from "./assets/img/trans-1-before.jpg";

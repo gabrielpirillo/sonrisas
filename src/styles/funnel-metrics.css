@@ -169,14 +169,14 @@
 .mx-on .mx-bar { transform: scaleY(1); }
 
 /* anillo de porcentaje */
-.mx-ring { transform: rotate(-90deg); }
+.mx-ring { transform: rotate(-90deg); overflow: visible; }
 .mx-ring-bg { fill: none; stroke: rgba(255, 255, 255, 0.12); stroke-width: 7; }
 .mx-ring-fg { fill: none; stroke: #b9cfdd; stroke-width: 7; stroke-linecap: round; stroke-dasharray: 100; stroke-dashoffset: 100; filter: drop-shadow(0 0 6px rgba(185, 207, 221, 0.55)); transition: stroke-dashoffset 1.8s cubic-bezier(.22, 1, .36, 1) calc(0.4s + var(--i) * 0.18s); }
 .mx-on .mx-ring-fg { stroke-dashoffset: calc(100 - var(--p)); }
 
 /* cronómetro de integración */
 .mx-clock { position: relative; width: 80px; height: 80px; margin-bottom: 8px; }
-.mx-clock svg { transform: rotate(-90deg); }
+.mx-clock svg { transform: rotate(-90deg); overflow: visible; }
 .mx-clock-sweep { fill: none; stroke: #b9cfdd; stroke-width: 7; stroke-dasharray: 100; stroke-dashoffset: 100; transition: stroke-dashoffset 1.6s cubic-bezier(.65, 0, .35, 1) calc(0.5s + var(--i) * 0.18s); }
 .mx-on .mx-clock-sweep { stroke-dashoffset: 0; }
 .mx-clock-hand { stroke: #fff; stroke-width: 2.5; stroke-linecap: round; transform-box: view-box; transform-origin: 40px 40px; transform: rotate(90deg); transition: transform 1.6s cubic-bezier(.65, 0, .35, 1) calc(0.5s + var(--i) * 0.18s); }

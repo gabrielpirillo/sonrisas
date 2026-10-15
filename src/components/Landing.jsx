@@ -40,7 +40,6 @@ function Nav({ onStart }) {
 
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        <a href="#" style={{ ...navLink, fontWeight: 500 }} className="nav-login">Acceder</a>
         <button className="btn btn-white btn-sm" onClick={onStart}>Quiero probarlo</button>
       </div>
     </nav>);
@@ -95,18 +94,16 @@ function Hero({ onStart }) {
 
       <div className="wrap hero2-inner">
         <div className="hero2-copy">
-          <span className="mono" style={{ fontSize: 12, color: "rgba(255,255,255,0.78)" }}></span>
           <h1 className="display hero2-h1" style={{ fontSize: "clamp(38px, 4.4vw, 60px)", margin: "22px 0 24px" }}>
             La herramienta<br />que llena tu clínica.
           </h1>
           <p className="hero2-lead" style={{ fontSize: 19, maxWidth: 440, textAlign: "justify" }}>
-            Smile Fast les muestra su nueva sonrisa antes de cerrar la pestaña. <b>+38% de pacientes.</b>
+            Tus visitantes ven su nueva sonrisa en tu web, dejan sus datos y <b>agendan su cita.</b>
           </p>
           <div style={{ display: "flex", gap: 12, marginTop: 34, flexWrap: "wrap" }}>
             <button className="btn btn-white" style={{ padding: "16px 30px", fontSize: 16 }} onClick={onStart}>Quiero probarlo</button>
             <a href="#como" className="btn hero2-ghost">Cómo funciona</a>
           </div>
-          <p className="mono" style={{ fontSize: 11, letterSpacing: "0.1em", color: "rgba(255,255,255,0.9)", marginTop: 16 }}></p>
           <div className="hero2-stats">
             {[
             ["+38% de pacientes", "Mayor facturación"],
@@ -153,7 +150,7 @@ function LeadAsset({ onStart }) {
     <section id="activo" ref={ref} className={"lead-asset tone-blue" + (on ? " in" : "")} style={{ padding: "100px 0", background: "linear-gradient(180deg,#ffffff,var(--blue-soft))" }}>
       <div className="wrap la-grid">
         <div className="la-copy">
-          <div style={{ marginBottom: 22 }}><MonoPill>TU ACTIVO</MonoPill></div>
+          <div style={{ marginBottom: 22 }}><MonoPill>CADA VISITA, UN LEAD</MonoPill></div>
           <h2 className="display" style={{ fontSize: "clamp(34px,4.4vw,56px)", lineHeight: 1.05 }}>
             Cada visitante te deja <span className="dim">un lead listo para cerrar</span>
           </h2>
@@ -176,7 +173,7 @@ function LeadAsset({ onStart }) {
             <div className="la-head">
               <div className="la-avatar">MG</div>
               <div className="la-head-txt">
-                <div className="la-name la-f" style={{ transitionDelay: "0.2s" }}>María Fernandez.</div>
+                <div className="la-name la-f" style={{ transitionDelay: "0.2s" }}>María Fernández</div>
                 <div className="la-meta"><span className="la-dot"></span>hace 2 min · <span style={{ color: "var(--sage-deep)", fontWeight: 500 }}>nuevo</span></div>
               </div>
             </div>
@@ -188,7 +185,7 @@ function LeadAsset({ onStart }) {
               <div className="la-row la-f" style={{ transitionDelay: "0.6s" }}>
                 <span className="la-row-ic">{phoneIcon}</span>
                 <span>+34 611 22 33 44</span>
-                <a className="la-wa" href="#" onClick={(e) => e.preventDefault()}>{waIcon} WhatsApp</a>
+                <span className="la-wa">{waIcon} WhatsApp</span>
               </div>
             </div>
             <div className="la-thumb la-f" style={{ transitionDelay: "0.8s" }}>
@@ -347,7 +344,7 @@ function PatientPreview({ onStart }) {
         <h2 className="display" style={{ fontSize: "clamp(38px, 5vw, 64px)" }}>
           Lo que verán <span className="dim">tus visitantes</span>
         </h2>
-        <p className="lead" style={{ fontSize: 18, marginTop: 16 }}>Una experiencia premium que convierte la curiosidad en una cita.</p>
+        <p className="lead" style={{ fontSize: 18, marginTop: 16 }}>Así se ve Smile Fast dentro de la web de tu clínica.</p>
       </div>
       <div className="wrap future-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.15fr 1fr", gap: 22, alignItems: "stretch" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
@@ -423,7 +420,7 @@ function UseCases() {
     tag: "USO ADICIONAL",
     title: "Marketing y redes",
     img: RES.usecase_marketing, alt: "Tablet mostrando una simulación dental 3D", pos: "50% 55%",
-    body: "Genera contenido before/after para anuncios, campañas de captación y redes sociales."
+    body: "Genera contenido antes y después para anuncios, campañas de captación y redes sociales."
   }];
 
   return (
@@ -468,7 +465,7 @@ function Metrics() {
     <section id="resultados" className={"mx" + (inview ? " mx-on" : "")} ref={ref}>
       <div className="wrap">
         <div className="mx-head">
-          <span className="mono mx-eyebrow"><span className="mx-live" />RESULTADOS EN CLÍNICAS</span>
+          <span className="mono mx-eyebrow"><span className="mx-live" />EL IMPACTO</span>
           <h2 className="display mx-title">Lo que cambia cuando tus visitantes <span className="mx-dim">se ven antes de agendar</span></h2>
         </div>
         <div className="mx-grid">
@@ -514,7 +511,7 @@ function MxBars({ a, b }) {
   return (
     <div className="mx-bars">
       <div className="mx-bar-col"><span className="mx-bar mx-bar-a" style={{ "--h": a / max }} /><span className="mono">ANTES</span></div>
-      <div className="mx-bar-col"><span className="mx-bar mx-bar-b" style={{ "--h": b / max }} /><span className="mono">CON SF</span></div>
+      <div className="mx-bar-col"><span className="mx-bar mx-bar-b" style={{ "--h": b / max }} /><span className="mono">CON</span></div>
     </div>);
 
 }
@@ -636,7 +633,7 @@ function FAQ() {
      "No tienes que programar nada. Nosotros lo dejamos activo en tu web, con tu logo y tus colores, sin tocar su diseño ni contratar a un desarrollador. Queda funcionando en un día y adaptado a móvil y escritorio."],
     ["¿Los datos de los pacientes están seguros y cumplen el RGPD?",
      "Sí. La captura incluye consentimiento explícito y confirmación de mayoría de edad, y las imágenes y datos se procesan cifrados. El paciente acepta términos y privacidad antes de generar su simulación, de modo que tu clínica capta leads de forma conforme a la normativa."],
-    ["¿Qué recibe mi clínica por cada visitante que usa el widget?",
+    ["¿Qué recibe mi clínica por cada visitante que se simula?",
      "Un lead cualificado: nombre, correo y WhatsApp junto a su simulación de sonrisa. Los leads llegan a tu panel de administración, donde puedes verlos, cambiar su estado (pendiente, contactado, convertido) y contactarlos directamente por WhatsApp."],
     ["¿La simulación es realista? ¿No genera expectativas falsas?",
      "El resultado es una proyección estética orientativa, siempre etiquetada como tal. Sirve para motivar al paciente a agendar; la viabilidad clínica real se confirma en consulta con tu equipo. Puedes ofrecer además un vídeo personalizado que se puede generar presencialmente en consulta."],
@@ -645,7 +642,7 @@ function FAQ() {
     ["¿Cómo me ayuda de verdad a conseguir más pacientes?",
      "Convierte el tráfico anónimo de tu web en citas. En lugar de un visitante que duda y se va, la persona se ve con su nueva sonrisa, deja sus datos con intención real y agenda. Es captación proactiva desde tu propio sitio, sin depender solo de publicidad."],
     ["¿Tengo que firmar permanencia o hacer una gran inversión inicial?",
-     "No. Ningún plan tiene permanencia: puedes cancelar cuando quieras. En el plan Esencial la inversión inicial es de 0 $, así empiezas a captar leads sin coste de arranque. Si más adelante quieres avanzar a un plan superior (más marca, vídeo o funciones), solo hay un coste mínimo de implementación, sin ataduras a largo plazo."]];
+     "No. No hay permanencia: puedes cancelar cuando quieras. Puedes empezar sin inversión inicial y, si más adelante quieres más funciones (vídeo o más personalización de marca), solo hay un coste mínimo de implementación, sin ataduras a largo plazo."]];
 
   return (
     <section id="faq" style={{ padding: "100px 0", borderTop: "1px solid var(--line)" }}>
@@ -692,7 +689,7 @@ function Testimonios({ onStart }) {
     <span style={{ width: 44, height: 44, borderRadius: "50%", flexShrink: 0, display: "grid", placeItems: "center", fontSize: 15, fontWeight: 600, letterSpacing: "-0.01em", background: "var(--bg-tint)", color: "var(--sage-deep)", border: "1px solid var(--line)" }}>{t.initials}</span>;
   const metrics = [["+15", "empresas activas"], ["+6", "países"]];
   const seals = [
-    { label: "Datos encriptados", icon: <><rect x="4" y="10" width="16" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></> },
+    { label: "Datos cifrados", icon: <><rect x="4" y="10" width="16" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></> },
     { label: "Privacidad del paciente", icon: <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" /> },
     { label: "Sin permanencia", icon: <><path d="M3 12a9 9 0 0 1 15-6.7L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-15 6.7L3 16" /><path d="M3 21v-5h5" /></> }];
   return (
@@ -714,7 +711,7 @@ function Testimonios({ onStart }) {
               </span>
               <div>
                 <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: "-0.01em", color: "var(--ink)" }}>Brandboost AI</div>
-                <div className="mono" style={{ fontSize: 10.5, letterSpacing: "0.16em", color: "var(--ink-3)", textTransform: "uppercase", marginTop: 3 }}>Enterprise AI Agency</div>
+                <div className="mono" style={{ fontSize: 10.5, letterSpacing: "0.16em", color: "var(--ink-3)", textTransform: "uppercase", marginTop: 3 }}>Agencia de IA</div>
               </div>
             </div>
           </div>
@@ -725,10 +722,10 @@ function Testimonios({ onStart }) {
             <div style={{ position: "relative", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 30, color: "#fff", minHeight: 340 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <img src={RES.r25_brandboost_mark_png} alt="" style={{ width: 30, height: 30, objectFit: "contain", filter: "brightness(1.6)" }} />
-                <span className="mono" style={{ fontSize: 10, letterSpacing: "0.2em", color: "#22d3ee", textTransform: "uppercase" }}>✦ Impulsando tu empresa con IA</span>
+                <span className="mono" style={{ fontSize: 10, letterSpacing: "0.2em", color: "var(--blue-light)", textTransform: "uppercase" }}>Agentes · Automatización · IA</span>
               </div>
               <div>
-                <p style={{ fontSize: 20, fontWeight: 300, lineHeight: 1.4, margin: "0 0 22px", maxWidth: "24ch" }}>Escala tus operaciones <b>sin fricción humana.</b></p>
+                <p style={{ fontSize: 20, fontWeight: 300, lineHeight: 1.4, margin: "0 0 22px", maxWidth: "24ch" }}>Agentes de IA, automatizaciones e integraciones <b>a medida de cada empresa.</b></p>
                 <div style={{ display: "flex", gap: 30, flexWrap: "wrap" }}>
                   {[["LATAM + España", "Empresas que ya confían"], ["Soporte real", "Equipo humano detrás"]].map((m, i) =>
                   <div key={i}>
@@ -744,7 +741,7 @@ function Testimonios({ onStart }) {
 
         {/* Muro de logos */}
         <div style={{ marginTop: 64 }}>
-          <div className="mono" style={{ fontSize: 12, letterSpacing: "0.2em", color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 20 }}>Empresas que confían en nosotros</div>
+          <div className="mono" style={{ fontSize: 12, letterSpacing: "0.2em", color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 20 }}>Empresas que ya trabajan con Brandboost</div>
           <div className={"bb-metrics" + (inview ? " in" : "")} style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "10px 26px", marginBottom: 30 }}>
             {metrics.map((m, i) =>
             <React.Fragment key={i}>
@@ -799,8 +796,7 @@ function Testimonios({ onStart }) {
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px 20px", marginTop: 40 }}>
-          <button className="btn btn-blue" onClick={onStart} style={{ padding: "14px 28px", fontSize: 14 }}>Agendar Reunión</button>
-          <span style={{ fontSize: 16, fontWeight: 600, letterSpacing: "-0.01em", color: "var(--sage-deep)" }}>Tu socio en la evolución tecnológica.</span>
+          <button className="btn btn-blue" onClick={onStart} style={{ padding: "14px 28px", fontSize: 14 }}>Agendar reunión</button>
         </div>
       </div>
     </section>);
@@ -810,7 +806,7 @@ function Testimonios({ onStart }) {
 /* ---------------- CTA + Footer ---------------- */
 /* ---------------- Footer ---------------- */
 const FT_COLS = [
-  ["Producto", [["Cómo funciona", "#como"], ["Lo que ve tu paciente", "#producto"], ["El recorrido", "#recorrido"], ["Análisis clínico", "#analisis"], ["Vídeo realista", "#video"]]],
+  ["Producto", [["Cómo funciona", "#como"], ["Lo que ven tus visitantes", "#producto"], ["El recorrido", "#recorrido"], ["Análisis clínico", "#analisis"], ["Vídeo realista", "#video"]]],
   ["Para tu clínica", [["Beneficios", "#transformaciones"], ["Casos de uso", "#usos"], ["Resultados", "#resultados"], ["Preguntas frecuentes", "#faq"]]]];
 const FT_BADGES = [
   ["Cumple RGPD", <><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6l7-3Z" /><path d="M9 12l2 2 4-4" /></>],
@@ -844,7 +840,6 @@ function SiteFooter({ onStart }) {
             <span className="mono ft-h">Empresa</span>
             <a href="#testimonios" className="ft-link">Brandboost<span aria-hidden="true">→</span></a>
             <button type="button" className="ft-link ft-link-btn" onClick={onStart}>Agendar reunión<span aria-hidden="true">→</span></button>
-            <button type="button" className="ft-link ft-link-btn" onClick={onStart}>Solicitar acceso<span aria-hidden="true">→</span></button>
           </div>
         </nav>
       </div>
@@ -883,7 +878,7 @@ function CTAFooter({ onStart }) {
   }, []);
   return (
     <>
-      <section id="precios" ref={ref} className={"cta-final" + (inview ? " in" : "")}>
+      <section id="empezar" ref={ref} className={"cta-final" + (inview ? " in" : "")}>
         <div className="ctaf-cards" ref={cardsRef} aria-hidden="true">
           <img className="ctaf-card c1" src={RES.r17_preview_after_png} alt="" />
           <img className="ctaf-card c2" src={RES.r28_trans_2_after_jpg} alt="" />
@@ -900,7 +895,6 @@ function CTAFooter({ onStart }) {
           <div style={{ display: "flex", gap: 16, justifyContent: "center", alignItems: "center", flexWrap: "wrap" }}>
             <button className="btn btn-white cta-glow" style={{ padding: "18px 42px", fontSize: 17 }} onClick={onStart}>Quiero probarlo</button>
           </div>
-          <p className="mono ctaf-note">Cada visitante, una oportunidad de agendar</p>
         </div>
       </section>
       <SiteFooter onStart={onStart} />
@@ -931,9 +925,9 @@ function Transformations() {
       <div className="wrap trans-grid tf-grid">
         {/* Columna izquierda: encabezado + beneficios */}
         <div className="tf-left">
-          <div className="tf-rise" style={{ marginBottom: 26 }}><MonoPill>NUEVO ENFOQUE</MonoPill></div>
+          <div className="tf-rise" style={{ marginBottom: 26 }}><MonoPill>BENEFICIOS</MonoPill></div>
           <h2 className="display tf-rise" style={{ fontSize: "clamp(36px, 4vw, 56px)", transitionDelay: "0.06s" }}>
-            Transformaciones<br /><span className="dim">que cambian vidas</span>
+            Lo que gana<br /><span className="dim">tu clínica</span>
           </h2>
           <p className="lead tf-rise" style={{ fontSize: 16.5, margin: "18px 0 0", maxWidth: 400, transitionDelay: "0.12s" }}>
             La demanda de estética dental crece: convierte ese interés en pacientes que agendan y elevan la facturación de tu clínica.
@@ -970,16 +964,16 @@ function VideoFeature({ onStart }) {
         <div>
           <div style={{ marginBottom: 22 }}><MonoPill>NUEVO · VÍDEO REALISTA</MonoPill></div>
           <h2 className="display" style={{ fontSize: "clamp(34px, 4.4vw, 58px)" }}>
-            No solo una foto:<br /><span className="dim">míralo en movimiento</span>
+            Su nueva sonrisa,<br /><span className="dim">en movimiento</span>
           </h2>
           <p className="lead" style={{ fontSize: 17, margin: "20px 0 34px", maxWidth: 420 }}>
-            Además de la simulación estática, tu paciente puede ver su nueva sonrisa en un vídeo realista sonriendo que refuerza el deseo de agendar.
+            Además de la foto, tu paciente puede verse sonreír en un vídeo realista. Verse en movimiento es lo que termina de convencerlo para agendar.
           </p>
           <button className="btn btn-white" onClick={onStart}>Quiero probarlo</button>
         </div>
         <div style={{ position: "relative", borderRadius: 22, overflow: "hidden", border: "1px solid var(--line)", background: "var(--photo)", aspectRatio: "16 / 10" }}>
           <video src="https://res.cloudinary.com/dhzmkxbek/video/upload/v1781638188/0614_2_upxmh1.mp4" autoPlay loop muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}></video>
-          <span className="mono" style={{ position: "absolute", top: 16, left: 16, fontSize: 9, letterSpacing: "0.18em", color: "#fff", background: "rgba(20,24,23,0.5)", padding: "6px 12px", borderRadius: 99 }}>VÍDEO ANTES / DESPUÉS</span>
+          <span className="mono" style={{ position: "absolute", top: 16, left: 16, fontSize: 9, letterSpacing: "0.18em", color: "#fff", background: "rgba(20,24,23,0.5)", padding: "6px 12px", borderRadius: 99 }}>VÍDEO REALISTA</span>
         </div>
       </div>
     </section>);

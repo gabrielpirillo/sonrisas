@@ -12,7 +12,6 @@ import "./styles/trust.css";
 import "./styles/footer.css";
 
 import "./resources";
-import "./lib/image-slot.js";
 
 import App from "./App";
 

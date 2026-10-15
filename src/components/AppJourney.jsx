@@ -9,10 +9,10 @@ import { RES } from "../resources";
 const { useState, useEffect, useRef } = React;
 
 const JOURNEY_STEPS = [
-  { n: "01", tag: "DATOS", t: "Deja sus datos", d: "Nombre, email y teléfono → tu lead.", img: RES.r6_app_step1_png },
+  { n: "01", tag: "DATOS", t: "Deja sus datos", d: "Nombre, email y teléfono: ya es tu lead.", img: RES.r6_app_step1_png },
   { n: "02", tag: "FOTO", t: "Sube una selfie", d: "Una foto frontal, sin descargas.", img: RES.r7_app_step2_jpg },
   { n: "03", tag: "ANÁLISIS", t: "La IA analiza su sonrisa", d: "Proporciones, simetría y tono VITA.", img: RES.r8_app_step3_jpg },
-  { n: "04", tag: "RESULTADO", t: "Ve su nueva sonrisa", d: "Antes/después realista + agenda.", img: RES.r9_app_step4_jpg }
+  { n: "04", tag: "RESULTADO", t: "Ve su nueva sonrisa", d: "Su antes y después realista, y agenda.", img: RES.r9_app_step4_jpg }
 ];
 
 function slideStyle(i, active, mob) {
@@ -76,7 +76,6 @@ function AppJourney() {
   return (
     <section className="journey" id="recorrido" ref={ref} style={{ height: "320vh" }}>
       <div className="jsticky">
-        <img className="j-blur" src={RES.r10_analysis_blur_png} alt="" aria-hidden="true" />
         <div className="jglow" />
         <div className="jgrid">
           <div className="jhead">
@@ -97,7 +96,6 @@ function AppJourney() {
               <div key={i} className="slide" style={slideStyle(i, active, mob)}>
                 <div className="jphone"><img src={s.img} alt={"Paso " + s.n + " · " + s.tag} /></div>
               </div>)}
-            <span className="cap mono">DISEÑO GENERATIVO · TIEMPO REAL</span>
           </div>
           <div className="mcap"><span className="mn">{sd.n}</span><div><div className="mt">{sd.t}</div><div className="md">{sd.d}</div></div></div>
           <div className="mdots">{JOURNEY_STEPS.map((s, i) => <i key={i} className={i === active ? "on" : ""} />)}</div>
