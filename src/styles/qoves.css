@@ -498,7 +498,8 @@ image-slot {
   object-position: center 30%;
   z-index: 0;
   pointer-events: none;
-  filter: brightness(0.8) saturate(1.05);
+  /* el oscurecido (brightness .8 / saturate 1.05) ya viene aplicado en la imagen,
+     compuesta sobre el azul acero de la sección */
 }
 .analysis-portrait-img {
   position: absolute;
