@@ -1,0 +1,48 @@
+/* ============================================================
+   Acento azul claro — el azul acero característico del hero y
+   del análisis, usado para alternar secciones, botones y textos.
+   ============================================================ */
+:root {
+  --blue:        #8ea4b4;   /* azul característico (fondos, trazos) */
+  --blue-accent: #7d97aa;   /* acento de titulares bicolor */
+  --blue-deep:   #4f6b7f;   /* texto / botones sobre blanco (AA) */
+  --blue-ink:    #3e5769;   /* hover de botones azules */
+  --blue-line:   #d3dee6;   /* bordes en secciones azules */
+  --blue-soft:   #e7eef3;   /* fondo de sección */
+  --blue-tint:   #f2f6f9;   /* fondo de sección más leve */
+}
+
+/* Botón azul */
+.btn-blue { background: var(--blue-deep); color: #fff; padding: 16px 30px; }
+.btn-blue:hover { background: var(--blue-ink); transform: translateY(-1px); }
+.btn-blue:active { transform: scale(0.985); }
+
+/* Secciones con acento azul: titular bicolor, pill y detalles */
+.accent-blue .dim { color: var(--blue-accent); }
+.accent-blue .mono-pill { border-color: var(--blue-line); color: var(--blue-deep); background: rgba(255, 255, 255, 0.7); }
+
+/* Transformaciones: íconos en azul */
+.tf .tf-ic { background: var(--blue-soft); color: var(--blue-deep); }
+.tf .tf-item:hover .tf-ic { background: var(--blue-deep); color: #fff; }
+.tf .tf-item:hover { border-color: var(--blue-line); }
+
+/* Lead asset (fondo azul): checks y CTA en azul */
+.tone-blue .la-check-ic { background: var(--blue); }
+.tone-blue .la-cta { background: var(--blue-deep); }
+.tone-blue .la-cta:hover { background: var(--blue-ink); }
+.tone-blue .mono-pill { border-color: var(--blue-line); color: var(--blue-deep); background: rgba(255, 255, 255, 0.7); }
+
+/* Lo que verán tus visitantes: tiles de íconos en azul */
+#producto .fc-ic { background: var(--blue-soft) !important; border-color: var(--blue-line) !important; color: var(--blue-deep) !important; }
+
+/* Casos de uso: tarjetas claras con borde azul suave */
+#usos .uc-a-card:not(.uc-a-dark) { border-color: var(--blue-line); }
+
+/* Cómo funciona: riel y escenarios con toque azul */
+.hiw-rail-fill { background: linear-gradient(90deg, var(--ink), var(--blue)); }
+.hiw-on .hiw-node { box-shadow: 0 0 0 6px rgba(142, 164, 180, 0.22); }
+.hiw-card:not(.hiw-dark) .hiw-stage { background: linear-gradient(160deg, var(--blue-tint), var(--blue-soft)); }
+.hiw-card:hover .hiw-num { color: var(--blue-accent); }
+
+/* Testimonios: estrellas y métricas con acento azul */
+.accent-blue.bb-section .bb-dots { background-image: radial-gradient(var(--blue) 1.1px, transparent 1.2px); }

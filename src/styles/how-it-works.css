@@ -103,7 +103,7 @@
 .hiw [class*="hiw-"] { animation-play-state: paused; }
 .hiw-on [class*="hiw-"] { animation-play-state: running; }
 
-/* ---------- Paso 1 · navegador + snippet + widget ---------- */
+/* ---------- Paso 1 · interruptor "Activar" + botón en la web ---------- */
 .hiw-browser {
   width: 84%;
   background: #fff;
@@ -115,36 +115,65 @@
 .hiw-bar { display: flex; align-items: center; gap: 5px; padding: 9px 11px; border-bottom: 1px solid var(--line); background: var(--bg-soft); }
 .hiw-bar i { width: 7px; height: 7px; border-radius: 50%; background: var(--line-strong); }
 .hiw-url { margin-left: 8px; flex: 1; font-family: var(--font-mono); font-size: 9px; color: var(--ink-3); background: #fff; border: 1px solid var(--line); border-radius: 99px; padding: 3px 10px; }
-.hiw-page { position: relative; padding: 14px 14px 16px; display: flex; flex-direction: column; gap: 7px; min-height: 140px; }
+.hiw-page { position: relative; padding: 14px 14px 14px; display: flex; flex-direction: column; gap: 7px; }
 .hiw-sk { display: block; height: 8px; border-radius: 4px; background: #e9eded; }
-.hiw-sk-btn { width: 30%; height: 16px; border-radius: 99px; margin-top: 3px; }
-.hiw-code {
+
+.hiw-setup {
+  position: relative;
   margin-top: 6px;
-  display: inline-flex; align-items: center; align-self: flex-start;
-  font-family: var(--font-mono); font-size: 9.5px; color: #e9eded;
-  background: var(--ink); border-radius: 6px; padding: 6px 9px;
+  display: grid; grid-template-columns: 28px 1fr auto; align-items: center; gap: 9px;
+  padding: 8px 10px;
+  border: 1px solid var(--line); border-radius: 10px;
+  background: var(--blue-tint, #f3f7f9);
 }
-.hiw-typed {
-  display: inline-block; overflow: hidden; white-space: nowrap;
-  width: 0; max-width: 28ch;
-  animation: hiwType var(--hiw-cycle) steps(28, end) infinite;
+.hiw-setup-ic { display: grid; place-items: center; }
+.hiw-setup-txt { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; }
+.hiw-setup-txt b { font-size: 11px; font-weight: 600; }
+.hiw-setup-state { display: grid; }
+.hiw-setup-state small { grid-area: 1 / 1; font-size: 9.5px; white-space: nowrap; }
+.hiw-state-off { color: var(--ink-3); animation: hiwOff var(--hiw-cycle) infinite; }
+.hiw-state-on { color: var(--hiw-green); font-weight: 600; opacity: 0; animation: hiwOn var(--hiw-cycle) infinite; }
+.hiw-switch {
+  position: relative; width: 34px; height: 20px; border-radius: 99px;
+  background: var(--line-strong);
+  animation: hiwSwitch var(--hiw-cycle) infinite;
 }
-.hiw-caret { width: 6px; height: 11px; margin-left: 1px; background: var(--sage); animation: hiwBlink 0.8s steps(1) infinite; }
-@keyframes hiwType { 0%, 6% { width: 0; } 34%, 92% { width: 28ch; } 100% { width: 0; } }
-@keyframes hiwBlink { 50% { opacity: 0; } }
+.hiw-knob {
+  position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  animation: hiwKnob var(--hiw-cycle) cubic-bezier(.4, 0, .2, 1) infinite;
+}
+.hiw-cursor {
+  position: absolute; right: 8px; top: 50%; margin-top: -2px; z-index: 3;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
+  animation: hiwCursor var(--hiw-cycle) cubic-bezier(.45, 0, .2, 1) infinite;
+}
+@keyframes hiwCursor {
+  0%, 4% { transform: translate(-90px, 46px); opacity: 0; }
+  10% { opacity: 1; }
+  24% { transform: translate(0, 0) scale(1); }
+  27% { transform: translate(0, 0) scale(0.82); }
+  30% { transform: translate(0, 0) scale(1); opacity: 1; }
+  42%, 100% { transform: translate(26px, 40px); opacity: 0; }
+}
+@keyframes hiwSwitch { 0%, 27% { background: var(--line-strong); } 30%, 93% { background: var(--hiw-green); } 100% { background: var(--line-strong); } }
+@keyframes hiwKnob { 0%, 27% { transform: none; } 31%, 93% { transform: translateX(14px); } 100% { transform: none; } }
+@keyframes hiwOff { 0%, 28% { opacity: 1; } 31%, 93% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes hiwOn { 0%, 29% { opacity: 0; } 32%, 92% { opacity: 1; } 96%, 100% { opacity: 0; } }
+
 .hiw-widget {
-  position: relative; align-self: flex-end; margin-top: 2px;
+  position: relative; align-self: flex-end; margin-top: 3px;
   display: inline-flex; align-items: center; gap: 6px;
   font-size: 10.5px; font-weight: 600; letter-spacing: -0.01em;
-  color: #fff; background: var(--ink);
+  color: #fff; background: var(--blue-deep, #4f6b7f);
   padding: 8px 12px; border-radius: 99px;
-  box-shadow: 0 10px 24px -10px rgba(28, 30, 29, 0.6);
+  box-shadow: 0 10px 24px -10px rgba(79, 107, 127, 0.7);
   opacity: 0; transform: translateY(8px) scale(0.85);
   animation: hiwWidget var(--hiw-cycle) cubic-bezier(.22, 1, .36, 1) infinite;
 }
-.hiw-widget-ring { position: absolute; inset: 0; border-radius: inherit; border: 2px solid var(--sage); opacity: 0; animation: hiwRing var(--hiw-cycle) ease-out infinite; }
-@keyframes hiwWidget { 0%, 38% { opacity: 0; transform: translateY(8px) scale(0.85); } 46%, 92% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(4px) scale(0.95); } }
-@keyframes hiwRing { 0%, 50% { opacity: 0; transform: scale(1); } 54% { opacity: 0.9; } 70%, 100% { opacity: 0; transform: scale(1.35); } }
+.hiw-widget-ring { position: absolute; inset: 0; border-radius: inherit; border: 2px solid var(--blue, #8ea4b4); opacity: 0; animation: hiwRing var(--hiw-cycle) ease-out infinite; }
+@keyframes hiwWidget { 0%, 36% { opacity: 0; transform: translateY(8px) scale(0.85); } 44%, 92% { opacity: 1; transform: none; } 100% { opacity: 0; transform: translateY(4px) scale(0.95); } }
+@keyframes hiwRing { 0%, 48% { opacity: 0; transform: scale(1); } 52% { opacity: 0.9; } 68%, 100% { opacity: 0; transform: scale(1.35); } }
 
 /* ---------- Paso 2 · escaneo + revelado ---------- */
 .hiw-sim { position: absolute; inset: 0; }
@@ -237,8 +266,11 @@
   .hiw-card, .hiw-rail-fill, .hiw-node { transition: none; }
   .hiw-card { opacity: 1; transform: none; }
   .hiw [class*="hiw-"] { animation: none !important; }
-  .hiw-typed { width: 28ch; }
   .hiw-widget, .hiw-lead-new, .hiw-toast { opacity: 1; transform: none; }
+  .hiw-state-off, .hiw-cursor { opacity: 0; }
+  .hiw-state-on { opacity: 1; }
+  .hiw-switch { background: var(--hiw-green); }
+  .hiw-knob { transform: translateX(14px); }
   .hiw-lead-old { transform: none; }
   .hiw-sim-after { clip-path: inset(0 0 0 50%); }
   .hiw-sim-scan { opacity: 1; left: 50%; }

@@ -52,7 +52,7 @@ function PlansA({ mobile, onStart }) {
             <ul className="pl-feats">
               {p.feats.map((f, i) => <li key={i} className={i === 0 && p.id !== "esencial" ? "pl-feat pl-feat-lead" : "pl-feat"}><Chk on hi={!!p.badge} /><span>{f}</span></li>)}
             </ul>
-            <button className={"btn " + (p.badge ? "btn-white" : "btn-primary")} style={{ width: "100%" }} onClick={onStart}>Solicitar DEMO</button>
+            <button className={"btn " + (p.badge ? "btn-white" : "btn-primary")} style={{ width: "100%" }} onClick={onStart}>Quiero probarlo</button>
           </div>
         )}
       </div>
@@ -81,7 +81,7 @@ function PlansB({ mobile }) {
             )}
             <tr className="pl-table-cta">
               <td></td>
-              {PLANS.map((p) => <td key={p.id} className={p.badge ? "hi" : ""}><button className={"btn btn-sm " + (p.badge ? "btn-primary" : "btn-ghost")} style={{ background: p.badge ? "" : "#fff" }}>Solicitar DEMO</button></td>)}
+              {PLANS.map((p) => <td key={p.id} className={p.badge ? "hi" : ""}><button className={"btn btn-sm " + (p.badge ? "btn-primary" : "btn-ghost")} style={{ background: p.badge ? "" : "#fff" }}>Quiero probarlo</button></td>)}
             </tr>
           </tbody>
         </table>
@@ -107,7 +107,7 @@ function PlansC({ mobile }) {
         <div className="pl-c-info">
           <div className="pl-name">{p.name}</div>
           <div className="pl-tag">{p.tag}</div>
-          <button className="btn btn-primary" style={{ marginTop: 20 }}>Solicitar DEMO</button>
+          <button className="btn btn-primary" style={{ marginTop: 20 }}>Quiero probarlo</button>
         </div>
         <ul className="pl-feats pl-c-feats">
           {p.feats.map((f, i) => <li key={i} className="pl-feat"><Chk on /><span>{f}</span></li>)}

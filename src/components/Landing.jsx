@@ -165,7 +165,7 @@ function LeadAsset({ onStart }) {
   const phoneIcon = <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" /></svg>;
   const waIcon = <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 0 0-8.6 15.06L2 22l5.06-1.33A10 10 0 1 0 12 2zm0 18a8 8 0 0 1-4.08-1.12l-.29-.17-3 .79.8-2.92-.19-.3A8 8 0 1 1 12 20zm4.4-5.8c-.24-.12-1.42-.7-1.64-.78-.22-.08-.38-.12-.54.12-.16.24-.62.78-.76.94-.14.16-.28.18-.52.06a6.5 6.5 0 0 1-1.92-1.18 7.2 7.2 0 0 1-1.33-1.65c-.14-.24 0-.37.1-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.54-1.3-.74-1.78-.2-.47-.4-.4-.54-.41h-.46a.9.9 0 0 0-.64.3 2.68 2.68 0 0 0-.84 2 4.65 4.65 0 0 0 .98 2.48c.12.16 1.7 2.6 4.12 3.65.58.25 1.03.4 1.38.51.58.19 1.1.16 1.52.1.46-.07 1.42-.58 1.62-1.14.2-.56.2-1.04.14-1.14-.06-.1-.22-.16-.46-.28z" /></svg>;
   return (
-    <section id="activo" ref={ref} className={"lead-asset" + (on ? " in" : "")} style={{ padding: "100px 0", background: "linear-gradient(180deg,#ffffff,#f4f6f6)" }}>
+    <section id="activo" ref={ref} className={"lead-asset tone-blue" + (on ? " in" : "")} style={{ padding: "100px 0", background: "linear-gradient(180deg,#ffffff,var(--blue-soft))" }}>
       <div className="wrap la-grid">
         <div className="la-copy">
           <div style={{ marginBottom: 22 }}><MonoPill>TU ACTIVO</MonoPill></div>
@@ -229,7 +229,7 @@ function LeadAsset({ onStart }) {
 function HowItWorks() {
   const [ref, inview] = useInview(0.2);
   const steps = [
-  { tag: "INTEGRACIÓN", chip: "10 MIN DE SETUP", title: "Integra nuestra herramienta", body: "Sin desarrollo, funcionando en minutos, en tu web y con tu marca.", Visual: StepIntegrate },
+  { tag: "ACTIVACIÓN", chip: "SIN PROGRAMAR · 10 MIN", title: "Actívalo en tu web", body: "Se activa en minutos, con tu logo y tus colores. No necesitas saber programar ni tocar nada técnico.", Visual: StepIntegrate },
   { tag: "SIMULACIÓN", chip: "SIN APPS NI DESCARGAS", title: "Tus visitantes se simulan", body: "Sube una selfie, ve su sonrisa nueva al instante y agenda antes de hablar con nadie.", Visual: StepSimulate, dark: true },
   { tag: "CONVERSIÓN", chip: "AVISO AL INSTANTE", title: "Recibes el lead caliente", body: "Sus datos de contacto y su simulación llegan a tu panel. Tu equipo agenda y cierra la cita.", Visual: StepLead }];
 
@@ -270,7 +270,7 @@ function HowItWorks() {
 
 }
 
-/* Paso 1 — la web de la clínica recibe el snippet y aparece el widget */
+/* Paso 1 — un interruptor se activa y el botón aparece en la web de la clínica */
 function StepIntegrate() {
   return (
     <div className="hiw-browser">
@@ -278,9 +278,19 @@ function StepIntegrate() {
       <div className="hiw-page">
         <span className="hiw-sk" style={{ width: "62%" }} />
         <span className="hiw-sk" style={{ width: "44%", opacity: 0.7 }} />
-        <span className="hiw-sk hiw-sk-btn" />
-        <div className="hiw-code">
-          <span className="hiw-typed">&lt;script src="smilefast.js"&gt;</span><span className="hiw-caret" />
+        <div className="hiw-setup">
+          <span className="hiw-setup-ic"><LogoMark size={22} /></span>
+          <span className="hiw-setup-txt">
+            <b>Smile Fast</b>
+            <span className="hiw-setup-state">
+              <small className="hiw-state-off">Desactivado</small>
+              <small className="hiw-state-on">Activo en tu web ✓</small>
+            </span>
+          </span>
+          <span className="hiw-switch"><span className="hiw-knob" /></span>
+          <svg className="hiw-cursor" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 3l14 7.5-6.2 1.7L10 18.5z" fill="#1c1e1d" stroke="#fff" strokeWidth="1.4" strokeLinejoin="round" />
+          </svg>
         </div>
         <div className="hiw-widget">
           <span className="hiw-widget-ring" />
@@ -347,7 +357,7 @@ function PatientPreview({ onStart }) {
   ["Captura el lead", "Cada simulación deja nombre, email y teléfono en tu panel.", "inbox"]];
 
   return (
-    <section id="producto" style={{ padding: "100px 0", background: "linear-gradient(180deg,#ffffff,#f4f6f6)" }}>
+    <section id="producto" className="accent-blue" style={{ padding: "100px 0", background: "linear-gradient(180deg,#ffffff,var(--blue-soft))" }}>
       <div className="wrap" style={{ textAlign: "center", marginBottom: 56 }}>
         <h2 className="display" style={{ fontSize: "clamp(38px, 5vw, 64px)" }}>
           Lo que verán <span className="dim">tus visitantes</span>
@@ -362,7 +372,7 @@ function PatientPreview({ onStart }) {
           <div style={{ flex: 1 }}>
             <BeforeAfter beforeSrc={RES.r16_preview_before_png} afterSrc={RES.r17_preview_after_png} height="100%" radius={22} imgPos="center 28%" />
           </div>
-          <button className="btn btn-primary" style={{ width: "100%" }} onClick={onStart}>Solicitar DEMO</button>
+          <button className="btn btn-blue" style={{ width: "100%" }} onClick={onStart}>Quiero probarlo</button>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
           {cards.slice(2, 4).map((c, i) => <FeatureCard key={i} title={c[0]} body={c[1]} icon={c[2]} />)}
@@ -381,7 +391,7 @@ function FeatureCard({ title, body, icon }) {
   }[icon];
   return (
     <div className="card card-hover" style={{ padding: 24, display: "flex", flexDirection: "column", justifyContent: "flex-end", flex: 1, minHeight: 230 }}>
-      <span style={{ width: 52, height: 52, borderRadius: 14, background: "var(--bg-tint)", border: "1px solid var(--line)", display: "grid", placeItems: "center", color: "var(--ink)", marginBottom: "auto" }}>
+      <span className="fc-ic" style={{ width: 52, height: 52, borderRadius: 14, background: "var(--bg-tint)", border: "1px solid var(--line)", display: "grid", placeItems: "center", color: "var(--ink)", marginBottom: "auto" }}>
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{paths}</svg>
       </span>
       <h3 style={{ fontSize: 21, fontWeight: 600, letterSpacing: "-0.02em", margin: "20px 0 8px" }}>{title}</h3>
@@ -432,7 +442,7 @@ function UseCases() {
   }];
 
   return (
-    <section id="usos" style={{ padding: "100px 0", background: "linear-gradient(180deg,#ffffff,#eef1f1)" }}>
+    <section id="usos" className="accent-blue" style={{ padding: "100px 0", background: "linear-gradient(180deg,#ffffff,var(--blue-soft))" }}>
       <div className="wrap" style={{ textAlign: "center", marginBottom: 56 }}>
         <div style={{ marginBottom: 24 }}><MonoPill>CASOS DE USO</MonoPill></div>
         <h2 className="display" style={{ fontSize: "clamp(36px, 4.8vw, 60px)" }}>
@@ -705,7 +715,7 @@ function Testimonios({ onStart }) {
     { label: "Privacidad del paciente", icon: <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" /> },
     { label: "Sin permanencia", icon: <><path d="M3 12a9 9 0 0 1 15-6.7L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-15 6.7L3 16" /><path d="M3 21v-5h5" /></> }];
   return (
-    <section id="testimonios" ref={ref} className="bb-section" style={{ position: "relative", padding: "112px 0", background: "var(--bg-soft)", borderTop: "1px solid var(--line)", overflow: "hidden" }}>
+    <section id="testimonios" ref={ref} className="bb-section accent-blue" style={{ position: "relative", padding: "112px 0", background: "var(--blue-tint)", borderTop: "1px solid var(--line)", overflow: "hidden" }}>
       <span className="bb-dots" aria-hidden="true"></span>
       <div className="wrap" style={{ position: "relative", zIndex: 1 }}>
         <div className="bb-intro" style={{ display: "grid", gridTemplateColumns: "1.05fr 0.95fr", gap: 52, alignItems: "center" }}>
@@ -808,7 +818,7 @@ function Testimonios({ onStart }) {
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px 20px", marginTop: 40 }}>
-          <button className="btn btn-primary" onClick={onStart} style={{ padding: "14px 28px", fontSize: 14 }}>Agendar Reunión</button>
+          <button className="btn btn-blue" onClick={onStart} style={{ padding: "14px 28px", fontSize: 14 }}>Agendar Reunión</button>
           <span style={{ fontSize: 16, fontWeight: 600, letterSpacing: "-0.01em", color: "var(--sage-deep)" }}>Tu socio en la evolución tecnológica.</span>
         </div>
       </div>
@@ -911,7 +921,7 @@ function Transformations() {
   const [touched, setTouched] = useState(false);
 
   return (
-    <section id="transformaciones" ref={ref} className={"tf" + (inview ? " tf-on" : "")} style={{ padding: "100px 0", borderTop: "1px solid var(--line)" }}>
+    <section id="transformaciones" ref={ref} className={"tf accent-blue" + (inview ? " tf-on" : "")} style={{ padding: "100px 0", borderTop: "1px solid var(--line)" }}>
       <div className="wrap trans-grid tf-grid">
         {/* Columna izquierda: encabezado + beneficios */}
         <div className="tf-left">
@@ -959,7 +969,7 @@ function VideoFeature({ onStart }) {
           <p className="lead" style={{ fontSize: 17, margin: "20px 0 34px", maxWidth: 420 }}>
             Además de la simulación estática, tu paciente puede ver su nueva sonrisa en un vídeo realista sonriendo que refuerza el deseo de agendar.
           </p>
-          <button className="btn btn-primary" onClick={onStart}>Solicitar DEMO</button>
+          <button className="btn btn-primary" onClick={onStart}>Quiero probarlo</button>
         </div>
         <div style={{ position: "relative", borderRadius: 22, overflow: "hidden", border: "1px solid var(--line)", background: "var(--photo)", aspectRatio: "16 / 10" }}>
           <video src="https://res.cloudinary.com/dhzmkxbek/video/upload/v1781638188/0614_2_upxmh1.mp4" autoPlay loop muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}></video>
