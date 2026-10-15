@@ -111,7 +111,7 @@ function Hero({ onStart }) {
             {[
             ["+38% de pacientes", "Mayor facturación"],
             ["Paciente + simulación", "Datos listos en tu panel"],
-            ["1 día", "Implementación completa"]].
+            ["Activo en 1 día", "Sin programar nada"]].
             map(([t, d], i) =>
             <div key={i} className="hero2-stat">
                 <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: "-0.01em", color: "#fff", textAlign: "center" }}>{t}</div>
