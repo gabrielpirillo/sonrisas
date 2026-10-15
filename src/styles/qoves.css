@@ -694,9 +694,9 @@ image-slot {
 .la-rows{display:flex;flex-direction:column;gap:12px;padding:16px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
 .la-row{display:flex;align-items:center;gap:11px;font-size:14px;color:var(--ink-2)}
 .la-row-ic{flex-shrink:0;color:var(--ink-3);display:grid;place-items:center}
-.la-wa{margin-left:auto;display:inline-flex;align-items:center;gap:6px;background:#25d366;color:#fff;font-size:12.5px;font-weight:600;text-decoration:none;padding:7px 13px;border-radius:99px;white-space:nowrap}
+.la-wa{margin-left:auto;display:inline-flex;align-items:center;gap:6px;background:var(--blue-deep);color:#fff;font-size:12.5px;font-weight:600;text-decoration:none;padding:7px 13px;border-radius:99px;white-space:nowrap}
 .lead-asset.in .la-wa{animation:laWa 2s ease-in-out infinite}
-@keyframes laWa{0%,100%{box-shadow:0 0 0 0 rgba(37,211,102,.5)}50%{box-shadow:0 0 0 8px rgba(37,211,102,0)}}
+@keyframes laWa{0%,100%{box-shadow:0 0 0 0 rgba(79,107,127,.45)}50%{box-shadow:0 0 0 8px rgba(79,107,127,0)}}
 .la-thumb{position:relative;margin:18px 0;border-radius:16px;height:150px;perspective:1000px}
 .la-flip{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .8s var(--ease)}
 .la-flip.flipped{transform:rotateY(180deg)}

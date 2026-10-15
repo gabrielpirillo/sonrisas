@@ -4,7 +4,7 @@
    cada escena corre en bucle de 7s, escalonada por paso (--i).
    ============================================================ */
 
-.hiw { --hiw-cycle: 7s; --hiw-green: #2f9e6e; }
+.hiw { --hiw-cycle: 7s; --hiw-green: var(--blue-deep); }
 
 /* ---------- Riel de progreso ---------- */
 .hiw-rail {
@@ -95,9 +95,9 @@
   background: var(--bg-soft);
 }
 .hiw-dark .hiw-chip { color: rgba(255, 255, 255, 0.8); border-color: rgba(255, 255, 255, 0.14); background: rgba(255, 255, 255, 0.06); }
-.hiw-chip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hiw-green); box-shadow: 0 0 0 0 rgba(47, 158, 110, 0.5); }
+.hiw-chip-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--hiw-green); box-shadow: 0 0 0 0 rgba(79, 107, 127, 0.5); }
 .hiw-on .hiw-chip-dot { animation: hiwPing 2.2s ease-out infinite; animation-delay: calc(var(--i) * 0.4s); }
-@keyframes hiwPing { 0% { box-shadow: 0 0 0 0 rgba(47, 158, 110, 0.5); } 70%, 100% { box-shadow: 0 0 0 7px rgba(47, 158, 110, 0); } }
+@keyframes hiwPing { 0% { box-shadow: 0 0 0 0 rgba(79, 107, 127, 0.5); } 70%, 100% { box-shadow: 0 0 0 7px rgba(79, 107, 127, 0); } }
 
 /* Todas las escenas: animaciones pausadas hasta que la sección entra en pantalla */
 .hiw [class*="hiw-"] { animation-play-state: paused; }
@@ -205,7 +205,7 @@
 }
 .hiw-st { grid-area: 1 / 1; display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
 .hiw-st-a { animation: hiwStA var(--hiw-cycle) infinite; animation-delay: 0.4s; }
-.hiw-st-b { opacity: 0; color: #9be3c0; animation: hiwStB var(--hiw-cycle) infinite; animation-delay: 0.4s; }
+.hiw-st-b { opacity: 0; color: #b9cfdd; animation: hiwStB var(--hiw-cycle) infinite; animation-delay: 0.4s; }
 @keyframes hiwStA { 0%, 50% { opacity: 1; } 54%, 96% { opacity: 0; } 100% { opacity: 1; } }
 @keyframes hiwStB { 0%, 51% { opacity: 0; } 55%, 92% { opacity: 1; } 96%, 100% { opacity: 0; } }
 .hiw-spin { width: 9px; height: 9px; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, 0.3); border-top-color: #fff; animation: spin 0.8s linear infinite; }
@@ -222,7 +222,7 @@
   display: flex; flex-direction: column; gap: 7px;
 }
 .hiw-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 0 2px 3px; }
-.hiw-count { font-size: 10px; font-weight: 600; color: var(--hiw-green); background: rgba(47, 158, 110, 0.1); padding: 3px 8px; border-radius: 99px; }
+.hiw-count { font-size: 10px; font-weight: 600; color: var(--hiw-green); background: rgba(79, 107, 127, 0.1); padding: 3px 8px; border-radius: 99px; }
 .hiw-lead { display: flex; align-items: center; gap: 9px; padding: 8px 9px; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
 .hiw-av { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 9.5px; font-weight: 600; color: var(--ink); background: #b9c4c1; }
 .hiw-lead-txt { display: flex; flex-direction: column; min-width: 0; flex: 1; }
@@ -231,8 +231,8 @@
 .hiw-lead-thumb { width: 26px; height: 26px; border-radius: 6px; object-fit: cover; object-position: center 40%; flex-shrink: 0; }
 .hiw-new { font-size: 8px; color: #fff; background: var(--hiw-green); padding: 3px 6px; border-radius: 99px; flex-shrink: 0; }
 .hiw-lead-new {
-  border-color: rgba(47, 158, 110, 0.45);
-  box-shadow: 0 0 0 3px rgba(47, 158, 110, 0.1);
+  border-color: rgba(79, 107, 127, 0.45);
+  box-shadow: 0 0 0 3px rgba(79, 107, 127, 0.1);
   opacity: 0; transform: translateY(-14px) scale(0.96);
   animation: hiwLead var(--hiw-cycle) cubic-bezier(.22, 1, .36, 1) infinite; animation-delay: 0.8s;
 }

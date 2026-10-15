@@ -10,6 +10,10 @@
   --blue-line:   #d3dee6;   /* bordes en secciones azules */
   --blue-soft:   #e7eef3;   /* fondo de sección */
   --blue-tint:   #f2f6f9;   /* fondo de sección más leve */
+  --blue-light:  #b9cfdd;   /* acento sobre fondos oscuros */
+  --navy-1:      #2a3a47;   /* bandas oscuras (derivadas del azul acero) */
+  --navy-2:      #1b2630;
+  --navy-3:      #131b22;
 }
 
 /* Botón azul */
@@ -46,3 +50,16 @@
 
 /* Testimonios: estrellas y métricas con acento azul */
 .accent-blue.bb-section .bb-dots { background-image: radial-gradient(var(--blue) 1.1px, transparent 1.2px); }
+
+/* Banda oscura navy (vídeo): contraste fuerte entre secciones claras */
+.tone-dark { position: relative; overflow: hidden; color: #fff; background: radial-gradient(90% 140% at 12% 0%, var(--navy-1) 0%, var(--navy-2) 55%, var(--navy-3) 100%); }
+.tone-dark::after { content: ""; position: absolute; right: -10%; top: -30%; width: 55%; height: 160%; background: radial-gradient(circle, rgba(150, 190, 215, 0.16), transparent 70%); pointer-events: none; }
+.tone-dark > * { position: relative; z-index: 1; }
+.tone-dark .display { color: #fff; }
+.tone-dark .dim { color: var(--blue-light); }
+.tone-dark .lead { color: rgba(255, 255, 255, 0.72); }
+.tone-dark .mono-pill { background: rgba(255, 255, 255, 0.06); border-color: rgba(255, 255, 255, 0.18); color: rgba(255, 255, 255, 0.8); }
+.tone-dark .video-grid > div:last-child { border-color: rgba(255, 255, 255, 0.12) !important; box-shadow: 0 40px 90px -40px rgba(0, 0, 0, 0.6); }
+
+/* CTA final: duotono azul sobre la foto (neutraliza rojos cálidos) */
+.cta-duotone { position: absolute; inset: 0; background: var(--blue-deep); mix-blend-mode: color; opacity: 0.85; pointer-events: none; }

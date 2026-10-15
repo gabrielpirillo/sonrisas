@@ -652,7 +652,7 @@ function FAQ() {
   const [open, setOpen] = useState(0);
   const items = [
     ["¿Cómo se integra en la web de mi clínica?",
-     "Se añade con una sola línea de código. No necesitas tocar el diseño de tu web ni contratar a un desarrollador: lo pegas donde quieras, nosotros te ayudamos y queda funcionando en minutos, adaptado a móvil y escritorio."],
+     "No tienes que programar nada. Nosotros lo dejamos activo en tu web, con tu logo y tus colores, sin tocar su diseño ni contratar a un desarrollador. Queda funcionando en minutos y adaptado a móvil y escritorio."],
     ["¿Los datos de los pacientes están seguros y cumplen el RGPD?",
      "Sí. La captura incluye consentimiento explícito y confirmación de mayoría de edad, y las imágenes y datos se procesan cifrados. El paciente acepta términos y privacidad antes de generar su simulación, de modo que tu clínica capta leads de forma conforme a la normativa."],
     ["¿Qué recibe mi clínica por cada visitante que usa el widget?",
@@ -852,8 +852,9 @@ function CTAFooter({ onStart }) {
     <>
       <section id="precios" ref={ref} className={"cta-final" + (inview ? " in" : "")} style={{ position: "relative", padding: "150px 0", textAlign: "center", overflow: "hidden" }}>
         <img ref={imgRef} src={RES.r26_cta_smile_jpg} alt="Sonrisa tras tratamiento dental" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center 35%", transform: "scale(1.15)", willChange: "transform" }} />
-        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(16,20,18,0.35) 0%, rgba(16,20,18,0.55) 55%, rgba(16,20,18,0.82) 100%)" }} />
-        <div style={{ position: "absolute", inset: 0, boxShadow: "inset 0 0 200px 40px rgba(10,14,12,0.55)", pointerEvents: "none" }} />
+        <div className="cta-duotone" aria-hidden="true" />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg, rgba(27,38,48,0.35) 0%, rgba(27,38,48,0.55) 55%, rgba(19,27,34,0.88) 100%)" }} />
+        <div style={{ position: "absolute", inset: 0, boxShadow: "inset 0 0 200px 40px rgba(12,18,24,0.55)", pointerEvents: "none" }} />
         <div className="wrap cta-final-body" style={{ position: "relative", zIndex: 1 }}>
           <h2 className="display" style={{ fontSize: "clamp(46px, 6.4vw, 88px)", fontWeight: 700, color: "#fff", letterSpacing: "-0.02em", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "center", gap: "0.26em", lineHeight: 1.05 }}>
             <span>Lleva</span>
@@ -861,7 +862,7 @@ function CTAFooter({ onStart }) {
             <span style={{ color: "rgba(255,255,255,0.6)" }}>a tu clínica</span>
           </h2>
           <p className="lead" style={{ fontSize: 19, margin: "22px auto 40px", maxWidth: 520, color: "rgba(255,255,255,0.85)" }}>
-            Solicita una demo, intégralo en tu web y generá más agendamientos de turnos.
+            Actívalo en tu web y convierte cada visita en una cita agendada.
           </p>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", alignItems: "center", flexWrap: "wrap" }}>
             <button className="btn btn-white cta-glow" style={{ padding: "18px 42px", fontSize: 17 }} onClick={onStart}>Quiero probarlo</button>
@@ -869,7 +870,7 @@ function CTAFooter({ onStart }) {
           <p className="mono" style={{ fontSize: 11.5, letterSpacing: "0.1em", color: "rgba(255,255,255,0.6)", marginTop: 26 }}>Cada visitante, una oportunidad de agendar</p>
         </div>
       </section>
-      <footer style={{ background: "var(--ink)", color: "rgba(255,255,255,0.86)", padding: "70px 0 50px" }}>
+      <footer style={{ background: "var(--navy-3)", color: "rgba(255,255,255,0.86)", padding: "70px 0 50px" }}>
         <div className="wrap" style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 40 }}>
           <div style={{ maxWidth: 300 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
@@ -959,7 +960,7 @@ function Transformations() {
 /* ---------------- Vídeo en movimiento (feature aparte) ---------------- */
 function VideoFeature({ onStart }) {
   return (
-    <section id="video" style={{ padding: "100px 0" }}>
+    <section id="video" className="tone-dark" style={{ padding: "110px 0" }}>
       <div className="wrap video-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.15fr", gap: 50, alignItems: "center" }}>
         <div>
           <div style={{ marginBottom: 22 }}><MonoPill>NUEVO · VÍDEO REALISTA</MonoPill></div>
@@ -969,7 +970,7 @@ function VideoFeature({ onStart }) {
           <p className="lead" style={{ fontSize: 17, margin: "20px 0 34px", maxWidth: 420 }}>
             Además de la simulación estática, tu paciente puede ver su nueva sonrisa en un vídeo realista sonriendo que refuerza el deseo de agendar.
           </p>
-          <button className="btn btn-primary" onClick={onStart}>Quiero probarlo</button>
+          <button className="btn btn-white" onClick={onStart}>Quiero probarlo</button>
         </div>
         <div style={{ position: "relative", borderRadius: 22, overflow: "hidden", border: "1px solid var(--line)", background: "var(--photo)", aspectRatio: "16 / 10" }}>
           <video src="https://res.cloudinary.com/dhzmkxbek/video/upload/v1781638188/0614_2_upxmh1.mp4" autoPlay loop muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}></video>
