@@ -18,14 +18,12 @@ export function PageHead({
     action?: ReactNode;
 }) {
     return (
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 16, flexWrap: "wrap" }}>
-            <div>
+        <div className="page-head">
+            <div style={{ minWidth: 0 }}>
                 {eyebrow && (
-                    <span className="mono" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 9.5, color: "var(--blue-deep)", padding: "6px 12px", borderRadius: 99, border: "1px solid var(--blue-line)", background: "rgba(255,255,255,0.7)", marginBottom: 14 }}>
-                        {eyebrow}
-                    </span>
+                    <span className="mono page-eyebrow">{eyebrow}</span>
                 )}
-                <h1 className="display" style={{ fontSize: 38 }}>
+                <h1 className="display page-title">
                     {title}
                     {accent && <> <span className="dim">{accent}</span></>}
                 </h1>

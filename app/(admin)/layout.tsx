@@ -5,7 +5,7 @@ import "./qoves-admin.css";
 import Link from "next/link";
 import {
     LayoutGrid, Users, SlidersHorizontal, LogOut, Menu,
-    Coins, Building2, ShieldCheck, CircleUser,
+    Coins, Building2, ShieldCheck, CircleUser, ChevronRight,
 } from "lucide-react";
 import { authClient, useListOrganizations, useActiveOrganization } from "@/lib/auth/client";
 import { useRouter, usePathname } from "next/navigation";
@@ -194,6 +194,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </div>
                 )}
             </nav>
+
+            {/* Acceso directo al widget (solo quien puede configurarlo) */}
+            {role === "admin" && !impersonating && (
+                <Link href="/administracion/settings" onClick={() => setOpen(false)} className="side-widget">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/brand/panel/widget-thumb.jpg" alt="" />
+                    <div style={{ minWidth: 0 }}>
+                        <strong>Widget de simulación</strong>
+                        <span>Código e instalación</span>
+                    </div>
+                    <ChevronRight size={16} strokeWidth={1.8} />
+                </Link>
+            )}
 
             {/* User foot */}
             <div className="user-foot">

@@ -4,15 +4,15 @@
    Sparkline drawn with visx + animated with motion; the headline value
    counts up via NumberFlow. */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { LinePath } from "@visx/shape";
 import { curveMonotoneX } from "@visx/curve";
 import { scaleLinear } from "@visx/scale";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import NumberFlow, { type Format } from "@number-flow/react";
 import { C } from "@/lib/brand";
 
-function Sparkline({ data, w = 96, h = 30, color }: { data: number[]; w?: number; h?: number; color: string }) {
+function Sparkline({ data, w = 96, h = 30, color, still }: { data: number[]; w?: number; h?: number; color: string; still?: boolean }) {
     const safe = data && data.length > 1 ? data : [0, 0];
     const min = Math.min(...safe);
     const max = Math.max(...safe);
@@ -38,7 +38,7 @@ function Sparkline({ data, w = 96, h = 30, color }: { data: number[]; w?: number
                         d={`${path(safe) || ""} L ${w} ${h} L 0 ${h} Z`}
                         fill={`url(#spark-${color.replace('#', '')})`}
                         stroke="none"
-                        initial={{ opacity: 0 }}
+                        initial={still ? false : { opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ duration: 0.8, delay: 0.5 }}
                     />
@@ -58,7 +58,7 @@ function Sparkline({ data, w = 96, h = 30, color }: { data: number[]; w?: number
                         strokeWidth={1.8}
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        initial={{ pathLength: 0 }}
+                        initial={still ? false : { pathLength: 0 }}
                         animate={{ pathLength: 1 }}
                         transition={{ duration: 1, ease: "easeInOut" }}
                     />
@@ -69,7 +69,7 @@ function Sparkline({ data, w = 96, h = 30, color }: { data: number[]; w?: number
                 cy={yScale(safe[safe.length - 1]) ?? 0}
                 r={2.4}
                 fill={color}
-                initial={{ scale: 0 }}
+                initial={still ? false : { scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.9, duration: 0.25 }}
             />
@@ -86,6 +86,9 @@ export function KpiCard({
     suffix,
     format,
     index = 0,
+    icon,
+    tone = "light",
+    hint = "VS MES ANTERIOR",
 }: {
     label: string;
     value: string | number;
@@ -95,7 +98,14 @@ export function KpiCard({
     suffix?: string;
     format?: Format;
     index?: number;
+    /** Icono (elemento lucide ya renderizado: <Users size={17} />) que identifica la métrica. */
+    icon?: ReactNode;
+    /** "navy" invierte la tarjeta para dar contraste a la métrica clave. */
+    tone?: "light" | "navy";
+    hint?: string;
 }) {
+    const reduce = useReducedMotion();
+    const navy = tone === "navy";
     const numeric = typeof value === "number";
     const [display, setDisplay] = useState(numeric ? 0 : 0);
 
@@ -105,36 +115,36 @@ export function KpiCard({
         return () => clearTimeout(t);
     }, [numeric, value, index]);
 
+    const sparkColor = navy ? C.blueLight : up ? C.blueDeep : C.danger;
+
     return (
         <motion.div
-            className="card"
-            style={{ padding: 22, display: "flex", flexDirection: "column", gap: 16, minHeight: 140 }}
-            whileHover={{ y: -3 }}
-            initial={{ opacity: 0, y: 12 }}
+            className={navy ? "card card-navy kpi-card kpi-card-navy" : "card kpi-card"}
+            whileHover={reduce ? undefined : { y: -3 }}
+            initial={reduce ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
         >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <span className="mono" style={{ fontSize: 9 }}>{label}</span>
-                <Sparkline data={spark} color={up ? C.blueDeep : C.danger} />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                    {icon && <span className="kpi-ic" aria-hidden="true">{icon}</span>}
+                    <span className="mono kpi-label">{label}</span>
+                </div>
+                <Sparkline data={spark} color={sparkColor} still={!!reduce} w={78} h={28} />
             </div>
             <div>
-                <div style={{ fontSize: 40, fontWeight: 600, letterSpacing: "-0.035em", lineHeight: 1, color: C.ink }}>
+                <div className="kpi-value">
                     {numeric ? (
                         <NumberFlow value={display} suffix={suffix} format={format} locales="es-ES" />
                     ) : (
                         value
                     )}
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
-                    <span style={{
-                        fontSize: 11.5, fontWeight: 600, padding: "3px 8px", borderRadius: 99,
-                        color: up ? C.blueInk : "#8f4f47",
-                        background: up ? C.blueSoft : C.dangerSoft,
-                    }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 7, marginTop: 10, flexWrap: "wrap" }}>
+                    <span className={"kpi-delta" + (up ? " kpi-delta-up" : " kpi-delta-down")}>
                         {up ? "↑" : "↓"} {delta}
                     </span>
-                    <span className="mono" style={{ fontSize: 9 }}>VS MES ANTERIOR</span>
+                    <span className="mono" style={{ fontSize: 9 }}>{hint}</span>
                 </div>
             </div>
         </motion.div>
