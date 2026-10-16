@@ -1,0 +1,321 @@
+/* ============================================================
+   Smile Forward · Widget — Qoves design language (scoped)
+   Mobile: Opción 1 (stepper guiado). Desktop: Datos + Foto juntos.
+   Everything is scoped under .qoves-widget so the rest of the app
+   (admin / landing) keeps its own styles.
+   ============================================================ */
+
+@import url('https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+
+.qoves-widget {
+  /* ---- Color: white / ink / sage-gray ramp ---- */
+  --bg:            #ffffff;
+  --bg-soft:       #f5f6f6;
+  --bg-tint:       #eef1f1;
+  --photo:         #aeb9bb;
+  --photo-2:       #c3cccd;
+
+  --ink:           #1c1e1d;
+  --ink-2:         #565b59;
+  --ink-3:         #8a8f8c;
+  --sage:          #97a39e;
+  --sage-deep:     #7e8c86;
+
+  --line:          #e8eae8;
+  --line-strong:   #d6d9d6;
+
+  --accent:        #8f9d97;
+
+  --font-sans: "General Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --r-pill: 999px;
+  --r-card: 18px;
+
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  font-family: var(--font-sans);
+  color: var(--ink);
+  background: #fff;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+.qoves-widget *,
+.qoves-widget *::before,
+.qoves-widget *::after { box-sizing: border-box; }
+
+/* ---------- Mono technical label ---------- */
+.qoves-widget .mono {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 500;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+.qoves-widget .mono-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--bg);
+  white-space: nowrap;
+}
+.qoves-widget .dim { color: var(--sage); }
+
+/* ---------- Buttons ---------- */
+.qoves-widget .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  border-radius: var(--r-pill);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.25s var(--ease);
+  white-space: nowrap;
+  text-decoration: none;
+  line-height: 1;
+}
+.qoves-widget .btn-primary { background: var(--ink); color: #fff; padding: 16px 30px; }
+.qoves-widget .btn-primary:not(:disabled):hover { background: #000; transform: translateY(-1px); }
+.qoves-widget .btn-primary:not(:disabled):active { transform: scale(0.985); }
+.qoves-widget .btn-ghost {
+  background: rgba(255,255,255,0.6);
+  color: var(--ink);
+  border-color: var(--line-strong);
+  padding: 16px 30px;
+  backdrop-filter: blur(8px);
+}
+.qoves-widget .btn-ghost:hover { background: #fff; border-color: var(--ink); }
+
+/* ---------- Inputs ---------- */
+.qoves-widget .field {
+  width: 100%;
+  height: 52px;
+  border: 1px solid var(--line);
+  background: var(--bg-soft);
+  border-radius: var(--r-pill);
+  padding: 0 22px;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--ink);
+  outline: none;
+  transition: all 0.2s var(--ease);
+}
+.qoves-widget .field::placeholder { color: var(--ink-3); }
+.qoves-widget .field:focus { border-color: var(--ink); background: #fff; }
+
+/* ============================================================
+   Widget shell
+   ============================================================ */
+.qoves-widget {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  width: 100%;
+}
+.qoves-widget .wf-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  flex-shrink: 0;
+}
+.qoves-widget .wf-header-left { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.qoves-widget .wf-brand { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; white-space: nowrap; }
+.qoves-widget .logo-mark {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--ink); flex-shrink: 0;
+}
+.qoves-widget .wf-back {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 1px solid var(--line); background: #fff; cursor: pointer;
+  display: grid; place-items: center; color: var(--ink-2); flex-shrink: 0;
+}
+.qoves-widget .wf-back:hover { border-color: var(--ink); color: var(--ink); }
+.qoves-widget .wf-online {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.16em; color: var(--ink-3);
+  white-space: nowrap;
+}
+.qoves-widget .wf-online-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--sage);
+  animation: wfpulse 1.6s ease-in-out infinite;
+}
+@keyframes wfpulse { 50% { opacity: 0.35; } }
+
+/* ---------- Stepper ---------- */
+.qoves-widget .stepper { display: flex; padding: 6px 22px 18px; }
+.qoves-widget .stepper-node { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
+.qoves-widget .stepper-dot {
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 1px solid var(--line-strong); background: #fff;
+  display: grid; place-items: center; font-family: var(--font-mono);
+  font-size: 11px; color: var(--ink-3); z-index: 2; transition: all .25s var(--ease);
+}
+.qoves-widget .stepper-lbl { font-size: 10px; color: var(--ink-3); margin-top: 7px; letter-spacing: -0.01em; text-align: center; }
+.qoves-widget .stepper-line { position: absolute; top: 14px; left: 50%; width: 100%; height: 1px; background: var(--line-strong); z-index: 1; }
+.qoves-widget .stepper-node.done .stepper-dot { background: var(--ink); border-color: var(--ink); color: #fff; }
+.qoves-widget .stepper-node.active .stepper-dot { border-color: var(--ink); color: var(--ink); box-shadow: 0 0 0 4px var(--bg-soft); }
+.qoves-widget .stepper-node.active .stepper-lbl,
+.qoves-widget .stepper-node.done .stepper-lbl { color: var(--ink); font-weight: 500; }
+
+/* desktop stepper lives inside header, hidden on mobile */
+.qoves-widget .stepper-desktop { display: none; }
+
+/* ============================================================
+   Body / steps
+   ============================================================ */
+.qoves-widget .wf-body { flex: 1; display: flex; flex-direction: column; padding: 6px 22px 22px; }
+.qoves-widget .wf-intro { margin-bottom: 16px; }
+.qoves-widget .wf-h2 { font-family: var(--font-sans); font-size: 26px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.05; margin: 0; color: var(--ink); }
+.qoves-widget .wf-h2 .dim { color: var(--sage); }
+.qoves-widget .wf-sub { font-size: 14px; color: var(--ink-2); line-height: 1.45; margin: 8px 0 0; }
+.qoves-widget .wf-fields { display: flex; flex-direction: column; gap: 12px; }
+.qoves-widget .wf-field { height: 50px; font-size: 15px; }
+.qoves-widget .wf-consent { display: flex; gap: 11px; align-items: center; font-size: 13px; color: var(--ink-2); cursor: pointer; padding: 3px 0; line-height: 1.4; }
+.qoves-widget .wf-consent u { cursor: pointer; }
+.qoves-widget .wf-cta { width: 100%; margin-top: 20px; padding: 16px 24px; }
+.qoves-widget .wf-foot { font-size: 8px; text-align: center; margin-top: 14px; letter-spacing: 0.16em; }
+.qoves-widget .wf-check {
+  width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%;
+  display: grid; place-items: center; transition: all .2s var(--ease);
+}
+
+/* ---------- Photo step ---------- */
+.qoves-widget .wf-photo .wf-intro { margin-bottom: 14px; }
+.qoves-widget .photo-frame {
+  position: relative; width: 100%; height: 396px;
+  border-radius: 18px; overflow: hidden; border: 1px solid var(--line);
+  background: linear-gradient(150deg,#c8d0d1,#aab6b8);
+}
+.qoves-widget .photo-frame img.pf-preview { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.qoves-widget .cam-tick { position: absolute; width: 14px; height: 14px; border: 1.5px solid rgba(255,255,255,0.8); z-index: 5; pointer-events: none; }
+.qoves-widget .cam-tick[data-c="0"] { top: 14px; left: 14px; border-right: none; border-bottom: none; }
+.qoves-widget .cam-tick[data-c="1"] { top: 14px; right: 14px; border-left: none; border-bottom: none; }
+.qoves-widget .cam-tick[data-c="2"] { bottom: 14px; left: 14px; border-right: none; border-top: none; }
+.qoves-widget .cam-tick[data-c="3"] { bottom: 14px; right: 14px; border-left: none; border-top: none; }
+
+.qoves-widget .pf-chooser {
+  position: absolute; inset: 0; z-index: 5;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; text-align: center; padding: 26px;
+}
+.qoves-widget .pf-ic { width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,0.85); display: grid; place-items: center; color: var(--ink); margin-bottom: 6px; }
+.qoves-widget .pf-choose-txt { font-size: 19px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
+.qoves-widget .pf-choose-sub { font-size: 13px; color: var(--ink); opacity: 0.68; margin-bottom: 12px; }
+.qoves-widget .pf-btns { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 248px; }
+.qoves-widget .pf-btn {
+  display: flex; align-items: center; justify-content: center; gap: 9px;
+  padding: 13px 18px; border-radius: 99px;
+  border: 1px solid rgba(255,255,255,0.75); background: rgba(255,255,255,0.94);
+  color: var(--ink); font-family: var(--font-sans); font-size: 14.5px; font-weight: 500;
+  cursor: pointer; transition: all .2s var(--ease);
+}
+.qoves-widget .pf-btn:hover { background: #fff; transform: translateY(-1px); }
+.qoves-widget .pf-btn-primary { background: var(--ink); color: #fff; border-color: var(--ink); }
+.qoves-widget .pf-btn-primary:hover { background: #000; }
+
+.qoves-widget .pf-change {
+  position: absolute; top: 13px; left: 13px; z-index: 7;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 12px 6px 9px; border-radius: 99px;
+  background: rgba(20,24,23,0.5); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  color: #fff; font-family: var(--font-sans); font-size: 11.5px; border: none; cursor: pointer;
+}
+.qoves-widget .pf-change:hover { background: rgba(20,24,23,0.72); }
+
+.qoves-widget .pf-actions { position: absolute; bottom: 14px; left: 14px; right: 14px; z-index: 8; display: flex; gap: 11px; align-items: center; }
+.qoves-widget .pf-redo {
+  width: 50px; height: 50px; border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.75); background: rgba(255,255,255,0.94);
+  color: var(--ink); display: grid; place-items: center; cursor: pointer; flex-shrink: 0;
+}
+.qoves-widget .pf-redo:hover { background: #fff; }
+.qoves-widget .pf-actions .btn { flex: 1; }
+.qoves-widget .dk-shot-ok { display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 99px; background: rgba(28,30,29,0.86); color: #fff; font-size: 13px; font-weight: 500; }
+.qoves-widget .dk-shot-ok svg { color: #fff; }
+
+/* live camera (real SelfieCaptureFlow) mounted inside the frame */
+.qoves-widget .pf-camera { position: absolute; inset: 0; z-index: 6; }
+.qoves-widget .pf-camera > div { min-height: 0 !important; height: 100% !important; border-radius: 0 !important; }
+
+/* ---------- Result ---------- */
+.qoves-widget .wf-result { height: 300px; }
+.qoves-widget .wf-result-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.qoves-widget .wf-result-actions .btn-ghost { background: #fff; width: 100%; padding: 15px 20px; }
+
+/* ---------- Success ---------- */
+.qoves-widget .wf-success { align-items: center; justify-content: center; gap: 18px; text-align: center; padding-top: 48px; flex: 1; }
+.qoves-widget .wf-success-mark { width: 64px; height: 64px; border-radius: 50%; background: var(--ink); display: grid; place-items: center; color: #fff; }
+
+/* ============================================================
+   Processing — escáner inmersivo
+   ============================================================ */
+.qoves-widget .proc-a { padding-top: 4px; }
+.qoves-widget .proc-a-stage { position: relative; width: 100%; height: 440px; border-radius: 20px; overflow: hidden; background: linear-gradient(155deg,#cdd5d6,#a4b1b3); }
+.qoves-widget .proc-a-stage > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.85; }
+.qoves-widget .proc-a-bar { position: absolute; left: 0; right: 0; bottom: 0; padding: 50px 20px 20px; background: linear-gradient(180deg,transparent,rgba(20,24,23,0.55)); z-index: 6; }
+.qoves-widget .proc-track { height: 3px; background: rgba(255,255,255,0.25); border-radius: 99px; }
+.qoves-widget .proc-track > div { height: 100%; background: #fff; border-radius: 99px; transition: width .8s var(--ease); }
+.qoves-widget .proc-phrase { font-size: 17px; font-weight: 500; letter-spacing: -0.02em; text-align: center; color: var(--ink); margin-top: 22px; animation: fadeUp .5s var(--ease); }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.qoves-widget .proc-scanline {
+  position: absolute; left: 0; right: 0; height: 2px; top: 50%; z-index: 4;
+  background: linear-gradient(90deg,transparent,rgba(255,255,255,0.95),transparent);
+  box-shadow: 0 0 18px 3px rgba(255,255,255,0.55);
+  animation: procScan 2s var(--ease) infinite alternate;
+}
+@keyframes procScan { 0% { top: 6%; } 100% { top: 94%; } }
+.qoves-widget .proc-tag {
+  position: absolute; z-index: 5; font-family: var(--font-mono); font-size: 8.5px;
+  letter-spacing: 0.12em; color: #fff; background: rgba(20,24,23,0.42);
+  border: 1px solid rgba(255,255,255,0.4); padding: 3px 8px; border-radius: 99px; white-space: nowrap;
+}
+.qoves-widget .proc-landmarks { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 4; }
+
+/* ============================================================
+   Desktop (≥ 768px): Datos + Foto en un solo paso
+   ============================================================ */
+@media (min-width: 768px) {
+  .qoves-widget .wf-header { padding: 18px 30px; border-bottom: 1px solid var(--line); }
+  .qoves-widget .wf-brand { font-size: 18px; }
+  .qoves-widget .logo-mark { width: 32px; height: 32px; }
+
+  /* show desktop stepper inside header, hide the mobile row */
+  .qoves-widget .stepper-desktop { display: flex; flex: 0 1 460px; padding: 0; }
+  .qoves-widget .stepper-desktop .stepper-node { flex: 1; }
+  .qoves-widget .stepper-mobile { display: none; }
+
+  /* intake grid */
+  .qoves-widget .dk-intake { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0; }
+  .qoves-widget .dk-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; padding: 30px 40px 8px; }
+  .qoves-widget .dk-col { display: flex; flex-direction: column; min-height: 0; }
+  .qoves-widget .dk-col .photo-frame { flex: 1; height: auto; min-height: 320px; }
+  .qoves-widget .dk-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 40px; border-top: 1px solid var(--line); }
+
+  /* processing centered, wider */
+  .qoves-widget .dk-proc { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .qoves-widget .dk-proc .wf-body { max-width: 520px; padding: 0; width: 100%; }
+  .qoves-widget .dk-proc .proc-a-stage { height: 380px; }
+
+  /* result 2-col */
+  .qoves-widget .dk-result { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 44px; padding: 30px 40px; align-items: center; }
+  .qoves-widget .dk-result-media { height: 520px; max-height: 100%; }
+  .qoves-widget .dk-result-info { display: flex; flex-direction: column; }
+  .qoves-widget .dk-result-info .wf-h2 { font-size: 38px; }
+  .qoves-widget .dk-result-actions { display: flex; flex-direction: column; gap: 10px; max-width: 360px; }
+  .qoves-widget .dk-result-actions .btn-ghost { background: #fff; }
+
+  .qoves-widget .wf-success { padding-top: 0; }
+  .qoves-widget .wf-success .wf-h2 { font-size: 38px; }
+}

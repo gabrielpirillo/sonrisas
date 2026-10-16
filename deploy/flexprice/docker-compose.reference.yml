@@ -1,0 +1,93 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Flexprice — docker-compose de REFERENCIA (esqueleto orientativo)
+#
+# NO es el compose oficial. Sirve para entender las dependencias entre servicios
+# al desplegar en Easypanel. Antes de usar en serio, contrástalo con el
+# docker-compose.yml del repo oficial (https://github.com/flexprice/flexprice),
+# que mantiene los nombres de imagen, variables y comandos actualizados.
+#
+# Cada servicio aquí se traduce a un "Service" en un proyecto Easypanel aislado.
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: flexprice
+      POSTGRES_PASSWORD: ${FLEXPRICE_PG_PASSWORD}
+      POSTGRES_DB: flexprice
+    volumes:
+      - flexprice_pg:/var/lib/postgresql/data
+
+  kafka:
+    image: bitnami/kafka:latest
+    environment:
+      # KRaft mode (sin Zookeeper)
+      KAFKA_CFG_NODE_ID: "1"
+      KAFKA_CFG_PROCESS_ROLES: "broker,controller"
+      KAFKA_CFG_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9093"
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+    volumes:
+      - flexprice_kafka:/bitnami/kafka
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    environment:
+      CLICKHOUSE_USER: flexprice
+      CLICKHOUSE_PASSWORD: ${FLEXPRICE_CH_PASSWORD}
+      CLICKHOUSE_DB: flexprice
+    volumes:
+      - flexprice_ch:/var/lib/clickhouse
+
+  temporal:
+    image: temporalio/auto-setup:latest
+    environment:
+      DB: postgres12
+      DB_PORT: "5432"
+      POSTGRES_USER: flexprice
+      POSTGRES_PWD: ${FLEXPRICE_PG_PASSWORD}
+      POSTGRES_SEEDS: postgres
+    depends_on:
+      - postgres
+
+  api:
+    image: flexprice/flexprice:latest
+    # command: ajusta al comando del API server del repo oficial.
+    ports:
+      - "8080:8080"
+    environment:
+      # Nombres exactos según .env.example del repo de Flexprice:
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: flexprice
+      POSTGRES_PASSWORD: ${FLEXPRICE_PG_PASSWORD}
+      POSTGRES_DB: flexprice
+      KAFKA_BROKERS: kafka:9092
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_USER: flexprice
+      CLICKHOUSE_PASSWORD: ${FLEXPRICE_CH_PASSWORD}
+      TEMPORAL_HOST: temporal:7233
+    depends_on:
+      - postgres
+      - kafka
+      - clickhouse
+      - temporal
+
+  worker:
+    image: flexprice/flexprice:latest
+    # command: ajusta al comando del worker (Temporal / consumidor de Kafka).
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: flexprice
+      POSTGRES_PASSWORD: ${FLEXPRICE_PG_PASSWORD}
+      POSTGRES_DB: flexprice
+      KAFKA_BROKERS: kafka:9092
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_USER: flexprice
+      CLICKHOUSE_PASSWORD: ${FLEXPRICE_CH_PASSWORD}
+      TEMPORAL_HOST: temporal:7233
+    depends_on:
+      - api
+
+volumes:
+  flexprice_pg:
+  flexprice_kafka:
+  flexprice_ch:

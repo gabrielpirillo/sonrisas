@@ -1,0 +1,394 @@
+/* ============================================================
+   Qoves admin design language — Version 1 · Rail claro editorial
+   Ported from the Claude Design handoff (Panel Admin — 3 versiones).
+   Everything is scoped under `.qoves-admin` so it never leaks into
+   the rest of the app (landing, widget, shadcn theme tokens).
+   ============================================================ */
+
+@import url("https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap");
+
+.qoves-admin {
+  /* ---- Color: white / ink / sage-gray ramp ---- */
+  --ink: #1c1e1d;
+  --ink-2: #565b59;
+  --ink-3: #8a8f8c;
+  --sage: #97a39e;
+  --bg-soft: #f5f6f6;
+  --photo: #aeb9bb;
+  --line: #e8eae8;
+  --line-strong: #d6d9d6;
+  --accent: #8f9d97;
+
+  /* ---- Type ---- */
+  --font-sans: "General Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* ---- Radii / motion ---- */
+  --r-card: 18px;
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+
+  font-family: var(--font-sans);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.qoves-admin *,
+.qoves-admin *::before,
+.qoves-admin *::after {
+  box-sizing: border-box;
+}
+
+/* ---------- Mono technical label ---------- */
+.qoves-admin .mono {
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 500;
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+/* ---------- Headlines / lead ---------- */
+.qoves-admin .display {
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.02;
+  color: var(--ink);
+  margin: 0;
+}
+.qoves-admin .lead {
+  font-weight: 400;
+  color: var(--ink-2);
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+/* ---------- Cards ---------- */
+.qoves-admin .card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  transition: all 0.3s var(--ease);
+}
+
+/* ---------- Buttons ---------- */
+.qoves-admin .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.25s var(--ease);
+  white-space: nowrap;
+  text-decoration: none;
+  line-height: 1;
+}
+.qoves-admin .btn-primary {
+  background: var(--ink);
+  color: #fff;
+  padding: 16px 30px;
+}
+.qoves-admin .btn-primary:hover { background: #000; transform: translateY(-1px); }
+.qoves-admin .btn-primary:active { transform: scale(0.985); }
+.qoves-admin .btn-primary:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+.qoves-admin .btn-ghost {
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--ink);
+  border-color: var(--line-strong);
+  padding: 16px 30px;
+  backdrop-filter: blur(8px);
+}
+.qoves-admin .btn-ghost:hover { background: #fff; border-color: var(--ink); }
+
+.qoves-admin .btn-white {
+  background: #fff;
+  color: var(--ink);
+  border-color: var(--line);
+  padding: 13px 24px;
+  box-shadow: 0 6px 20px -10px rgba(28, 30, 29, 0.25);
+}
+.qoves-admin .btn-white:hover { transform: translateY(-1px); box-shadow: 0 10px 26px -12px rgba(28, 30, 29, 0.35); }
+.qoves-admin .btn-white:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.qoves-admin .btn-sm { padding: 11px 20px; font-size: 14px; }
+
+/* ---------- Inputs ---------- */
+.qoves-admin .field {
+  width: 100%;
+  height: 52px;
+  border: 1px solid var(--line);
+  background: var(--bg-soft);
+  border-radius: 999px;
+  padding: 0 22px;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  color: var(--ink);
+  outline: none;
+  transition: all 0.2s var(--ease);
+}
+.qoves-admin .field::placeholder { color: var(--ink-3); }
+.qoves-admin .field:focus { border-color: var(--ink); background: #fff; }
+
+/* ============================================================
+   Shell
+   ============================================================ */
+.qoves-admin .main-scroll {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  background: linear-gradient(180deg, #f6f7f7, #eef1f1);
+}
+.qoves-admin .admin-page {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 40px 40px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+/* ---------- Sidebar (V1 · light editorial rail) ---------- */
+.qoves-admin .sidebar {
+  width: 266px;
+  flex-shrink: 0;
+  height: 100%;
+  background: #fff;
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+}
+.qoves-admin .clinic-switch {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: calc(100% - 28px);
+  height: auto;
+  margin: 16px 14px 10px;
+  padding: 12px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease);
+}
+.qoves-admin .clinic-switch:hover { border-color: var(--line-strong); }
+.qoves-admin .nav-scroll { flex: 1; padding: 8px 14px; overflow-y: auto; }
+.qoves-admin .nav-group { font-size: 9px; padding: 0 12px 8px; }
+.qoves-admin .navitem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 2px;
+  border: none;
+  background: transparent;
+  border-radius: 11px;
+  font-family: var(--font-sans);
+  font-size: 14.5px;
+  font-weight: 450;
+  letter-spacing: -0.01em;
+  color: var(--ink-2);
+  cursor: pointer;
+  position: relative;
+  text-decoration: none;
+  transition: background 0.18s var(--ease), color 0.18s var(--ease);
+}
+.qoves-admin .navitem:hover { background: var(--bg-soft); color: var(--ink); }
+.qoves-admin .navitem-on { background: var(--bg-soft); color: var(--ink); font-weight: 500; }
+.qoves-admin .navitem-on::before {
+  content: "";
+  position: absolute;
+  left: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 20px;
+  background: var(--accent);
+  border-radius: 99px;
+}
+.qoves-admin .nav-badge {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  background: var(--ink);
+  color: #fff;
+  padding: 2px 7px;
+  border-radius: 99px;
+}
+
+/* ---------- user foot ---------- */
+.qoves-admin .user-foot {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 14px 18px;
+  border-top: 1px solid var(--line);
+}
+
+/* ---------- icon button ---------- */
+.qoves-admin .icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: #fff;
+  cursor: pointer;
+  display: inline-grid;
+  place-items: center;
+  color: var(--ink-2);
+  transition: border-color 0.18s var(--ease), color 0.18s var(--ease);
+  flex-shrink: 0;
+}
+.qoves-admin .icon-btn:hover { border-color: var(--ink); color: var(--ink); }
+
+/* ============================================================
+   Page widgets
+   ============================================================ */
+.qoves-admin .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+.qoves-admin .dash-split { display: grid; grid-template-columns: 1.5fr 1fr; gap: 18px; align-items: stretch; }
+.qoves-admin .config-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; align-items: start; }
+
+.qoves-admin .avatar {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ink-2);
+  letter-spacing: 0;
+}
+
+/* segmented controls */
+.qoves-admin .seg {
+  display: inline-flex;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  padding: 3px;
+  gap: 2px;
+}
+.qoves-admin .seg button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 450;
+  color: var(--ink-3);
+  padding: 7px 14px;
+  border-radius: 99px;
+  transition: all 0.18s var(--ease);
+}
+.qoves-admin .seg button:hover { color: var(--ink); }
+.qoves-admin .seg .seg-on { background: #fff; color: var(--ink); font-weight: 500; box-shadow: 0 1px 3px rgba(28, 30, 29, 0.1); }
+.qoves-admin .seg-tabs { flex-wrap: wrap; }
+.qoves-admin .seg-count { font-family: var(--font-mono); font-size: 9.5px; opacity: 0.6; margin-left: 5px; }
+.qoves-admin .seg-now {
+  font-size: 9px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  background: #fff;
+}
+
+/* lead table */
+.qoves-admin .lead-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.qoves-admin .lead-table thead th {
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  font-weight: 500;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-soft);
+}
+.qoves-admin .lead-table tbody td { padding: 14px 20px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.qoves-admin .lead-table tbody tr { cursor: pointer; transition: background 0.15s var(--ease); }
+.qoves-admin .lead-table tbody tr:hover { background: var(--bg-soft); }
+.qoves-admin .lead-table tbody tr:last-child td { border-bottom: none; }
+.qoves-admin .row-go { font-size: 13px; color: var(--ink-3); font-weight: 500; white-space: nowrap; }
+.qoves-admin .lead-table tbody tr:hover .row-go { color: var(--ink); }
+
+/* status pill */
+.qoves-admin .status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 11px 4px 9px;
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  font-size: 12px;
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.qoves-admin .status-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+/* chips */
+.qoves-admin .chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 13px;
+  border-radius: 99px;
+  border: 1px solid var(--line);
+  background: #fff;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--ink-2);
+  transition: all 0.18s var(--ease);
+}
+.qoves-admin .chip:hover { border-color: var(--line-strong); }
+.qoves-admin .chip-on { border-color: var(--ink); color: var(--ink); font-weight: 500; }
+
+/* embed code block */
+.qoves-admin .embed-pre {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: rgba(255, 255, 255, 0.85);
+  line-height: 1.7;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* ---------- shell show/hide (robust: not overridable by inline display) ---------- */
+.qoves-admin .qoves-mobile-header { display: none; }
+.qoves-admin .qoves-desktop-sidebar { display: flex; height: 100%; }
+@media (max-width: 767px) {
+  .qoves-admin .qoves-mobile-header { display: flex; }
+  .qoves-admin .qoves-desktop-sidebar { display: none; }
+}
+
+/* ---------- responsive ---------- */
+@media (max-width: 1100px) {
+  .qoves-admin .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .qoves-admin .dash-split,
+  .qoves-admin .config-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .qoves-admin .kpi-grid { grid-template-columns: 1fr; }
+  .qoves-admin .admin-page { padding: 24px 18px 80px; }
+}
