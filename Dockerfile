@@ -61,6 +61,10 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Migraciones SQL: se aplican al arrancar (scripts/migrate.mjs, idempotente)
+COPY --from=builder --chown=nextjs:nodejs /app/migrations ./migrations
+COPY --from=builder --chown=nextjs:nodejs /app/scripts/migrate.mjs ./scripts/migrate.mjs
+
 USER nextjs
 
 EXPOSE 4550
@@ -69,4 +73,4 @@ ENV PORT=4550
 ENV HOSTNAME="0.0.0.0"
 
 # Runtime env vars are injected by EasyPanel (DATABASE_URL, MINIO_*, etc.)
-CMD ["node", "server.js"]
+CMD ["sh", "-c", "node scripts/migrate.mjs && node server.js"]
