@@ -14,7 +14,8 @@ export async function POST(req: NextRequest) {
         const authHeader = req.headers.get('Authorization');
         const expectedToken = process.env.CRON_SECRET || process.env.API_SECRET;
 
-        if (expectedToken && authHeader !== `Bearer ${expectedToken}`) {
+        // Sin secreto configurado, el cron queda cerrado (antes quedaba abierto).
+        if (!expectedToken || authHeader !== `Bearer ${expectedToken}`) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 

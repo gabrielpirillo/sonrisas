@@ -8,7 +8,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { storage } from '@/lib/storage';
-import { resolveClinic, reserve, refund } from '@/lib/billing/credits';
+import { reserve, refund } from '@/lib/billing/credits';
+import { requireClinic } from '@/lib/security';
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -85,10 +86,14 @@ export async function OPTIONS() {
 export async function POST(req: NextRequest) {
     const requestStart = Date.now();
 
+    // Solo usuarios del panel; la clínica sale de la sesión, no del body.
+    const auth = await requireClinic();
+    if (auth.error) return auth.error;
+
     try {
         // ── INPUT ─────────────────────────────────────────────────────────────
         const body = await req.json();
-        const { lead_id, scenario_id, clinic_key } = body;
+        const { lead_id, scenario_id } = body;
         logStep('input', '📥 Incoming request body', body);
 
         if (!lead_id) throw new Error('lead_id is required');
@@ -97,21 +102,17 @@ export async function POST(req: NextRequest) {
         if (!apiKey) throw new Error('GOOGLE_API_KEY not configured');
 
         // ── CREDIT GATING ─────────────────────────────────────────────────
-        // Resolve the clinic (prefer the lead's clinic, fall back to the key).
-        // FAILS OPEN: any infra error (e.g. billing schema not migrated yet)
-        // proceeds without charging so the widget never goes down.
-        let clinic: any = null;
-        try {
-            const leadClinic = await db.queryOne<{ clinic_id: string | null }>(
-                'SELECT clinic_id FROM leads WHERE id = $1',
-                [lead_id]
+        // La clínica es la de la sesión y el lead tiene que ser suyo.
+        const clinic: any = auth.ctx.clinic;
+        const ownsLead = await db.queryOne(
+            'SELECT 1 FROM leads WHERE id = $1 AND clinic_id = $2',
+            [lead_id, clinic.id]
+        );
+        if (!ownsLead) {
+            return NextResponse.json(
+                { success: false, error: 'Lead no encontrado.' },
+                { headers: corsHeaders, status: 404 }
             );
-            clinic = await resolveClinic(clinic_key || undefined)
-                || (leadClinic?.clinic_id
-                    ? await db.queryOne('SELECT * FROM clinics WHERE id = $1', [leadClinic.clinic_id])
-                    : null);
-        } catch (gatingErr: any) {
-            console.warn('[generate-video] Clinic resolution skipped (fail-open):', gatingErr?.message);
         }
 
         if (clinic && clinic.status === 'suspended') {

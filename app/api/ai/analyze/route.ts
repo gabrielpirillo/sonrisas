@@ -6,6 +6,7 @@
  * Modes: 'validate' (pre-check) and 'analyze' (full analysis with prompts).
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfNotInternal } from '@/lib/security';
 import { db } from '@/lib/db';
 import { storage } from '@/lib/storage';
 
@@ -20,6 +21,10 @@ export async function OPTIONS() {
 }
 
 export async function POST(req: NextRequest) {
+    // Solo llamadas internas (server actions del propio servidor).
+    const denied = rejectIfNotInternal(req);
+    if (denied) return denied;
+
     try {
         console.log("[analyze-face] ===== REQUEST RECEIVED =====");
 

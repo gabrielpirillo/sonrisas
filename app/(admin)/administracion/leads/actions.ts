@@ -3,11 +3,22 @@
 import { db } from '@/lib/db';
 import { storage } from '@/lib/storage';
 import { revalidatePath } from 'next/cache';
+import { getAuthContext } from '@/lib/auth/context';
 
 export async function deleteLeadAction(leadId: string) {
     if (!leadId) {
         return { success: false, error: 'Lead ID is required' };
     }
+
+    // Solo owner/admin de la clínica dueña del lead, y nunca en impersonación.
+    const ctx = await getAuthContext();
+    if (!ctx?.clinic) return { success: false, error: 'No autenticado' };
+    if (ctx.impersonatedBy) return { success: false, error: 'No disponible durante una impersonación.' };
+    if (ctx.role !== 'owner' && ctx.role !== 'admin') {
+        return { success: false, error: 'No tienes permisos para eliminar leads.' };
+    }
+    const owned = await db.queryOne('SELECT 1 FROM leads WHERE id = $1 AND clinic_id = $2', [leadId, ctx.clinic.id]);
+    if (!owned) return { success: false, error: 'Lead no encontrado' };
 
     try {
         // 1. Get all generations for this lead to find storage paths

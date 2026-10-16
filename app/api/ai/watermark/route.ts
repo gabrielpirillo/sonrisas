@@ -5,6 +5,7 @@
  * Adds a watermark to generated smile images using Sharp.
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfNotInternal, escapeXml } from '@/lib/security';
 import sharp from 'sharp';
 import { storage } from '@/lib/storage';
 
@@ -19,8 +20,12 @@ export async function OPTIONS() {
 }
 
 export async function POST(req: NextRequest) {
+    // Solo llamadas internas (server actions del propio servidor).
+    const denied = rejectIfNotInternal(req);
+    if (denied) return denied;
+
     try {
-        const { image_path, watermark_text = 'Smile Forward' } = await req.json();
+        const { image_path, watermark_text = 'Smile Fast' } = await req.json();
 
         if (!image_path) {
             throw new Error('image_path is required');
@@ -47,7 +52,7 @@ export async function POST(req: NextRequest) {
                 }
             </style>
             <text x="${width - 10}" y="${height - 15}" text-anchor="end" class="watermark">
-                ${watermark_text}
+                ${escapeXml(String(watermark_text).slice(0, 80))}
             </text>
         </svg>`;
 

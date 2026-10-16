@@ -6,6 +6,7 @@
  * Models: gemini-3-pro-image-preview → gemini-2.5-flash-image
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { rejectIfNotInternal, internalHeaders } from '@/lib/security';
 import { randomUUID } from 'crypto';
 import { db } from '@/lib/db';
 import { storage } from '@/lib/storage';
@@ -22,6 +23,10 @@ export async function OPTIONS() {
 }
 
 export async function POST(req: NextRequest) {
+    // Solo llamadas internas (server actions del propio servidor).
+    const denied = rejectIfNotInternal(req);
+    if (denied) return denied;
+
     // Billing context — declared up front so the catch block can refund.
     let clinicId: string | null = null;
     let reserveKey: string | null = null;
@@ -35,10 +40,9 @@ export async function POST(req: NextRequest) {
         if (!apiKey) throw new Error('GOOGLE_API_KEY not configured');
 
         // ── CREDIT GATING ─────────────────────────────────────────────────
-        // Reserve credits before spending money on Gemini. A clean "insufficient"
-        // result blocks with 402. Any infrastructure error (e.g. billing schema
-        // not migrated yet) FAILS OPEN: we log and proceed without charging so a
-        // misconfiguration never takes the widget down.
+        // Reserve credits before spending money on Gemini. "Insufficient" blocks
+        // with 402. FAILS CLOSED: if the clinic can't be resolved or billing
+        // errors, nothing is generated (no free generations on misconfiguration).
         try {
             const clinic = await resolveClinic(clinic_key);
             if (clinic && clinic.status === 'suspended') {
@@ -69,10 +73,18 @@ export async function POST(req: NextRequest) {
                 clinicId = clinic.id;
                 reserveKey = key;
             } else {
-                console.warn('[generate-smile] No clinic resolved — proceeding without credit gating.');
+                console.error('[generate-smile] No clinic resolved — blocking generation.');
+                return NextResponse.json(
+                    { success: false, error: 'Clínica no encontrada.', code: 'CLINIC_NOT_FOUND' },
+                    { headers: corsHeaders, status: 404 }
+                );
             }
         } catch (gatingErr: any) {
-            console.error('[generate-smile] Credit gating skipped (fail-open):', gatingErr?.message);
+            console.error('[generate-smile] Credit gating failed (fail-closed):', gatingErr?.message);
+            return NextResponse.json(
+                { success: false, error: 'El servicio no está disponible en este momento. Inténtalo más tarde.', code: 'BILLING_UNAVAILABLE' },
+                { headers: corsHeaders, status: 503 }
+            );
         }
 
         // Get image data
@@ -308,7 +320,7 @@ export async function POST(req: NextRequest) {
         const port = process.env.PORT || '3000';
         fetch(`http://localhost:${port}/api/ai/watermark`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: internalHeaders(),
             body: JSON.stringify({
                 image_path: fileName,
                 original_public_url: publicUrl,

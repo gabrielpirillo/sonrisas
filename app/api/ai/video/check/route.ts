@@ -7,6 +7,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireClinic } from '@/lib/security';
 import { storage } from '@/lib/storage';
 import { refund, confirm, type Clinic } from '@/lib/billing/credits';
 
@@ -33,9 +34,21 @@ export async function OPTIONS() {
 }
 
 export async function POST(req: NextRequest) {
+    const { ctx, error } = await requireClinic();
+    if (error) return error;
     try {
         const { generation_id } = await req.json();
         if (!generation_id) throw new Error('Generation ID is required');
+
+        // Solo generaciones de leads de la clínica de la sesión.
+        const owned = await db.queryOne(
+            `SELECT 1 FROM generations g JOIN leads l ON l.id = g.lead_id
+             WHERE g.id = $1 AND l.clinic_id = $2`,
+            [generation_id, ctx.clinic.id]
+        );
+        if (!owned) {
+            return NextResponse.json({ error: 'Generación no encontrada' }, { status: 404, headers: corsHeaders });
+        }
 
         // 1. Fetch Generation Info
         const gen = await db.queryOne(

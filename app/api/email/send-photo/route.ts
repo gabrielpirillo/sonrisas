@@ -5,6 +5,8 @@
  * Downloads a generated smile image, and emails it to the lead.
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { getLeadForEmail } from '@/lib/leadAccess';
+import { escapeXml } from '@/lib/security';
 import nodemailer from 'nodemailer';
 import { storage } from '@/lib/storage';
 
@@ -20,11 +22,18 @@ export async function OPTIONS() {
 
 export async function POST(req: NextRequest) {
     try {
-        const { email, name, imageUrl, leadId } = await req.json();
+        const { imageUrl, leadId } = await req.json();
 
-        if (!email || !imageUrl) {
-            throw new Error('Email and imageUrl are required');
+        if (!imageUrl || typeof imageUrl !== 'string') {
+            return NextResponse.json({ success: false, error: 'imageUrl es obligatorio' }, { headers: corsHeaders, status: 400 });
         }
+        // El destinatario es siempre el email del lead (nunca el del body).
+        const access = await getLeadForEmail(req, leadId, { allowWidget: true });
+        if (!access.ok) {
+            return NextResponse.json({ success: false, error: access.error }, { headers: corsHeaders, status: access.status });
+        }
+        const email = access.lead.email;
+        const name = access.lead.name;
 
         // Download image — try watermarked version first, fallback to original
         // Extract path after bucket name (handles full URLs and relative paths)
@@ -32,6 +41,9 @@ export async function POST(req: NextRequest) {
         const generatedIdx = imageUrl.indexOf('/generated/');
         if (generatedIdx !== -1) {
             imagePath = imageUrl.substring(generatedIdx + '/generated/'.length);
+        }
+        if (imagePath.includes('..') || imagePath.startsWith('/')) {
+            return NextResponse.json({ success: false, error: 'Ruta de imagen inválida' }, { headers: corsHeaders, status: 400 });
         }
         const watermarkedPath = imagePath.replace(/\.(jpg|png)$/i, '_watermarked.jpg');
 
@@ -105,7 +117,7 @@ function getPhotoEmailTemplate(name: string | null): string {
         <div style="font-size: 32px; font-weight: 700; font-family: 'Playfair Display', serif;">Smile Forward</div>
     </div>
     <div style="padding: 50px 0;">
-        <h1 style="font-family: 'Playfair Display', serif; font-size: 28px;">¡Hola${name ? ` ${name}` : ''}! 👋</h1>
+        <h1 style="font-family: 'Playfair Display', serif; font-size: 28px;">¡Hola${name ? ` ${escapeXml(name)}` : ''}! 👋</h1>
         <p style="color: #555;">Tu simulación de sonrisa está lista. Adjuntamos tu imagen en alta calidad para que puedas verla con todo detalle.</p>
         <p style="color: #555;">Esta es una <strong style="color: #000;">simulación orientativa</strong> de cómo podría verse tu sonrisa después del tratamiento.</p>
         <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 25px 0;">

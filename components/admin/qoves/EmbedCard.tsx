@@ -7,7 +7,7 @@ import EmbedConfigurator from "@/components/admin/embed/EmbedConfigurator";
 /* Prominent dark "código de integración" card — the central B2B value.
    Shows the real inline-iframe embed snippet for this deployment and a
    copy button; the full integration wizard stays available below. */
-export function EmbedCard() {
+export function EmbedCard({ widgetKey }: { widgetKey?: string | null }) {
     const [origin, setOrigin] = useState("https://smile-forward.app");
     const [copied, setCopied] = useState(false);
 
@@ -17,7 +17,7 @@ export function EmbedCard() {
 
     const snippet = `<div style="width:100%; max-width:1200px; margin:0 auto; aspect-ratio:16/9; min-height:500px; overflow:hidden; border-radius:2rem; border:1px solid #e5e7eb; background:#fff;">
   <iframe
-    src="${origin}/widget?theme=auto"
+    src="${origin}/widget${widgetKey ? `?key=${encodeURIComponent(widgetKey)}` : ''}"
     width="100%" height="100%" frameborder="0"
     allow="camera; microphone; clipboard-read; clipboard-write"
     style="border:none;"
@@ -43,7 +43,7 @@ export function EmbedCard() {
             <pre className="embed-pre">{snippet}</pre>
             <div style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap" }}>
                 <button className="btn btn-white btn-sm" onClick={copy}>{copied ? "Copiado" : "Copiar código"}</button>
-                <EmbedConfigurator />
+                <EmbedConfigurator widgetKey={widgetKey} />
             </div>
         </div>
     );

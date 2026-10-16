@@ -469,7 +469,7 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
         if (!lead) return;
         setLoadingAction(true);
         try {
-            const updateRes = await fetch('/api/db', {
+            const updateRes = await fetch('/api/admin', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -494,7 +494,7 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
         if (!lead || lead.status === status) return;
         setSettingStatus(true);
         try {
-            const res = await fetch('/api/db', {
+            const res = await fetch('/api/admin', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'update_lead_status', data: { lead_id: lead.id, status } }),

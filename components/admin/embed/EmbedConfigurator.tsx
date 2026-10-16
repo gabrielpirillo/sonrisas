@@ -15,7 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type EmbedType = "inline" | "floating" | "click" | null;
 
-export default function EmbedConfigurator() {
+export default function EmbedConfigurator({ widgetKey }: { widgetKey?: string | null } = {}) {
     const [isOpen, setIsOpen] = useState(false);
     const [embedType, setEmbedType] = useState<EmbedType>(null);
 
@@ -35,7 +35,7 @@ export default function EmbedConfigurator() {
                 {!embedType ? (
                     <EmbedSelection onSelect={setEmbedType} />
                 ) : (
-                    <EmbedSettings type={embedType} onBack={reset} />
+                    <EmbedSettings widgetKey={widgetKey} type={embedType} onBack={reset} />
                 )}
             </DialogContent>
         </Dialog>
@@ -132,7 +132,7 @@ function SelectionCard({ title, desc, onClick, illustration }: any) {
     )
 }
 
-function EmbedSettings({ type, onBack }: { type: EmbedType, onBack: () => void }) {
+function EmbedSettings({ type, onBack, widgetKey }: { type: EmbedType, onBack: () => void, widgetKey?: string | null }) {
     const [theme, setTheme] = useState("auto");
     const [brandColor, setBrandColor] = useState("#2A9D8F");
     const [activeTab, setActiveTab] = useState("preview"); // preview | code
@@ -150,7 +150,7 @@ function EmbedSettings({ type, onBack }: { type: EmbedType, onBack: () => void }
             // Modificado para mantener proporciones horizontales (16:9) y diseño del frontend
             return `<div style="width:100%; max-width:1200px; margin: 0 auto; aspect-ratio: 16/9; min-height: 500px; overflow:hidden; border-radius: 2rem; border: 1px solid #e5e7eb; background: #ffffff;">
   <iframe 
-    src="${baseUrl}/widget?theme=${theme}&color=${encodeURIComponent(brandColor)}" 
+    src="${baseUrl}/widget?${widgetKey ? `key=${encodeURIComponent(widgetKey)}&` : ''}theme=${theme}&color=${encodeURIComponent(brandColor)}" 
     width="100%" 
     height="100%" 
     frameborder="0"

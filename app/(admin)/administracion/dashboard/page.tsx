@@ -37,6 +37,8 @@ export default async function DashboardPage() {
     if (!session) redirect("/acceso");
     const ctx = await getAuthContext();
     const impersonating = Boolean(ctx?.impersonatedBy);
+    // Todo se filtra por la clínica activa (sin clínica no se muestra nada).
+    const clinicId = ctx?.clinic?.id ?? '00000000-0000-0000-0000-000000000000';
 
     if (session.role !== 'admin' && session.role !== 'basic') {
         return (
@@ -45,19 +47,19 @@ export default async function DashboardPage() {
                 <p className="lead" style={{ maxWidth: 460 }}>
                     Tu cuenta no tiene los permisos necesarios para acceder al panel de administración.
                 </p>
-                <a href="/api/auth/signout" className="btn btn-primary btn-sm" style={{ marginTop: 8 }}>
-                    Cerrar sesión
-                </a>
+                <form action="/auth/logout" method="post" style={{ marginTop: 8 }}>
+                    <button type="submit" className="btn btn-primary btn-sm">Cerrar sesión</button>
+                </form>
             </div>
         );
     }
 
     // ── All-time totals ──────────────────────────────────────────────
     const [totalLeadsRow, smileRow, videoRow, convertedRow] = await Promise.all([
-        db.queryOne('SELECT COUNT(*) as count FROM leads'),
-        db.queryOne("SELECT COUNT(*) as count FROM generations WHERE type = 'image'"),
-        db.queryOne("SELECT COUNT(*) as count FROM generations WHERE type = 'video'"),
-        db.queryOne("SELECT COUNT(*) as count FROM leads WHERE status = 'converted'"),
+        db.queryOne('SELECT COUNT(*) as count FROM leads WHERE clinic_id = $1', [clinicId]),
+        db.queryOne("SELECT COUNT(*) as count FROM generations g JOIN leads l ON l.id = g.lead_id WHERE l.clinic_id = $1 AND g.type = 'image'", [clinicId]),
+        db.queryOne("SELECT COUNT(*) as count FROM generations g JOIN leads l ON l.id = g.lead_id WHERE l.clinic_id = $1 AND g.type = 'video'", [clinicId]),
+        db.queryOne("SELECT COUNT(*) as count FROM leads WHERE clinic_id = $1 AND status = 'converted'", [clinicId]),
     ]);
     const totalLeads = parseInt(totalLeadsRow?.count || '0');
     const smileGenerations = parseInt(smileRow?.count || '0');
@@ -70,8 +72,9 @@ export default async function DashboardPage() {
     const sixtyDaysAgo = new Date(now - 60 * DAY).toISOString();
 
     const [gensResult, leadsResult] = await Promise.all([
-        db.query(`SELECT created_at, type FROM generations WHERE created_at >= $1 ORDER BY created_at ASC`, [sixtyDaysAgo]),
-        db.query(`SELECT created_at, status FROM leads WHERE created_at >= $1 ORDER BY created_at ASC`, [sixtyDaysAgo]),
+        db.query(`SELECT g.created_at, g.type FROM generations g JOIN leads l ON l.id = g.lead_id
+                  WHERE l.clinic_id = $2 AND g.created_at >= $1 ORDER BY g.created_at ASC`, [sixtyDaysAgo, clinicId]),
+        db.query(`SELECT created_at, status FROM leads WHERE clinic_id = $2 AND created_at >= $1 ORDER BY created_at ASC`, [sixtyDaysAgo, clinicId]),
     ]);
 
     const gens = gensResult.rows as { created_at: string; type: string }[];
@@ -110,9 +113,11 @@ export default async function DashboardPage() {
             COUNT(g.id) FILTER (WHERE g.type = 'video' AND g.status = 'completed') as video_count
          FROM leads l
          LEFT JOIN generations g ON g.lead_id = l.id
+         WHERE l.clinic_id = $1
          GROUP BY l.id, l.name, l.email, l.created_at, l.status
          ORDER BY l.created_at DESC
-         LIMIT 6`
+         LIMIT 6`,
+        [clinicId]
     );
     const recentActivity = activityResult.rows as any[];
 

@@ -1,6 +1,6 @@
 import { MembersManager } from "@/components/admin/MembersManager";
 import { getSession } from "@/lib/auth/session";
-import { isImpersonating } from "@/lib/auth/context";
+import { isImpersonating, getAuthContext } from "@/lib/auth/context";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { PageHead, Field } from "@/components/admin/qoves/PageHead";
@@ -18,7 +18,11 @@ export default async function SettingsPage() {
     let usage30 = 0;
     try {
         const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
-        const row = await db.queryOne("SELECT COUNT(*) as count FROM generations WHERE created_at >= $1", [since]);
+        const clinicId = (await getAuthContext())?.clinic?.id ?? '00000000-0000-0000-0000-000000000000';
+        const row = await db.queryOne(
+            "SELECT COUNT(*) as count FROM generations g JOIN leads l ON l.id = g.lead_id WHERE l.clinic_id = $2 AND g.created_at >= $1",
+            [since, clinicId]
+        );
         usage30 = parseInt(row?.count || "0");
     } catch (e) {
         console.error("[settings] usage query failed:", e);
@@ -31,7 +35,7 @@ export default async function SettingsPage() {
             <div className="config-grid">
                 {/* ── Left column ── */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-                    <EmbedCard />
+                    <EmbedCard widgetKey={(await getAuthContext())?.clinic?.public_widget_key ?? null} />
 
                     {/* Marca */}
                     <div className="card" style={{ padding: 24 }}>

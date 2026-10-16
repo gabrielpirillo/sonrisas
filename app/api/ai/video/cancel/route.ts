@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { requireClinic } from '@/lib/security';
 
 export async function POST(req: NextRequest) {
+    const { ctx, error } = await requireClinic();
+    if (error) return error;
     try {
         const { generation_id } = await req.json();
 
@@ -11,8 +14,8 @@ export async function POST(req: NextRequest) {
 
         // Update the generation status to cancelled
         await db.query(
-            `UPDATE generations SET status = 'cancelled', metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('cancelled_at', NOW()::text) WHERE id = $1`,
-            [generation_id]
+            `UPDATE generations SET status = 'cancelled', metadata = COALESCE(metadata, '{}'::jsonb) || jsonb_build_object('cancelled_at', NOW()::text) WHERE id = $1 AND lead_id IN (SELECT id FROM leads WHERE clinic_id = $2)`,
+            [generation_id, ctx.clinic.id]
         );
 
         return NextResponse.json({ success: true });

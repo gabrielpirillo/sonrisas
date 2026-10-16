@@ -5,6 +5,8 @@
  * Sends the generated video to the lead via email using SMTP.
  */
 import { NextRequest, NextResponse } from 'next/server';
+import { getLeadForEmail } from '@/lib/leadAccess';
+import { escapeXml } from '@/lib/security';
 import nodemailer from 'nodemailer';
 import { db } from '@/lib/db';
 import { storage } from '@/lib/storage';
@@ -27,13 +29,19 @@ export async function POST(req: NextRequest) {
             throw new Error('leadId and videoPath are required');
         }
 
-        // 1. Get lead info
-        const lead = await db.queryOne(
-            'SELECT email, name FROM leads WHERE id = $1',
-            [leadId]
+        // 1. Solo el panel de la clínica dueña del lead puede enviar el video.
+        const access = await getLeadForEmail(req, leadId, { allowWidget: false });
+        if (!access.ok) {
+            return NextResponse.json({ success: false, error: access.error }, { status: access.status });
+        }
+        const lead = access.lead;
+        const ownsVideo = await db.queryOne(
+            "SELECT 1 FROM generations WHERE lead_id = $1 AND type = 'video' AND output_path = $2",
+            [leadId, videoPath]
         );
-
-        if (!lead?.email) throw new Error('Lead not found or no email');
+        if (!ownsVideo) {
+            return NextResponse.json({ success: false, error: 'Video no encontrado' }, { status: 404 });
+        }
 
         // 2. Download video from storage
         const videoBuffer = await storage.downloadFileAsBuffer('generated', videoPath);
@@ -104,7 +112,7 @@ function getVideoEmailTemplate(name: string | null): string {
         <div style="font-size: 32px; font-weight: 700; font-family: 'Playfair Display', serif;">Smile Forward</div>
     </div>
     <div style="padding: 50px 0;">
-        <h1 style="font-family: 'Playfair Display', serif; font-size: 28px;">¡Hola${name ? ` ${name}` : ''}! 🎬</h1>
+        <h1 style="font-family: 'Playfair Display', serif; font-size: 28px;">¡Hola${name ? ` ${escapeXml(name)}` : ''}! 🎬</h1>
         <p style="color: #555; font-size: 16px;">Tu video personalizado de Smile Forward está listo. Adjuntamos tu video para que puedas verlo con todo detalle.</p>
         <p style="color: #555; font-size: 16px;">Este video te muestra cómo podrías verte sonriendo en diferentes situaciones reales.</p>
         <div style="text-align: center; margin: 30px 0;">

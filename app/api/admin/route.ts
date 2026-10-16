@@ -1,22 +1,25 @@
 /**
- * API Route: Admin Data Queries
- * Replaces client-side Supabase queries for admin pages.
- * All queries require authentication context (via cookies/session).
+ * API Route: consultas del panel de la clínica.
+ * Exige sesión y filtra todo por la clínica activa del usuario.
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { hashPassword } from '@/lib/auth';
-import { getSession } from '@/lib/auth/session';
-import { isImpersonating } from '@/lib/auth/context';
+import { requireClinic } from '@/lib/security';
+
+const LEAD_STATUSES = ['pending', 'contacted', 'converted', 'rejected'];
 
 export async function POST(req: NextRequest) {
+    const { ctx, error } = await requireClinic();
+    if (error) return error;
+    const clinicId = ctx.clinic.id;
+
     try {
         const body = await req.json();
         const { action } = body;
 
         // Impersonación = solo lectura: bloquea exportaciones y escrituras.
-        const BLOCKED_WHEN_IMPERSONATING = ['get_generations', 'update_password'];
-        if (BLOCKED_WHEN_IMPERSONATING.includes(action) && (await isImpersonating())) {
+        const BLOCKED_WHEN_IMPERSONATING = ['get_generations', 'update_lead_status'];
+        if (BLOCKED_WHEN_IMPERSONATING.includes(action) && ctx.impersonatedBy) {
             return NextResponse.json(
                 { error: 'No disponible durante una impersonación (solo lectura).' },
                 { status: 403 }
@@ -26,82 +29,52 @@ export async function POST(req: NextRequest) {
         switch (action) {
             case 'get_leads': {
                 const result = await db.query(
-                    `SELECT l.*, 
+                    `SELECT l.*,
                         COALESCE(
-                            json_agg(g.* ORDER BY g.created_at DESC) 
+                            json_agg(g.* ORDER BY g.created_at DESC)
                             FILTER (WHERE g.id IS NOT NULL), '[]'
                         ) as generations
                      FROM leads l
                      LEFT JOIN generations g ON g.lead_id = l.id
+                     WHERE l.clinic_id = $1
                      GROUP BY l.id
-                     ORDER BY l.created_at DESC`
+                     ORDER BY l.created_at DESC`,
+                    [clinicId]
                 );
                 return NextResponse.json({ data: result.rows });
             }
 
             case 'get_generations': {
                 const result = await db.query(
-                    'SELECT * FROM generations ORDER BY created_at DESC'
+                    `SELECT g.* FROM generations g
+                     JOIN leads l ON l.id = g.lead_id
+                     WHERE l.clinic_id = $1
+                     ORDER BY g.created_at DESC`,
+                    [clinicId]
                 );
                 return NextResponse.json({ data: result.rows });
             }
 
-            case 'get_dashboard_stats': {
-                const [leads, images, videos] = await Promise.all([
-                    db.queryOne('SELECT COUNT(*) as count FROM leads'),
-                    db.queryOne("SELECT COUNT(*) as count FROM generations WHERE type = 'image'"),
-                    db.queryOne("SELECT COUNT(*) as count FROM generations WHERE type = 'video'"),
-                ]);
-
-                const thirtyDaysAgo = new Date();
-                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-                const chartResult = await db.query(
-                    `SELECT created_at, type FROM generations 
-                     WHERE created_at >= $1 ORDER BY created_at ASC`,
-                    [thirtyDaysAgo.toISOString()]
-                );
-
-                const activityResult = await db.query(
-                    'SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT 5'
-                );
-
-                return NextResponse.json({
-                    totalLeads: parseInt(leads?.count || '0'),
-                    smileGenerations: parseInt(images?.count || '0'),
-                    videoRequests: parseInt(videos?.count || '0'),
-                    chartData: chartResult.rows,
-                    recentActivity: activityResult.rows,
-                });
-            }
-
-            case 'get_user_role': {
-                const { user_id } = body;
-                const result = await db.queryOne(
-                    'SELECT role FROM user_roles WHERE user_id = $1',
-                    [user_id]
-                );
-                return NextResponse.json({ role: result?.role || null });
-            }
-
-            case 'update_password': {
-                // Legacy: la gestión de contraseña migró a Better Auth.
-                const session = await getSession();
-                if (!session) {
-                    return NextResponse.json({ error: 'No hay sesión activa' }, { status: 401 });
+            case 'update_lead_status': {
+                const { lead_id, status } = body.data || body;
+                if (!lead_id || !LEAD_STATUSES.includes(status)) {
+                    return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
                 }
-                return NextResponse.json(
-                    { error: 'El cambio de contraseña ahora se gestiona desde el panel (Better Auth).' },
-                    { status: 410 }
+                const result = await db.query(
+                    'UPDATE leads SET status = $1 WHERE id = $2 AND clinic_id = $3',
+                    [status, lead_id, clinicId]
                 );
+                if (result.rowCount === 0) {
+                    return NextResponse.json({ error: 'Lead no encontrado' }, { status: 404 });
+                }
+                return NextResponse.json({ success: true });
             }
 
             default:
                 return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
         }
-    } catch (error: any) {
-        console.error('[api/admin] Error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (err: any) {
+        console.error('[api/admin] Error:', err);
+        return NextResponse.json({ error: 'Error interno' }, { status: 500 });
     }
 }
-

@@ -1,6 +1,10 @@
 'use server';
 
 import { storage as minioStorage } from '@/lib/storage';
+import { fetchTrustedImage } from '@/lib/security';
+
+/** Solo letras, números, guion y guion bajo: evita rutas arbitrarias en el bucket. */
+const safeSegment = (v: string) => String(v || 'anon').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80) || 'anon';
 
 /**
  * Uploads a file to MinIO Storage.
@@ -13,9 +17,12 @@ export const uploadScan = async (formData: FormData): Promise<{ success: boolean
         const userId = formData.get('userId') as string;
 
         if (!file || !userId) return { success: false, error: "Missing file or userId" };
+        if (!file.type?.startsWith('image/')) return { success: false, error: "El archivo debe ser una imagen" };
+        if (file.size > 10 * 1024 * 1024) return { success: false, error: "La imagen supera los 10 MB" };
 
-        const fileExt = file.name?.split('.').pop() || 'jpg';
-        const filePath = `${userId}/${Date.now()}.${fileExt}`;
+        const rawExt = (file.name?.split('.').pop() || 'jpg').toLowerCase();
+        const fileExt = ['jpg', 'jpeg', 'png', 'webp', 'heic'].includes(rawExt) ? rawExt : 'jpg';
+        const filePath = `${safeSegment(userId)}/${Date.now()}.${fileExt}`;
 
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
@@ -39,7 +46,7 @@ export const uploadScan = async (formData: FormData): Promise<{ success: boolean
  */
 export const uploadGeneratedImage = async (imageUrlOrBase64: string, userId: string, type: string): Promise<string> => {
     try {
-        const fileName = `${userId}/${Date.now()}_${type}.png`;
+        const fileName = `${safeSegment(userId)}/${Date.now()}_${safeSegment(type)}.png`;
 
         let buffer: Buffer;
 
@@ -49,8 +56,7 @@ export const uploadGeneratedImage = async (imageUrlOrBase64: string, userId: str
             buffer = Buffer.from(base64Data, 'base64');
         } else {
             // URL
-            const res = await fetch(imageUrlOrBase64);
-            const arrayBuffer = await res.arrayBuffer();
+            const arrayBuffer = await fetchTrustedImage(imageUrlOrBase64);
             buffer = Buffer.from(arrayBuffer);
         }
 
@@ -83,7 +89,7 @@ export const uploadGeneratedImageAction = async (formData: FormData): Promise<st
             return "";
         }
 
-        const fileName = `${userId}/${Date.now()}_${type}.png`;
+        const fileName = `${safeSegment(userId)}/${Date.now()}_${safeSegment(type)}.png`;
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 

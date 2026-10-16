@@ -3,6 +3,7 @@
 import { AnalysisResponse } from "@/types/gemini";
 import { logApiUsage, logAudit } from "./backendService";
 import { translateGeminiError } from "@/utils/errorTranslator";
+import { fetchTrustedImage, internalHeaders, ipFromHeaders, rateLimit } from "@/lib/security";
 
 interface ErrorDetail {
     title?: string;
@@ -44,6 +45,9 @@ export const validateImageStrict = async (base64Image: string): Promise<ServiceR
     if (!base64Image) {
         return { success: false, error: "Error: Imagen vacía o corrupta." };
     }
+    if (!rateLimit(`validate:${await ipFromHeaders()}`, 30, 60 * 60_000)) {
+        return { success: false, error: "Demasiadas solicitudes. Inténtalo más tarde." };
+    }
 
     try {
         const data = stripBase64Prefix(base64Image);
@@ -51,7 +55,7 @@ export const validateImageStrict = async (base64Image: string): Promise<ServiceR
 
         const response = await fetch(`${API_BASE}/api/ai/analyze`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: internalHeaders(),
             body: JSON.stringify({
                 image_base64: data,
                 mode: 'validate'
@@ -106,6 +110,9 @@ export const validateImageStrict = async (base64Image: string): Promise<ServiceR
 export const analyzeImageAndGeneratePrompts = async (formData: FormData): Promise<ServiceResult<AnalysisResponse>> => {
     console.log("[Gemini] ENTRY: analyzeImageAndGeneratePrompts called (Self-Hosted API).");
     try {
+        if (!rateLimit(`analyze:${await ipFromHeaders()}`, 15, 60 * 60_000)) {
+            return { success: false, error: "Demasiadas solicitudes. Inténtalo más tarde." };
+        }
         const file = formData.get('file');
         const imageUrl = formData.get('imageUrl') as string;
         const imagePath = formData.get('imagePath') as string;
@@ -117,8 +124,7 @@ export const analyzeImageAndGeneratePrompts = async (formData: FormData): Promis
             console.log("[Gemini] Using internal path for analysis:", imagePath);
         } else if (imageUrl && imageUrl.startsWith('http')) {
             console.log("[Gemini] Fetching image from URL for analysis:", imageUrl);
-            const res = await fetch(imageUrl);
-            const arrayBuffer = await res.arrayBuffer();
+            const arrayBuffer = await fetchTrustedImage(imageUrl);
             data = Buffer.from(arrayBuffer).toString('base64');
         } else if (file instanceof File) {
             const arrayBuffer = await file.arrayBuffer();
@@ -131,7 +137,7 @@ export const analyzeImageAndGeneratePrompts = async (formData: FormData): Promis
 
         const response = await fetch(`${API_BASE}/api/ai/analyze`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: internalHeaders(),
             body: JSON.stringify({
                 image_path: imagePath,
                 image_base64: data || undefined,
@@ -198,6 +204,9 @@ export const generateSmileVariation = async (formData: FormData): Promise<Servic
     console.log("[Gemini] generateSmileVariation STARTED (Self-Hosted API)");
 
     try {
+        if (!rateLimit(`smile:${await ipFromHeaders()}`, 10, 60 * 60_000)) {
+            return { success: false, error: "Demasiadas solicitudes. Inténtalo más tarde." };
+        }
         const file = formData.get('file');
         const imageUrl = formData.get('imageUrl') as string;
         const imagePath = formData.get('imagePath') as string;
@@ -215,8 +224,7 @@ export const generateSmileVariation = async (formData: FormData): Promise<Servic
             console.log("[Gemini] Using internal path for generation:", imagePath);
         } else if (imageUrl && imageUrl.startsWith('http')) {
             console.log("[Gemini] Fetching image from URL for generation:", imageUrl);
-            const res = await fetch(imageUrl);
-            const arrayBuffer = await res.arrayBuffer();
+            const arrayBuffer = await fetchTrustedImage(imageUrl);
             data = Buffer.from(arrayBuffer).toString('base64');
         } else if (file instanceof File) {
             const arrayBuffer = await file.arrayBuffer();
@@ -229,7 +237,7 @@ export const generateSmileVariation = async (formData: FormData): Promise<Servic
 
         const response = await fetch(`${API_BASE}/api/ai/smile`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: internalHeaders(),
             body: JSON.stringify({
                 image_path: imagePath,
                 image_base64: data || undefined,

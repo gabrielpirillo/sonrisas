@@ -82,6 +82,11 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
     const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
     const [userId, setUserId] = useState<string>("anon");
     const [leadId, setLeadId] = useState<string | null>(null);
+    // Clave pública de la clínica dueña del widget (?key= en la URL del embed).
+    // Sin clave, el servidor usa la clínica por defecto.
+    const [clinicKey] = useState<string | null>(() =>
+        typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('key')
+    );
     const [userEmail, setUserEmail] = useState<string>('');
     const [userName, setUserName] = useState<string>('Usuario');
     const [userPhone, setUserPhone] = useState<string>('');
@@ -243,7 +248,7 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
                             name: formValues.name,
                             email: formValues.email,
                             phone: fullPhone.trim(),
-                            status: 'pending'
+                            clinic_key: clinicKey
                         }
                     })
                 });
@@ -338,6 +343,7 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
             genFormData.append('userId', anonUserId);
             if (analysisResult.analysis_id) genFormData.append('analysisId', analysisResult.analysis_id);
             genFormData.append('variationType', VariationType.ORIGINAL_BG);
+            if (clinicKey) genFormData.append('clinicKey', clinicKey);
 
             const genResult = await generateSmileVariation(genFormData);
 
