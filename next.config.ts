@@ -16,8 +16,18 @@ const nextConfig: NextConfig = {
       bodySizeLimit: '10mb',
     },
   },
+  async rewrites() {
+    return {
+      // La landing (Vite, compilada en public/landing) es la portada.
+      beforeFiles: [
+        { source: '/', destination: '/landing/index.html', missing: [{ type: 'query', key: 'embed' }] },
+      ],
+    };
+  },
   async redirects() {
     return [
+      // Embeds antiguos que apuntaban a la raíz (?embed=widget|full) → demo
+      { source: '/', has: [{ type: 'query', key: 'embed' }], destination: '/demo', permanent: false },
       // Entrada única
       { source: '/login', destination: '/acceso', permanent: false },
       // Panel único: todo bajo /administracion

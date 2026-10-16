@@ -10,12 +10,24 @@ export default function App() {
     document.body.style.overflow = demoOpen ? "hidden" : "";
   }, [demoOpen]);
 
-  const open = () => setDemoOpen(true);
+  // "Quiero probarlo" lleva a la demo interactiva de la app.
+  // El formulario "Agenda tu demo personalizada" se abre con /#agendar.
+  const goToDemo = () => { window.location.href = "/demo"; };
+  useEffect(() => {
+    const sync = () => setDemoOpen(window.location.hash === "#agendar");
+    sync();
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
+  }, []);
+  const close = () => {
+    setDemoOpen(false);
+    if (window.location.hash === "#agendar") history.replaceState(null, "", window.location.pathname + window.location.search);
+  };
 
   return (
     <React.Fragment>
-      <Landing onStart={open} />
-      {demoOpen && <DemoModal onClose={() => setDemoOpen(false)} />}
+      <Landing onStart={goToDemo} />
+      {demoOpen && <DemoModal onClose={close} />}
     </React.Fragment>
   );
 }

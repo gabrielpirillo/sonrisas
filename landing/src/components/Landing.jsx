@@ -40,6 +40,7 @@ function Nav({ onStart }) {
 
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <a href="/acceso" className="nav-login" style={navLink}>Acceder</a>
         <button className="btn btn-white btn-sm" onClick={onStart}>Quiero probarlo</button>
       </div>
     </nav>);

@@ -1004,3 +1004,7 @@ image-slot {
     /* footer columns stack cleanly */
     footer .wrap > div[style*="gap: 60"] { gap: 34px !important; }
   }
+
+/* Enlace "Acceder" al panel: se oculta en móviles muy angostos */
+.nav-login:hover { color: var(--ink) !important; }
+@media (max-width: 420px) { .nav-login { display: none; } }

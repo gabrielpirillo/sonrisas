@@ -1,0 +1,186 @@
+/* ============================================================
+   Smile Fast · Página de demo (/demo)
+   Fotos reales antes/después + el widget dentro de la web de una clínica.
+   ============================================================ */
+
+.sfd {
+  --photo-bg: #a9bfcf;
+  min-height: 100dvh;
+  background: #fff;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+.sfd a { color: inherit; }
+.sfd :focus-visible { outline: 2px solid var(--blue-deep); outline-offset: 3px; border-radius: 6px; }
+.sfd-wrap { width: min(1200px, 100%); margin: 0 auto; padding: 0 24px; }
+
+/* ── Barra superior ───────────────────────────────────── */
+.sfd-top { border-bottom: 1px solid var(--line); background: #fff; position: sticky; top: 0; z-index: 30; }
+.sfd-top .sfd-wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
+.sfd-top nav { display: flex; align-items: center; gap: 22px; font-size: 14.5px; }
+.sfd-top nav a { text-decoration: none; color: var(--ink-2); }
+.sfd-top nav a:hover { color: var(--ink); }
+.sfd-back { display: inline-flex; align-items: center; gap: 6px; }
+.sfd-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 20px; border-radius: 999px; border: 0;
+  font: inherit; font-size: 15px; font-weight: 600; text-decoration: none; cursor: pointer; white-space: nowrap;
+  transition: transform 0.2s var(--ease), box-shadow 0.25s var(--ease), background 0.2s var(--ease);
+}
+.sfd-btn-dark { background: var(--navy-2); color: #fff !important; }
+.sfd-btn-dark:hover { background: var(--blue-ink); transform: translateY(-1px); box-shadow: 0 14px 28px -16px rgba(27, 38, 48, 0.9); }
+.sfd-btn-line { background: #fff; color: var(--ink) !important; box-shadow: inset 0 0 0 1px var(--line-strong); }
+.sfd-btn-line:hover { box-shadow: inset 0 0 0 1px var(--blue-deep); color: var(--blue-deep) !important; }
+.sfd-btn-sm { padding: 9px 16px; font-size: 14px; }
+
+/* ── Hero ─────────────────────────────────────────────── */
+.sfd-hero { padding: 56px 0 72px; }
+.sfd-hero .sfd-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr); gap: 56px; align-items: center; }
+.sfd-kicker { font-size: 14px; color: var(--blue-deep); font-weight: 600; margin: 0 0 18px; display: flex; align-items: center; gap: 10px; }
+.sfd-kicker::before { content: ""; width: 28px; height: 2px; background: var(--blue-deep); border-radius: 2px; }
+.sfd-hero h1 {
+  font-size: clamp(42px, 5.6vw, 76px);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+  font-weight: 600;
+  margin: 0;
+}
+.sfd-hero h1 em { font-style: normal; color: var(--blue-accent); }
+.sfd-hero p.sfd-lead { font-size: 18px; line-height: 1.6; color: var(--ink-2); margin: 24px 0 32px; max-width: 470px; }
+.sfd-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+.sfd-facts { display: flex; gap: 28px; flex-wrap: wrap; margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--line); }
+.sfd-facts div { font-size: 14px; color: var(--ink-2); line-height: 1.45; max-width: 160px; }
+.sfd-facts strong { display: block; font-size: 15px; color: var(--ink); font-weight: 600; margin-bottom: 2px; }
+
+/* ── Comparador antes/después ─────────────────────────── */
+.sfd-compare {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  border-radius: 28px;
+  overflow: hidden;
+  background: var(--photo-bg);
+  cursor: ew-resize;
+  user-select: none;
+  touch-action: pan-y;
+  box-shadow: 0 50px 90px -50px rgba(27, 38, 48, 0.7);
+}
+.sfd-compare img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.sfd-compare img.after { clip-path: inset(0 0 0 var(--pos)); }
+.sfd-handle {
+  position: absolute; top: 0; bottom: 0; left: var(--pos);
+  width: 2px; margin-left: -1px; background: #fff;
+  box-shadow: 0 0 0 1px rgba(27, 38, 48, 0.08);
+}
+.sfd-handle button {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 52px; height: 52px; border-radius: 50%; border: 0;
+  background: #fff; color: var(--navy-2); cursor: ew-resize;
+  display: grid; place-items: center;
+  box-shadow: 0 10px 30px -8px rgba(27, 38, 48, 0.55);
+}
+.sfd-tag {
+  position: absolute; top: 18px; padding: 7px 13px; border-radius: 999px;
+  font-size: 13px; font-weight: 600; pointer-events: none;
+  box-shadow: 0 6px 18px -8px rgba(27, 38, 48, 0.45);
+}
+.sfd-tag.before { left: 18px; background: rgba(255, 255, 255, 0.9); color: var(--ink); }
+.sfd-tag.after { right: 18px; background: var(--navy-2); color: #fff; }
+
+/* ── Widget dentro de la web de una clínica ───────────── */
+.sfd-try { background: linear-gradient(180deg, var(--blue-tint), #fff 70%); padding: 80px 0 96px; border-top: 1px solid var(--blue-line); }
+.sfd-try-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr); gap: 40px; align-items: end; margin-bottom: 36px; }
+.sfd-try-head h2 { font-size: clamp(30px, 3.6vw, 46px); line-height: 1.04; letter-spacing: -0.04em; font-weight: 600; margin: 0; }
+.sfd-try-head p { margin: 0; font-size: 16px; line-height: 1.6; color: var(--ink-2); }
+.sfd-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0 0 28px; padding: 0; list-style: none; counter-reset: step; }
+.sfd-steps li { counter-increment: step; display: flex; gap: 12px; align-items: flex-start; font-size: 14.5px; line-height: 1.45; color: var(--ink-2); }
+.sfd-steps li::before {
+  content: counter(step); flex-shrink: 0;
+  width: 28px; height: 28px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--navy-2); color: #fff; font-size: 13px; font-weight: 600;
+}
+.sfd-steps strong { color: var(--ink); font-weight: 600; display: block; }
+
+.sfd-browser {
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 0 0 1px var(--blue-line), 0 60px 100px -60px rgba(27, 38, 48, 0.6);
+  overflow: hidden;
+}
+.sfd-browser-bar {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 16px; background: #f4f7f9; border-bottom: 1px solid var(--blue-line);
+}
+.sfd-dots { display: flex; gap: 6px; }
+.sfd-dots i { width: 10px; height: 10px; border-radius: 50%; background: #d5dde3; }
+.sfd-url {
+  flex: 1; max-width: 420px; margin: 0 auto;
+  padding: 6px 14px; border-radius: 999px; background: #fff; border: 1px solid var(--blue-line);
+  font-family: var(--font-mono); font-size: 12px; color: var(--ink-3); text-align: center;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sfd-site-nav {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 24px; border-bottom: 1px solid var(--line); font-size: 13.5px; color: var(--ink-3);
+}
+.sfd-site-nav b { color: var(--ink); font-weight: 600; font-size: 15px; letter-spacing: -0.01em; }
+.sfd-site-nav span { display: flex; gap: 18px; }
+
+/* ── Más ejemplos ─────────────────────────────────────── */
+.sfd-more { padding: 88px 0; }
+.sfd-more h2 { font-size: clamp(28px, 3vw, 40px); letter-spacing: -0.04em; line-height: 1.05; font-weight: 600; margin: 0 0 10px; }
+.sfd-more > .sfd-wrap > p { margin: 0 0 32px; color: var(--ink-2); font-size: 16px; }
+.sfd-pairs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.sfd-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; border-radius: 22px; overflow: hidden; background: var(--photo-bg); margin: 0; }
+.sfd-pair div { position: relative; aspect-ratio: 4 / 5; }
+.sfd-pair img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sfd-pair .sfd-tag { top: 12px; font-size: 12px; padding: 5px 10px; }
+.sfd-pair div:first-child .sfd-tag { left: 12px; }
+.sfd-pair div:last-child .sfd-tag { right: 12px; }
+.sfd-pairs figcaption { grid-column: 1 / -1; }
+
+/* ── Cierre ───────────────────────────────────────────── */
+.sfd-close { background: var(--navy-2); color: #fff; padding: 72px 0; }
+.sfd-close .sfd-wrap { display: flex; align-items: center; justify-content: space-between; gap: 32px; flex-wrap: wrap; }
+.sfd-close h2 { font-size: clamp(28px, 3.4vw, 44px); letter-spacing: -0.04em; line-height: 1.05; font-weight: 600; margin: 0; max-width: 620px; }
+.sfd-close h2 em { font-style: normal; color: var(--blue-light); }
+.sfd-close p { color: rgba(255, 255, 255, 0.65); margin: 12px 0 0; font-size: 16px; }
+.sfd-close .sfd-btn-line { background: transparent; color: #fff !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3); }
+.sfd-close .sfd-btn-line:hover { box-shadow: inset 0 0 0 1px #fff; }
+.sfd-btn-white { background: #fff; color: var(--navy-2) !important; }
+.sfd-btn-white:hover { transform: translateY(-1px); box-shadow: 0 14px 28px -14px rgba(0, 0, 0, 0.5); }
+.sfd-foot { background: var(--navy-3); color: rgba(255, 255, 255, 0.5); font-size: 13px; padding: 20px 0; }
+.sfd-foot .sfd-wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.sfd-foot a { color: rgba(255, 255, 255, 0.7); text-decoration: none; }
+
+/* ── Entrada ──────────────────────────────────────────── */
+.sfd-in { animation: sf-rise 0.8s var(--ease-out) both; }
+.sfd-in-2 { animation-delay: 0.08s; }
+.sfd-in-3 { animation-delay: 0.16s; }
+
+/* ── Responsive ───────────────────────────────────────── */
+@media (max-width: 900px) {
+  .sfd-hero { padding: 32px 0 56px; }
+  .sfd-hero .sfd-wrap { grid-template-columns: 1fr; gap: 36px; }
+  .sfd-compare { max-width: 520px; width: 100%; margin: 0 auto; }
+  .sfd-try-head { grid-template-columns: 1fr; gap: 14px; }
+  .sfd-steps { grid-template-columns: 1fr; }
+  .sfd-pairs { grid-template-columns: 1fr; }
+  .sfd-site-nav span { display: none; }
+}
+@media (max-width: 600px) {
+  .sfd-wrap { padding: 0 16px; }
+  .sfd-top nav .hide-sm { display: none; }
+  .sfd-facts { display: none; }
+  .sfd-hero p.sfd-lead { font-size: 16.5px; margin: 18px 0 24px; }
+  .sfd-hero .sfd-actions .sfd-btn { flex: 1 1 auto; justify-content: center; }
+  .sfd-try { padding: 56px 0 64px; }
+  .sfd-browser { border-radius: 16px; margin: 0 -4px; }
+  .sfd-browser-bar { padding: 10px 12px; }
+  .sfd-dots { display: none; }
+  .sfd-site-nav { padding: 12px 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sfd-in { animation: none; }
+}
