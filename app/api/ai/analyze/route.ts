@@ -7,6 +7,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { rejectIfNotInternal } from '@/lib/security';
+import { AI_MODELS, generateContent, responseText } from '@/lib/ai/gemini';
 import { db } from '@/lib/db';
 import { storage } from '@/lib/storage';
 
@@ -57,10 +58,8 @@ export async function POST(req: NextRequest) {
             ? getValidationPrompt()
             : getAnalysisPrompt();
 
-        // Call Gemini API
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-
-        console.log("[analyze-face] Calling Gemini API...");
+        // Call Gemini API (modelo configurable; ver lib/ai/gemini.ts)
+        console.log(`[analyze-face] Calling Gemini (${AI_MODELS.analysis})...`);
 
         const geminiBody = {
             contents: [{
@@ -70,28 +69,17 @@ export async function POST(req: NextRequest) {
                 ]
             }],
             generationConfig: {
-                responseMimeType: 'application/json'
+                responseMimeType: 'application/json',
+                // Gemini 3.x: el razonamiento se regula por nivel; 'LOW' basta para
+                // un JSON estructurado y es más rápido/barato. (temperature ya no aplica.)
+                thinkingConfig: { thinkingLevel: 'LOW' },
             }
         };
 
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(geminiBody)
-        });
-
-        console.log("[analyze-face] Gemini Response Status:", response.status);
-
-        if (!response.ok) {
-            const errText = await response.text();
-            console.error('[analyze-face] Gemini API Error:', errText);
-            throw new Error(`Gemini API Error (${response.status}): ${errText}`);
-        }
-
-        const data = await response.json();
+        const data = await generateContent(AI_MODELS.analysis, geminiBody, { timeoutMs: 60_000 });
 
         // Extract text from response
-        const analysisText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        const analysisText = responseText(data);
         console.log("[analyze-face] analysisText present:", !!analysisText);
 
         if (!analysisText) {

@@ -10,6 +10,8 @@ import { db } from '@/lib/db';
 import { storage } from '@/lib/storage';
 import { reserve, refund } from '@/lib/billing/credits';
 import { requireClinic } from '@/lib/security';
+import { generateImage } from '@/lib/ai/gemini';
+import { startVideo } from '@/lib/ai/video';
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -30,53 +32,6 @@ function logStep(section: string, msg: string, data?: unknown) {
 
 function logError(section: string, msg: string, err?: unknown) {
     console.error(`${tag(section)} ❌ ${msg}`, err instanceof Error ? err.message : err);
-}
-
-// ─── Veo retry helper ─────────────────────────────────────────────────────────
-async function fetchVeoWithRetry(
-    endpoint: string,
-    body: object,
-    maxRetries = 3,
-    backoffMs = 4000
-): Promise<{ response: Response }> {
-    let lastError = '';
-
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        logStep('veo-retry', `Attempt ${attempt}/${maxRetries} — sending request to Veo API...`);
-
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        });
-
-        logStep('veo-retry', `Response status: ${response.status} ${response.statusText}`);
-
-        if (response.ok) {
-            logStep('veo-retry', `✅ Veo request succeeded on attempt ${attempt}`);
-            return { response };
-        }
-
-        lastError = await response.text();
-        const isRetryableError =
-            lastError.includes('audio') ||
-            lastError.includes('safety') ||
-            lastError.includes('could not create your video') ||
-            lastError.includes('RESOURCE_EXHAUSTED');
-
-        logError('veo-retry', `Attempt ${attempt} failed. isRetryable=${isRetryableError}`, lastError);
-
-        if (isRetryableError && attempt < maxRetries) {
-            const waitMs = backoffMs * attempt;
-            logStep('veo-retry', `Retryable error detected — waiting ${waitMs}ms before retry...`);
-            await new Promise(r => setTimeout(r, waitMs));
-            continue;
-        }
-
-        break;
-    }
-
-    throw new Error(`Veo generation failed after ${maxRetries} attempts. Last error: ${lastError}`);
 }
 
 export async function OPTIONS() {
@@ -283,75 +238,26 @@ export async function POST(req: NextRequest) {
 
                 logStep('bg:scene', '📤 Sending request to Gemini image generation', { prompt: sceneGenerationPrompt });
 
-                const visionEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-image-preview:generateContent?key=${apiKey}`;
-
                 try {
-                    const sceneResponse = await fetch(visionEndpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{
-                                parts: [
-                                    { text: `Generate a photorealistic image based on: ${sceneGenerationPrompt}` },
-                                    { inlineData: { mimeType: mimeType, data: imgBase64 } }
-                                ]
-                            }],
-                            // Image models require the IMAGE modality to be declared explicitly;
-                            // without it the model may return only text and no inline image,
-                            // which silently falls back to the original photo (no scene change).
-                            generationConfig: {
-                                responseModalities: ['TEXT', 'IMAGE'],
-                                // Generate the scene already in the same aspect ratio Veo expects (9:16)
-                                // so there is no crop/letterbox mismatch when fed into the video model.
-                                imageConfig: {
-                                    aspectRatio: '9:16',
-                                },
-                            },
-                        })
+                    const scene = await generateImage({
+                        prompt: `Generate a photorealistic image based on: ${sceneGenerationPrompt}`,
+                        imageBase64: imgBase64,
+                        imageMimeType: mimeType,
+                        aspectRatio: '9:16',
                     });
+                    sceneImgBase64 = scene.data;
+                    sceneImgMimeType = scene.mimeType;
+                    logStep('bg:scene', `✅ Scene generated with ${scene.model}`);
 
-                    logStep('bg:scene', `Gemini response status: ${sceneResponse.status} ${sceneResponse.statusText}`);
-
-                    if (sceneResponse.ok) {
-                        const result = await sceneResponse.json();
-                        const candidates = result.candidates;
-
-                        logStep('bg:scene', `Candidates received: ${candidates?.length ?? 0}`, {
-                            finishReason: candidates?.[0]?.finishReason,
-                        });
-
-                        const foundBase64 = candidates?.[0]?.content?.parts?.find((p: any) => p.inline_data || p.inlineData);
-                        const actualInlineData = foundBase64?.inline_data || foundBase64?.inlineData;
-
-                        if (actualInlineData) {
-                            sceneImgBase64 = actualInlineData.data;
-                            sceneImgMimeType = actualInlineData.mime_type || actualInlineData.mimeType || "image/jpeg";
-
-                            const sceneFileName = `${lead_id}/scene_${Date.now()}.png`;
-                            const sceneBuffer = Buffer.from(sceneImgBase64, 'base64');
-
-                            logStep('bg:scene', `Uploading generated scene image as "${sceneFileName}"`, {
-                                mimeType: sceneImgMimeType,
-                                sizeBytes: sceneBuffer.byteLength
-                            });
-
-                            try {
-                                const sceneUrl = await storage.uploadFile('generated', sceneFileName, sceneBuffer, sceneImgMimeType);
-                                generatedScenePath = sceneFileName;
-                                logStep('bg:scene', `✅ Scene image uploaded`, { path: generatedScenePath, url: sceneUrl });
-                            } catch (uploadErr) {
-                                logError('bg:scene', 'Scene image upload failed', uploadErr);
-                            }
-                        } else {
-                            logError('bg:scene', 'No inline image in Gemini response — scene change SKIPPED, falling back to original photo as Veo input', {
-                                finishReason: candidates?.[0]?.finishReason,
-                                partTypes: candidates?.[0]?.content?.parts?.map((p: any) => Object.keys(p)),
-                            });
-                        }
-                    } else {
-                        const sceneErrText = await sceneResponse.text();
-                        logError('bg:scene', `Gemini request failed (status ${sceneResponse.status})`, sceneErrText);
-                        logStep('bg:scene', '⚠️ Falling back to original image for Veo input');
+                    const sceneExt = scene.mimeType === 'image/png' ? 'png' : 'jpg';
+                    const sceneFileName = `${lead_id}/scene_${Date.now()}.${sceneExt}`;
+                    const sceneBuffer = Buffer.from(sceneImgBase64, 'base64');
+                    try {
+                        const sceneUrl = await storage.uploadFile('generated', sceneFileName, sceneBuffer, sceneImgMimeType);
+                        generatedScenePath = sceneFileName;
+                        logStep('bg:scene', `✅ Scene image uploaded`, { path: generatedScenePath, url: sceneUrl });
+                    } catch (uploadErr) {
+                        logError('bg:scene', 'Scene image upload failed', uploadErr);
                     }
                 } catch (sceneErr) {
                     logError('bg:scene', 'Scene generation failed, falling back to original image', sceneErr);
@@ -362,48 +268,25 @@ export async function POST(req: NextRequest) {
                 const scenarioPrompt = `${baseInstructions}\n${scenarioDetails}\n- Style: Cinematic, Photorealistic, 4k High Quality.\n- NOTE: The video must start INSTANTLY in the target location. Do NOT fade in from the input image background.`;
                 const negativePrompt = "talking, speaking, lip syncing, dialog, dialogue, speech, singing, music, soundtrack, background music, ambient sound, sound effects, audio, voice, distortion, morphing teeth, low quality, blurry, flashing pixels, jerky movement";
 
-                const veoEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/veo-3.1-fast-generate-preview:predictLongRunning?key=${apiKey}`;
+                logStep('bg:video', '📤 Starting video generation', { scenarioPrompt, negativePrompt });
 
-                const veoBody = {
-                    instances: [{
-                        prompt: scenarioPrompt,
-                        image: { bytesBase64Encoded: sceneImgBase64, mimeType: sceneImgMimeType }
-                    }],
-                    parameters: {
-                        sampleCount: 1,
-                        aspectRatio: "9:16",
-                        personGeneration: "allow_adult",
-                        // 720p is the documented/stable resolution for vertical 9:16 on Veo 3.1.
-                        // 1080p/4k are reliable for 16:9 (8s only); using 1080p with 9:16 can
-                        // intermittently 400, which is a known source of video failures.
-                        resolution: "720p",
-                        durationSeconds: 8,
-                        negativePrompt,
-                    }
-                };
-
-                logStep('bg:veo', '📤 Sending request to Veo API', {
-                    endpoint: veoEndpoint.replace(apiKey, '***'),
-                    scenarioPrompt,
-                    negativePrompt,
-                    parameters: veoBody.parameters,
-                    imageMimeType: sceneImgMimeType,
-                    imageBase64LengthChars: sceneImgBase64.length
+                const started = await startVideo({
+                    imageBase64: sceneImgBase64,
+                    mimeType: sceneImgMimeType,
+                    prompt: scenarioPrompt,
+                    avoid: negativePrompt,
                 });
+                const operation = { name: started.operation };
 
-                const { response: veoResponse } = await fetchVeoWithRetry(veoEndpoint, veoBody, 3, 4000);
-
-                const operation = await veoResponse.json();
-
-                logStep('bg:veo', '✅ Veo long-running operation created', {
-                    operation_name: operation.name,
-                    done: operation.done ?? false,
-                    metadata: operation.metadata ?? null
+                logStep('bg:video', `✅ Video operation created (${started.provider} · ${started.model})`, {
+                    operation_name: started.operation,
                 });
 
                 // ── D. UPDATE RECORD ──────────────────────────────────────────
                 const updateMetadata = JSON.stringify({
                     operation_name: operation.name,
+                    provider: started.provider,
+                    model: started.model,
                     scenario: finalScenario,
                     prompt: scenarioPrompt,
                     negative_prompt: negativePrompt

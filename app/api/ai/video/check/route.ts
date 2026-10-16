@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { requireClinic } from '@/lib/security';
+import { pollVideo, type VideoProvider } from '@/lib/ai/video';
 import { storage } from '@/lib/storage';
 import { refund, confirm, type Clinic } from '@/lib/billing/credits';
 
@@ -73,81 +74,26 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // 2. Check Operation Status with Google
-        const apiKey = process.env.GOOGLE_API_KEY;
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/${operationName}?key=${apiKey}`;
+        // 2. Consultar el estado con el proveedor que creó el video
+        //    (los registros anteriores al cambio no guardaban proveedor → Veo).
+        const provider: VideoProvider = gen.metadata?.provider === 'omni' ? 'omni' : 'veo';
+        const polled = await pollVideo(provider, operationName);
 
-        const response = await fetch(endpoint);
-
-        // Handle transient Google API errors (503, 429, 500) gracefully
-        // Instead of crashing, return 'pending' so the frontend retries on the next poll
-        if (!response.ok) {
-            const errorBody = await response.text();
-            const isTransient = [500, 502, 503, 429].includes(response.status);
-
-            if (isTransient) {
-                console.warn(`[check-video] Transient Google API error (${response.status}), will retry on next poll: ${errorBody}`);
-                return NextResponse.json(
-                    { status: 'pending', id: generation_id, message: `Temporary API issue (${response.status}), retrying...` },
-                    { headers: corsHeaders }
-                );
-            }
-
-            throw new Error(`Google API Error: ${errorBody}`);
+        if (polled.state === 'failed') {
+            await db.query(
+                `UPDATE generations SET status = 'failed', metadata = metadata || $1 WHERE id = $2`,
+                [JSON.stringify({ error: { message: polled.reason, code: polled.filtered ? 'RAI_FILTERED' : 'PROVIDER_ERROR' } }), generation_id]
+            );
+            await refundVideo(gen, polled.filtered ? `RAI_FILTERED: ${polled.reason}` : polled.reason);
+            return NextResponse.json(
+                { status: 'failed', error: polled.reason },
+                { headers: corsHeaders }
+            );
         }
 
-        const operation = await response.json();
-
-        // 3. Handle Result
-        if (operation.done) {
-            if (operation.error) {
-                await db.query(
-                    `UPDATE generations SET status = 'error', metadata = metadata || $1 WHERE id = $2`,
-                    [JSON.stringify({ error: operation.error }), generation_id]
-                );
-                await refundVideo(gen, operation.error.message || 'veo_operation_error');
-                throw new Error(`Generation failed: ${operation.error.message}`);
-            }
-
-            // Check for Safety Filters
-            const genResponse = operation.response?.generateVideoResponse || operation.response;
-            if (genResponse?.raiMediaFilteredReasons?.length > 0) {
-                const reason = genResponse.raiMediaFilteredReasons.join(', ');
-                console.log(`Generation filtered: ${reason}`);
-                await db.query(
-                    `UPDATE generations SET status = 'failed', metadata = metadata || $1 WHERE id = $2`,
-                    [JSON.stringify({ error: { message: reason, code: 'RAI_FILTERED' } }), generation_id]
-                );
-                await refundVideo(gen, `RAI_FILTERED: ${reason}`);
-                return NextResponse.json(
-                    { status: 'failed', error: reason },
-                    { headers: corsHeaders }
-                );
-            }
-
-            // Support both old and new generatedSamples structure
-            const videoData = operation.response?.videos?.[0]
-                || genResponse?.videos?.[0]
-                || genResponse?.video
-                || genResponse?.generatedSamples?.[0]?.video;
-
-            if (!videoData) {
-                throw new Error(`No video found. Structure: ${JSON.stringify(operation)}`);
-            }
-
-            // 4. Upload to Storage
-            let videoBuffer: Buffer;
-            if (videoData.uri) {
-                const downloadUrl = new URL(videoData.uri);
-                downloadUrl.searchParams.set('key', apiKey || '');
-                const vidRes = await fetch(downloadUrl.toString());
-                if (!vidRes.ok) throw new Error(`Failed to download video: ${await vidRes.text()}`);
-                videoBuffer = Buffer.from(await vidRes.arrayBuffer());
-            } else if (videoData.bytesBase64) {
-                videoBuffer = Buffer.from(videoData.bytesBase64, 'base64');
-            } else {
-                throw new Error('Unsupported video data format');
-            }
+        // 3. Video listo → subirlo a nuestro almacenamiento
+        if (polled.state === 'done') {
+            const videoBuffer = polled.video;
 
             const fileName = `video_${generation_id}.mp4`;
             const filePath = `videos/${fileName}`;

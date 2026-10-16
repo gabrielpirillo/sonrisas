@@ -355,12 +355,10 @@ con `password_hash` en el formato de la app: `scrypt(password, salt, 64)` →
   (este panel: `*.uta3hi.easypanel.host`) construyendo un host tipo `<prefijo>.uta3hi.easypanel.host`.
   El esquema completo (id, middlewares, certificateResolver, wildcard, destinationType,
   serviceDestination con `composeService:""`) está en §3.
-- **Modelos Gemini retirados:** `app/api/ai/analyze/route.ts` tenía hardcodeado
-  `gemini-2.0-flash`, que Google **retiró** (el endpoint `generateContent` devuelve
-  `404 "no longer available"` aunque ListModels todavía lo liste). Usa un modelo vigente
-  (`gemini-2.5-flash` para análisis visión+JSON). Las rutas `smile`/`video` usan
-  `gemini-3-pro-image-preview` + `gemini-2.5-flash-image` (imagen), que siguen vigentes.
-  Para ver qué hay disponible: `GET https://generativelanguage.googleapis.com/v1beta/models?key=$GOOGLE_API_KEY`.
+- **Modelos de IA:** ya no están hardcodeados. Se configuran por variables de entorno
+  (`GEMINI_ANALYSIS_MODEL`, `GEMINI_IMAGE_MODELS`, `GEMINI_IMAGE_SIZE`, `VIDEO_PROVIDER`,
+  `OMNI_VIDEO_MODEL`, `VEO_VIDEO_MODEL`) con valores por defecto vigentes. Ver `docs/IA.md`
+  (modelos retirados, costes y el riesgo conocido del video a partir de selfies).
 - **MinIO/TLS:** la imagen de producción corre con `NODE_TLS_REJECT_UNAUTHORIZED=0` y el
   cliente S3 usa `forcePathStyle:true` y deshabilita verificación TLS (certs self-signed de
   Traefik/Easypanel). No fuerces verificación TLS en el código del servidor.

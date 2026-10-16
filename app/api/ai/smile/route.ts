@@ -3,10 +3,11 @@
  * Ported from Supabase Edge Function: generate-smile
  * 
  * Uses Google Gemini's image generation with model fallback chain.
- * Models: gemini-3-pro-image-preview → gemini-2.5-flash-image
+ * Models: configurables en lib/ai/gemini.ts (por defecto gemini-nano-banana-2.1 → gemini-3-pro-image)
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { rejectIfNotInternal, internalHeaders } from '@/lib/security';
+import { generateImage } from '@/lib/ai/gemini';
 import { randomUUID } from 'crypto';
 import { db } from '@/lib/db';
 import { storage } from '@/lib/storage';
@@ -211,101 +212,21 @@ export async function POST(req: NextRequest) {
         console.log(finalPrompt.trim());
         console.log("-----------------------------");
 
-        // Gemini request body (matches Supabase edge function config)
-        const geminiBody = {
-            contents: [{
-                parts: [
-                    { text: finalPrompt },
-                    {
-                        inline_data: {
-                            mime_type: 'image/jpeg',
-                            data: imageBase64,
-                        },
-                    },
-                ],
-            }],
-            generationConfig: {
-                response_modalities: ['TEXT', 'IMAGE'],
-                imageConfig: {
-                    aspectRatio: '9:16',
-                    imageSize: '4K',
-                },
-            },
-        };
+        // Generación con la cadena de modelos configurada (lib/ai/gemini.ts):
+        // principal gemini-nano-banana-2.1, respaldo gemini-3-pro-image, 9:16 a 2K.
+        const generated = await generateImage({
+            prompt: finalPrompt,
+            imageBase64,
+            aspectRatio: '9:16',
+        });
+        console.log(`Success with model: ${generated.model}`);
 
-        // Model fallback chain
-        const models = [
-            'gemini-3-pro-image-preview',  // Primary — highest quality
-            'gemini-2.5-flash-image',      // Fallback
-        ];
+        // Upload generated image to storage (con la extensión real del formato devuelto)
+        const imageBuffer = Buffer.from(generated.data, 'base64');
+        const isPng = generated.mimeType === 'image/png';
+        const fileName = `smile_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${isPng ? 'png' : 'jpg'}`;
 
-        let result: any = null;
-        let lastError = '';
-
-        for (const model of models) {
-            try {
-                console.log(`Trying model: ${model}`);
-                const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(geminiBody),
-                });
-
-                console.log(`Model ${model} response status:`, response.status);
-
-                if (!response.ok) {
-                    const err = await response.text();
-                    console.warn(`Model ${model} failed (${response.status}): ${err}`);
-                    lastError = `${model}: ${err}`;
-                    continue;
-                }
-
-                result = await response.json();
-                console.log(`Success with model: ${model}`);
-                break;
-            } catch (err: any) {
-                console.warn(`Model ${model} threw error:`, err);
-                lastError = err.message;
-                continue;
-            }
-        }
-
-        if (!result) throw new Error(`All models failed. Last error: ${lastError}`);
-
-        // Extract generated image
-        let generatedBase64: string | null = null;
-        const candidate = result.candidates?.[0];
-
-        if (candidate?.content?.parts) {
-            for (const part of candidate.content.parts) {
-                if (part.inlineData?.data) {
-                    generatedBase64 = part.inlineData.data;
-                    break;
-                }
-                // Also handle inline_data format
-                if (part.inline_data?.data) {
-                    generatedBase64 = part.inline_data.data;
-                    break;
-                }
-            }
-        }
-
-        if (!generatedBase64) {
-            const finishReason = candidate?.finishReason;
-            if (finishReason === 'SAFETY') {
-                throw new Error('SAFETY: Image generation was blocked by safety filters');
-            }
-            console.error('No image in response:', JSON.stringify(result));
-            throw new Error('AI did not return an image. Check content safety filters or prompt.');
-        }
-
-        // Upload generated image to storage
-        const imageBuffer = Buffer.from(generatedBase64, 'base64');
-        const fileName = `smile_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.jpg`;
-
-        const publicUrl = await storage.uploadFile('generated', fileName, imageBuffer, 'image/jpeg');
+        const publicUrl = await storage.uploadFile('generated', fileName, imageBuffer, isPng ? 'image/png' : 'image/jpeg');
 
         // If analysis_id provided, link it
         if (prompt_options?.analysis_id) {
