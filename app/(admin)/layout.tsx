@@ -16,7 +16,7 @@ import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { useState, useEffect } from "react";
-import { LogoMark } from "@/components/admin/qoves/LogoMark";
+import { LogoMark, Wordmark } from "@/components/admin/qoves/LogoMark";
 
 type Role = "admin" | "basic";
 type NavItem = { href: string; label: string; icon: any; adminOnly?: boolean };
@@ -67,6 +67,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const [email, setEmail] = useState("");
     const [isPlatform, setIsPlatform] = useState(false);
     const [impersonating, setImpersonating] = useState(false);
+    // Los menús Radix (Select/Sheet) solo se montan en el cliente: así el
+    // servidor y el navegador no generan IDs distintos (error de hidratación).
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
     const { data: orgs } = useListOrganizations();
     const { data: activeOrg } = useActiveOrganization();
 
@@ -110,7 +114,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const ImpersonationBanner = () =>
         impersonating ? (
-            <div style={{ background: "#f0b429", color: "#1c1e1d", fontSize: 13, padding: "8px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+            <div style={{ background: "linear-gradient(90deg, var(--blue-deep), var(--blue-ink))", color: "#fff", fontSize: 13, padding: "9px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
                 <span>Estás impersonando a otro usuario.</span>
                 <button onClick={stopImpersonating} style={{ textDecoration: "underline", fontWeight: 600, background: "none", border: "none", cursor: "pointer", color: "inherit" }}>
                     Salir de impersonación
@@ -120,10 +124,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     const SidebarContent = () => (
         <aside className="sidebar">
-            {/* Clinic switch (Better Auth organizations) — estilo del diseño */}
-            <Select value={activeOrg?.id ?? undefined} onValueChange={switchOrg}>
+            <div className="side-brand">
+                <Wordmark tone="light" height={22} />
+                <span className="mono" style={{ fontSize: 8, marginLeft: "auto", padding: "4px 8px", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 99 }}>PANEL</span>
+            </div>
+
+            {/* Selector de clínica (organizaciones de Better Auth) */}
+            {mounted ? (
+            <Select key={activeOrg?.id ?? 'sin-org'} value={activeOrg?.id ?? undefined} onValueChange={switchOrg}>
                 <SelectTrigger className="clinic-switch" style={{ height: "auto" }} aria-label="Cambiar clínica">
-                    <LogoMark size={34} dark />
+                    <LogoMark size={34} variant="light" />
                     <div style={{ flex: 1, textAlign: "left", minWidth: 0 }}>
                         <div style={{ fontSize: 14.5, fontWeight: 600, letterSpacing: "-0.02em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                             <SelectValue placeholder="Selecciona clínica" />
@@ -135,6 +145,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     {(orgs ?? []).map((o: { id: string; name: string }) => <SelectItem key={o.id} value={o.id}>{o.name}</SelectItem>)}
                 </SelectContent>
             </Select>
+            ) : (
+                <div className="clinic-switch" aria-hidden="true"><LogoMark size={34} variant="light" /><div style={{ flex: 1, height: 30 }} /></div>
+            )}
 
             {/* Grouped nav */}
             <nav className="nav-scroll">
@@ -174,7 +187,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             href="/superadmin"
                             onClick={() => setOpen(false)}
                             className={"navitem" + (pathname.startsWith("/superadmin") ? " navitem-on" : "")}
-                            style={{ color: "var(--sage-deep, #7e8c86)" }}
                         >
                             <ShieldCheck size={18} strokeWidth={1.6} />
                             <span style={{ flex: 1, textAlign: "left" }}>Plataforma</span>
@@ -218,15 +230,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 {/* Mobile header (solo móvil) */}
                 <div
                     className="qoves-mobile-header"
-                    style={{ alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "#fff", borderBottom: "1px solid var(--line)" }}
+                    style={{ alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "linear-gradient(90deg, var(--navy-1), var(--navy-2))", color: "#fff" }}
                 >
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                        <LogoMark size={30} dark />
-                        <span style={{ fontWeight: 600, fontSize: 15, letterSpacing: "-0.02em" }}>Smile Forward</span>
+                        <Wordmark tone="light" height={20} />
                     </div>
+                    {mounted && (
                     <Sheet open={open} onOpenChange={setOpen}>
                         <SheetTrigger asChild>
-                            <Button variant="ghost" size="icon"><Menu className="h-6 w-6" /></Button>
+                            <Button variant="ghost" size="icon" aria-label="Abrir menú" style={{ color: "#fff" }}><Menu className="h-6 w-6" /></Button>
                         </SheetTrigger>
                         <SheetContent side="left" className="p-0 w-[266px] border-r-0">
                             <SheetTitle className="sr-only">Navegación</SheetTitle>
@@ -235,6 +247,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             </div>
                         </SheetContent>
                     </Sheet>
+                    )}
                 </div>
 
                 <div style={{ display: "flex", flex: 1, minHeight: 0 }}>

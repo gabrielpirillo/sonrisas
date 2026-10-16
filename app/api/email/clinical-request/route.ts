@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 import { getLeadForEmail, clinicNotificationEmail } from '@/lib/leadAccess';
 import { escapeXml } from '@/lib/security';
+import { brandedEmail, clinicName, emailNote, mailFrom } from '@/lib/emailTemplate';
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -55,21 +56,39 @@ export async function POST(req: NextRequest) {
 
         const adminEmail = await clinicNotificationEmail(access.lead.clinic_id);
 
-        // 1. User Confirmation Email
+        const clinic = await clinicName(access.lead.clinic_id);
+        const clinicLabel = clinic ? escapeXml(clinic) : 'la clínica';
+
+        // 1. Confirmación al paciente
         await transporter.sendMail({
-            from: process.env.SMTP_FROM || smtpUser,
+            from: mailFrom(),
             to: email,
-            subject: 'Confirmación de solicitud de video en consulta - Dental Corbella',
-            html: `<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;line-height:1.6;color:#333;max-width:600px;margin:0 auto;padding:20px}.header{text-align:center;padding:30px 0;border-bottom:2px solid #f0f0f0}.logo{font-size:28px;font-weight:300;font-family:Georgia,serif;color:#000}.content{padding:40px 0}p{margin-bottom:20px;color:#444}.footer{text-align:center;padding:30px 0;border-top:2px solid #f0f0f0;color:#999;font-size:14px}</style></head><body><div class="header"><div class="logo">Smile Forward</div></div><div class="content"><p>Estimado/a ${name || 'Usuario'},</p><p>Le agradecemos que haya solicitado su video en consulta. Hemos recibido correctamente su petición y en breve nuestro equipo se pondrá en contacto con usted para gestionar y confirmar la fecha y hora de su visita.</p><p>Le recordamos que esta primera cita es totalmente gratuita. Durante la visita podrá visualizar su video generado por Smile Forward, donde conocerá una simulación personalizada de su futura sonrisa.</p><p>Si desea añadir alguna información adicional, puede responder a este correo o llamarnos directamente.</p><p>Gracias por confiar en nosotros.</p><p>Atentamente,<br><strong>Equipo de Atención al Paciente Dental Corbella</strong></p></div><div class="footer"><p>Dental Corbella - Smile Forward</p></div></body></html>`,
+            subject: clinic ? `Hemos recibido tu solicitud · ${clinic}` : 'Hemos recibido tu solicitud',
+            html: brandedEmail({
+                preheader: 'Te contactaremos para coordinar tu visita.',
+                eyebrow: 'Solicitud recibida',
+                title: `Gracias${name ? `, ${name}` : ''}. Te contactaremos pronto`,
+                body: `<p style="margin:0 0 14px;">Hemos recibido tu solicitud para ver tu video en consulta. En breve ${clinicLabel} se pondrá en contacto contigo para confirmar el día y la hora de tu visita.</p>
+                    <p style="margin:0;">Si quieres añadir algo, responde a este correo.</p>`,
+                signature: clinic ? escapeXml(clinic) : null,
+            }),
         });
 
-        // 2. Admin Notification Email (si la clínica tiene a quién avisar)
+        // 2. Aviso a la clínica (si tiene a quién avisar)
         if (!adminEmail) console.warn('[clinical-request] Sin email de aviso para la clínica', access.lead.clinic_id);
         if (adminEmail) await transporter.sendMail({
-            from: process.env.SMTP_FROM || smtpUser,
+            from: mailFrom(),
             to: adminEmail,
-            subject: `🔴 Nueva Solicitud de Video/Consulta - Dental Corbella`,
-            html: `<div style="font-family:sans-serif;padding:20px;border:1px solid #eee;border-radius:10px"><h2 style="color:#000">Nueva solicitud de consulta para vídeo</h2><p>Se ha recibido una nueva solicitud de un lead interesado en ver su simulación de sonrisa en consulta.</p><div style="background-color:#f9f9f9;padding:15px;border-radius:5px;margin:20px 0"><p><strong>Nombre:</strong> ${name || 'No proporcionado'}</p><p><strong>Email:</strong> ${escapeXml(email)}</p><p><strong>Teléfono:</strong> ${phone || 'No proporcionado'}</p></div><p style="color:#666;font-size:14px">Por favor, contacte con el paciente a la brevedad para coordinar la cita.</p></div>`,
+            subject: `Nueva solicitud de consulta · ${name || 'Lead'}`,
+            html: brandedEmail({
+                preheader: 'Un paciente quiere ver su simulación en consulta.',
+                eyebrow: 'Nuevo lead',
+                title: 'Nueva solicitud de consulta',
+                body: `<p style="margin:0 0 6px;">Un paciente quiere ver su simulación en consulta. Contáctalo cuanto antes para coordinar la cita.</p>
+                    ${emailNote(`<strong>Nombre:</strong> ${name || 'No proporcionado'}<br><strong>Email:</strong> ${escapeXml(email)}<br><strong>Teléfono:</strong> ${phone || 'No proporcionado'}`)}
+                    <p style="margin:0;font-size:13px;color:#8a8f8c;">También lo verás en la sección Leads de tu panel.</p>`,
+                signature: clinic ? escapeXml(clinic) : null,
+            }),
         });
 
         return NextResponse.json(

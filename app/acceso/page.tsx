@@ -3,13 +3,12 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import Link from 'next/link';
+import { AnimatePresence, motion } from 'framer-motion';
+import { ArrowRight, Building2, Loader2, Lock, Mail, User } from 'lucide-react';
 import { authClient } from '@/lib/auth/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AuthShell } from '@/components/auth/AuthShell';
+import { AuthField } from '@/components/auth/AuthField';
 
 function slugify(s: string): string {
     return (
@@ -59,65 +58,70 @@ export default function AccesoPage() {
         }
     }
 
+    const [tab, setTab] = useState<'login' | 'signup'>('login');
+    const isLogin = tab === 'login';
+
     return (
-        <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
-            <Card className="w-full max-w-md">
-                <CardHeader>
-                    <CardTitle>Smile Forward — Panel</CardTitle>
-                    <CardDescription>Accede o crea la cuenta de tu clínica.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <Tabs defaultValue="login">
-                        <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="login">Entrar</TabsTrigger>
-                            <TabsTrigger value="signup">Crear cuenta</TabsTrigger>
-                        </TabsList>
+        <AuthShell
+            eyebrow="Panel de clínicas"
+            title={isLogin ? 'Hola de nuevo,' : 'Crea tu cuenta'}
+            accent={isLogin ? 'entra a tu panel.' : 'y la de tu clínica.'}
+            subtitle={
+                isLogin
+                    ? 'Revisa tus leads, simulaciones y la configuración del widget.'
+                    : 'En minutos tendrás tu panel listo para instalar el widget en tu web.'
+            }
+        >
+            <div className="sf-auth-tabs" role="tablist">
+                <motion.span
+                    className="sf-auth-tab-pill"
+                    animate={{ x: isLogin ? '0%' : '100%' }}
+                    transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                />
+                <button type="button" role="tab" aria-selected={isLogin} onClick={() => setTab('login')}>Entrar</button>
+                <button type="button" role="tab" aria-selected={!isLogin} onClick={() => setTab('signup')}>Crear cuenta</button>
+            </div>
 
-                        <TabsContent value="login">
-                            <form onSubmit={handleLogin} className="space-y-4 pt-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="email">Email</Label>
-                                    <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="password">Contraseña</Label>
-                                    <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                                </div>
-                                <Button type="submit" className="w-full" disabled={loading}>
-                                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Entrar'}
-                                </Button>
-                                <p className="text-center text-sm">
-                                    <a href="/forgot-password" className="text-primary hover:underline">¿Olvidaste tu contraseña?</a>
-                                </p>
-                            </form>
-                        </TabsContent>
-
-                        <TabsContent value="signup">
-                            <form onSubmit={handleSignup} className="space-y-4 pt-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="name">Tu nombre</Label>
-                                    <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="clinicName">Nombre de la clínica</Label>
-                                    <Input id="clinicName" value={clinicName} onChange={(e) => setClinicName(e.target.value)} required />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="suEmail">Email</Label>
-                                    <Input id="suEmail" type="email" value={suEmail} onChange={(e) => setSuEmail(e.target.value)} required />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="suPass">Contraseña</Label>
-                                    <Input id="suPass" type="password" value={suPass} onChange={(e) => setSuPass(e.target.value)} minLength={8} required />
-                                </div>
-                                <Button type="submit" className="w-full" disabled={loading}>
-                                    {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Crear cuenta y clínica'}
-                                </Button>
-                            </form>
-                        </TabsContent>
-                    </Tabs>
-                </CardContent>
-            </Card>
-        </div>
+            <AnimatePresence mode="wait" initial={false}>
+                {isLogin ? (
+                    <motion.form
+                        key="login"
+                        onSubmit={handleLogin}
+                        className="sf-auth-form"
+                        initial={{ opacity: 0, x: -14 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 14 }}
+                        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                        <AuthField id="email" label="Email" icon={Mail} type="email" autoComplete="email" placeholder="tu@clinica.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                        <AuthField id="password" label="Contraseña" icon={Lock} type="password" autoComplete="current-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                        <div className="sf-auth-row">
+                            <Link href="/forgot-password" className="sf-auth-link">¿Olvidaste tu contraseña?</Link>
+                        </div>
+                        <button type="submit" className="sf-auth-btn" disabled={loading}>
+                            {loading ? <Loader2 size={18} className="animate-spin" /> : <>Entrar al panel <ArrowRight size={17} className="arrow" /></>}
+                        </button>
+                    </motion.form>
+                ) : (
+                    <motion.form
+                        key="signup"
+                        onSubmit={handleSignup}
+                        className="sf-auth-form"
+                        initial={{ opacity: 0, x: 14 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -14 }}
+                        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                        <AuthField id="name" label="Tu nombre" icon={User} autoComplete="name" placeholder="Nombre y apellido" value={name} onChange={(e) => setName(e.target.value)} required />
+                        <AuthField id="clinicName" label="Nombre de la clínica" icon={Building2} autoComplete="organization" placeholder="Clínica dental…" value={clinicName} onChange={(e) => setClinicName(e.target.value)} required />
+                        <AuthField id="suEmail" label="Email" icon={Mail} type="email" autoComplete="email" placeholder="tu@clinica.com" value={suEmail} onChange={(e) => setSuEmail(e.target.value)} required />
+                        <AuthField id="suPass" label="Contraseña" icon={Lock} type="password" autoComplete="new-password" placeholder="Mínimo 8 caracteres" value={suPass} onChange={(e) => setSuPass(e.target.value)} minLength={8} required />
+                        <button type="submit" className="sf-auth-btn" disabled={loading}>
+                            {loading ? <Loader2 size={18} className="animate-spin" /> : <>Crear cuenta y clínica <ArrowRight size={17} className="arrow" /></>}
+                        </button>
+                    </motion.form>
+                )}
+            </AnimatePresence>
+        </AuthShell>
     );
 }

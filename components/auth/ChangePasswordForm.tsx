@@ -5,9 +5,6 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { authClient } from '@/lib/auth/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 
 export function ChangePasswordForm({ redirectTo }: { redirectTo?: string }) {
     const router = useRouter();
@@ -35,23 +32,21 @@ export function ChangePasswordForm({ redirectTo }: { redirectTo?: string }) {
         if (redirectTo) router.push(redirectTo);
     }
 
+    const field = (id: string, label: string, value: string, set: (v: string) => void, extra: React.InputHTMLAttributes<HTMLInputElement> = {}) => (
+        <div>
+            <label htmlFor={id} className="mono" style={{ display: 'block', fontSize: 9, marginBottom: 7 }}>{label}</label>
+            <input id={id} className="field" type="password" value={value} onChange={(e) => set(e.target.value)} required style={{ height: 44 }} {...extra} />
+        </div>
+    );
+
     return (
-        <form onSubmit={onSubmit} className="space-y-4 max-w-sm">
-            <div className="space-y-2">
-                <Label htmlFor="current">Contraseña actual</Label>
-                <Input id="current" type="password" value={current} onChange={(e) => setCurrent(e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="next">Nueva contraseña</Label>
-                <Input id="next" type="password" value={next} onChange={(e) => setNext(e.target.value)} minLength={8} required />
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="confirm">Confirmar nueva contraseña</Label>
-                <Input id="confirm" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
-            </div>
-            <Button type="submit" disabled={loading}>
-                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Actualizar contraseña'}
-            </Button>
+        <form onSubmit={onSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {field('current', 'CONTRASEÑA ACTUAL', current, setCurrent, { autoComplete: 'current-password' })}
+            {field('next', 'NUEVA CONTRASEÑA', next, setNext, { minLength: 8, autoComplete: 'new-password' })}
+            {field('confirm', 'CONFIRMAR NUEVA CONTRASEÑA', confirm, setConfirm, { autoComplete: 'new-password' })}
+            <button type="submit" className="btn btn-primary" disabled={loading} style={{ marginTop: 4, justifyContent: 'center' }}>
+                {loading ? <Loader2 className="animate-spin" size={16} /> : 'Actualizar contraseña'}
+            </button>
         </form>
     );
 }

@@ -25,35 +25,41 @@ export const FaceOverlay: React.FC<FaceOverlayProps> = ({
     isCentered,
     isCorrectSize,
 }) => {
+    // Paleta de marca: neutro (sin cara) · ámbar (ajuste) · rosado (error) · cian (listo)
+    const NEUTRAL = "rgba(255, 255, 255, 0.75)";
+    const WARN = "#f2c879";
+    const ERR = "#e8a59c";
+    const OK = "#06b6d4";
+
     // Determine stroke color and feedback text based on detailed state
-    let strokeColor = "#ef4444"; // Default Red
+    let strokeColor = NEUTRAL;
     let feedbackText = "Ubica tu cara en el óvalo";
     let strokeWidth = 2; // Thinner by default
 
     if (multipleFacesDetected) {
-        strokeColor = "#ef4444";
+        strokeColor = ERR;
         feedbackText = "Solo una persona";
     } else if (!faceDetected) {
-        strokeColor = "#ef4444";
+        strokeColor = NEUTRAL;
         feedbackText = "Ubica tu cara en el óvalo";
     } else if (faceDetected && !isAligned) {
         // Face detected but something is off (centering, size, or smile, or light)
 
         if (isLowLight) {
-            strokeColor = "#eab308";
+            strokeColor = WARN;
             feedbackText = "Necesitas más luz";
         } else if (!isSmiling) {
             // Check specific reasons for not smiling
             if (smileScore > 0.25 && jawOpenScore <= 0.01) {
-                strokeColor = "#eab308";
+                strokeColor = WARN;
                 feedbackText = "Abre un poco más la boca";
             } else {
-                strokeColor = "#eab308"; // Yellow warning
+                strokeColor = WARN;
                 feedbackText = "¡Sonríe!";
             }
         } else {
             // Smiling but not aligned (position/size)
-            strokeColor = "#ef4444";
+            strokeColor = ERR;
             if (!isCentered) {
                 feedbackText = "Centra tu cara";
             } else if (!isCorrectSize) {
@@ -63,7 +69,7 @@ export const FaceOverlay: React.FC<FaceOverlayProps> = ({
             }
         }
     } else if (isAligned) {
-        strokeColor = "rgba(34, 197, 94, 0.8)"; // Subtler Green
+        strokeColor = OK;
         strokeWidth = 4;
         feedbackText = "¡Perfecto!";
     }
@@ -101,7 +107,7 @@ export const FaceOverlay: React.FC<FaceOverlayProps> = ({
                     y="0"
                     width="100%"
                     height="100%"
-                    fill="rgba(0,0,0,0.7)"
+                    fill="rgba(19,27,34,0.72)"
                     mask="url(#mask)"
                 />
 
@@ -122,10 +128,22 @@ export const FaceOverlay: React.FC<FaceOverlayProps> = ({
                 />
             </svg>
 
-            <div className="absolute top-1/2 mt-16 text-center w-full">
-                <p className={`text-2xl font-light tracking-wide ${isAligned ? 'text-green-400' : 'text-white'}`} style={{ textShadow: '0 2px 10px rgba(0,0,0,0.5)' }}>
+            <div className="absolute top-1/2 mt-16 w-full flex justify-center px-4">
+                <motion.p
+                    key={feedbackText}
+                    initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+                    className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-[15px] font-medium tracking-[-0.01em] text-white backdrop-blur-md"
+                    style={{
+                        background: isAligned ? "rgba(6,182,212,0.28)" : "rgba(19,27,34,0.55)",
+                        border: `1px solid ${isAligned ? "rgba(6,182,212,0.7)" : "rgba(255,255,255,0.22)"}`,
+                        boxShadow: isAligned ? "0 0 24px rgba(6,182,212,0.45)" : "none",
+                    }}
+                >
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: strokeColor, boxShadow: `0 0 8px ${strokeColor}` }} />
                     {feedbackText}
-                </p>
+                </motion.p>
             </div>
         </div>
     );

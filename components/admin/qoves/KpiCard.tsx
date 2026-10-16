@@ -9,7 +9,8 @@ import { LinePath } from "@visx/shape";
 import { curveMonotoneX } from "@visx/curve";
 import { scaleLinear } from "@visx/scale";
 import { motion } from "framer-motion";
-import NumberFlow from "@number-flow/react";
+import NumberFlow, { type Format } from "@number-flow/react";
+import { C } from "@/lib/brand";
 
 function Sparkline({ data, w = 96, h = 30, color }: { data: number[]; w?: number; h?: number; color: string }) {
     const safe = data && data.length > 1 ? data : [0, 0];
@@ -19,7 +20,30 @@ function Sparkline({ data, w = 96, h = 30, color }: { data: number[]; w?: number
     const yScale = scaleLinear({ domain: [min, max || 1], range: [h - 2, 2] });
 
     return (
-        <svg width={w} height={h} style={{ display: "block" }}>
+        <svg width={w} height={h} style={{ display: "block", overflow: "visible" }}>
+            <defs>
+                <linearGradient id={`spark-${color.replace('#', '')}`} x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor={color} stopOpacity={0.22} />
+                    <stop offset="100%" stopColor={color} stopOpacity={0} />
+                </linearGradient>
+            </defs>
+            <LinePath<number>
+                data={safe}
+                x={(_, i) => xScale(i) ?? 0}
+                y={(d) => yScale(d) ?? 0}
+                curve={curveMonotoneX}
+            >
+                {({ path }) => (
+                    <motion.path
+                        d={`${path(safe) || ""} L ${w} ${h} L 0 ${h} Z`}
+                        fill={`url(#spark-${color.replace('#', '')})`}
+                        stroke="none"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.8, delay: 0.5 }}
+                    />
+                )}
+            </LinePath>
             <LinePath<number>
                 data={safe}
                 x={(_, i) => xScale(i) ?? 0}
@@ -31,7 +55,7 @@ function Sparkline({ data, w = 96, h = 30, color }: { data: number[]; w?: number
                         d={path(safe) || ""}
                         fill="none"
                         stroke={color}
-                        strokeWidth={1.5}
+                        strokeWidth={1.8}
                         strokeLinecap="round"
                         strokeLinejoin="round"
                         initial={{ pathLength: 0 }}
@@ -69,7 +93,7 @@ export function KpiCard({
     up?: boolean;
     spark: number[];
     suffix?: string;
-    format?: Intl.NumberFormatOptions;
+    format?: Format;
     index?: number;
 }) {
     const numeric = typeof value === "number";
@@ -84,17 +108,18 @@ export function KpiCard({
     return (
         <motion.div
             className="card"
-            style={{ padding: 22, display: "flex", flexDirection: "column", gap: 16, minHeight: 132 }}
+            style={{ padding: 22, display: "flex", flexDirection: "column", gap: 16, minHeight: 140 }}
+            whileHover={{ y: -3 }}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: index * 0.08, ease: [0.16, 1, 0.3, 1] }}
         >
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                 <span className="mono" style={{ fontSize: 9 }}>{label}</span>
-                <Sparkline data={spark} color={up ? "#5f917b" : "#bd8b86"} />
+                <Sparkline data={spark} color={up ? C.blueDeep : C.danger} />
             </div>
             <div>
-                <div style={{ fontSize: 38, fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1 }}>
+                <div style={{ fontSize: 40, fontWeight: 600, letterSpacing: "-0.035em", lineHeight: 1, color: C.ink }}>
                     {numeric ? (
                         <NumberFlow value={display} suffix={suffix} format={format} locales="es-ES" />
                     ) : (
@@ -102,8 +127,12 @@ export function KpiCard({
                     )}
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 8 }}>
-                    <span style={{ fontSize: 12, color: up ? "#4e7d68" : "#b06b66", fontWeight: 600 }}>
-                        {up ? "▲" : "▼"} {delta}
+                    <span style={{
+                        fontSize: 11.5, fontWeight: 600, padding: "3px 8px", borderRadius: 99,
+                        color: up ? C.blueInk : "#8f4f47",
+                        background: up ? C.blueSoft : C.dangerSoft,
+                    }}>
+                        {up ? "↑" : "↓"} {delta}
                     </span>
                     <span className="mono" style={{ fontSize: 9 }}>VS MES ANTERIOR</span>
                 </div>

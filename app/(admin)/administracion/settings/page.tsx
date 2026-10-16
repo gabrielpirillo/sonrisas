@@ -3,10 +3,10 @@ import { getSession } from "@/lib/auth/session";
 import { isImpersonating, getAuthContext } from "@/lib/auth/context";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { PageHead, Field } from "@/components/admin/qoves/PageHead";
+import Link from "next/link";
+import { ArrowRight, Building2, Coins, Users } from "lucide-react";
+import { PageHead } from "@/components/admin/qoves/PageHead";
 import { EmbedCard } from "@/components/admin/qoves/EmbedCard";
-
-const ACCENTS = ["#1c1e1d", "#7e8c86", "#7b93b0", "#5f917b"];
 
 export default async function SettingsPage() {
     const session = await getSession();
@@ -14,11 +14,13 @@ export default async function SettingsPage() {
     if (await isImpersonating()) redirect("/administracion/dashboard");
     if (session.role !== "admin") redirect("/administracion/leads");
 
+    const clinic = (await getAuthContext())?.clinic ?? null;
+
     // Real usage — generations in the last 30 days
     let usage30 = 0;
     try {
         const since = new Date(Date.now() - 30 * 86_400_000).toISOString();
-        const clinicId = (await getAuthContext())?.clinic?.id ?? '00000000-0000-0000-0000-000000000000';
+        const clinicId = clinic?.id ?? '00000000-0000-0000-0000-000000000000';
         const row = await db.queryOne(
             "SELECT COUNT(*) as count FROM generations g JOIN leads l ON l.id = g.lead_id WHERE l.clinic_id = $2 AND g.created_at >= $1",
             [since, clinicId]
@@ -30,63 +32,57 @@ export default async function SettingsPage() {
 
     return (
         <div className="admin-page">
-            <PageHead title="Configuración" subtitle="Tu widget, tu marca y tu equipo" />
+            <PageHead eyebrow="CUENTA" title="Configuración" accent="del widget" subtitle="Instala el widget en tu web y gestiona a tu equipo." />
 
             <div className="config-grid">
                 {/* ── Left column ── */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-                    <EmbedCard widgetKey={(await getAuthContext())?.clinic?.public_widget_key ?? null} />
-
-                    {/* Marca */}
-                    <div className="card" style={{ padding: 24 }}>
-                        <span className="mono" style={{ fontSize: 9 }}>MARCA DE LA CLÍNICA</span>
-                        <h3 style={{ fontSize: 18, fontWeight: 600, letterSpacing: "-0.02em", margin: "10px 0 18px" }}>Personaliza tu widget</h3>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-                            <Field label="DOMINIO">
-                                <input className="field" defaultValue="dentalcorbella.com" style={{ height: 44, fontSize: 14 }} />
-                            </Field>
-                            <Field label="COLOR DE ACENTO">
-                                <div style={{ display: "flex", gap: 8, alignItems: "center", height: 44 }}>
-                                    {ACCENTS.map((c, i) => (
-                                        <span
-                                            key={c}
-                                            style={{
-                                                width: 28,
-                                                height: 28,
-                                                borderRadius: 8,
-                                                background: c,
-                                                border: i === 0 ? "2px solid var(--ink)" : "1px solid var(--line)",
-                                                boxShadow: i === 0 ? "0 0 0 2px #fff inset" : "none",
-                                            }}
-                                        />
-                                    ))}
-                                </div>
-                            </Field>
-                        </div>
-                    </div>
+                    <EmbedCard widgetKey={clinic?.public_widget_key ?? null} />
                 </div>
 
                 {/* ── Right column ── */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-                    {/* Uso */}
-                    <div className="card" style={{ padding: 24 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                            <span className="mono" style={{ fontSize: 9 }}>USO · ÚLTIMOS 30 DÍAS</span>
-                            <span className="mono" style={{ fontSize: 9 }}>GENERACIONES</span>
+                    {/* Clínica + uso */}
+                    <div className="card card-navy" style={{ padding: 24 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
+                            <span className="mono" style={{ fontSize: 9.5 }}>TU CLÍNICA</span>
+                            <span className="sf-cost-chip" style={{ padding: "5px 10px", fontSize: 12 }}>
+                                <span style={{ width: 6, height: 6, borderRadius: "50%", background: clinic?.status === "suspended" ? "var(--danger)" : "var(--scan)", boxShadow: clinic?.status === "suspended" ? "none" : "0 0 8px var(--scan)" }} />
+                                {clinic?.status === "suspended" ? "Suspendida" : "Activa"}
+                            </span>
                         </div>
-                        <div style={{ fontSize: 38, fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1, marginTop: 14 }}>{usage30}</div>
-                        <div style={{ fontSize: 13, color: "var(--ink-3)", marginTop: 12 }}>
-                            Simulaciones y vídeos generados por tus visitantes este periodo.
+                        <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "16px 0 22px" }}>
+                            <span style={{ width: 44, height: 44, borderRadius: 14, display: "grid", placeItems: "center", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.16)", color: "var(--blue-light)", flexShrink: 0 }}>
+                                <Building2 size={20} />
+                            </span>
+                            <span style={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.15 }}>{clinic?.name ?? "Sin clínica activa"}</span>
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                            <div style={{ padding: "14px 16px", borderRadius: 16, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)" }}>
+                                <span className="mono" style={{ fontSize: 8.5 }}>USO · 30 DÍAS</span>
+                                <div style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1, marginTop: 10 }}>{usage30}</div>
+                                <div style={{ fontSize: 12, color: "rgba(255,255,255,0.55)", marginTop: 6 }}>generaciones</div>
+                            </div>
+                            <Link href="/administracion/creditos" className="sf-navy-tile" style={{ padding: "14px 16px", borderRadius: 16, background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)", color: "#fff", textDecoration: "none", display: "block" }}>
+                                <span className="mono" style={{ fontSize: 8.5, display: "flex", justifyContent: "space-between" }}>SALDO <Coins size={12} /></span>
+                                <div style={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1, marginTop: 10 }}>{clinic?.credit_balance ?? 0}</div>
+                                <div style={{ fontSize: 12, color: "var(--blue-light)", marginTop: 6, display: "inline-flex", alignItems: "center", gap: 4 }}>Recargar <ArrowRight size={12} /></div>
+                            </Link>
                         </div>
                     </div>
 
                     {/* Equipo */}
                     <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-                        <div style={{ padding: "20px 22px", borderBottom: "1px solid var(--line)" }}>
-                            <span className="mono" style={{ fontSize: 9 }}>EQUIPO</span>
-                            <h3 style={{ fontSize: 16, fontWeight: 600, letterSpacing: "-0.02em", margin: "6px 0 0" }}>Miembros</h3>
+                        <div style={{ padding: "20px 22px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 12 }}>
+                            <span style={{ width: 38, height: 38, borderRadius: 12, display: "grid", placeItems: "center", background: "var(--blue-soft)", color: "var(--blue-deep)" }}>
+                                <Users size={18} />
+                            </span>
+                            <div>
+                                <span className="mono" style={{ fontSize: 9, color: "var(--blue-deep)" }}>EQUIPO</span>
+                                <h3 style={{ fontSize: 17, fontWeight: 600, letterSpacing: "-0.02em", margin: "3px 0 0" }}>Miembros <span style={{ color: "var(--ink-3)" }}>e invitaciones</span></h3>
+                            </div>
                         </div>
-                        <div style={{ padding: "18px 22px" }}>
+                        <div style={{ padding: "18px 22px 22px" }}>
                             <MembersManager />
                         </div>
                     </div>

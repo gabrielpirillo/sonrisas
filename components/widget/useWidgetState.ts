@@ -60,7 +60,7 @@ const PROCESSING_PHRASES = [
     "Estás a un paso de tu mejor versión",
     "Estamos afinando tu nueva sonrisa",
     "Ya casi está lista",
-    "Preparando tu simulación Smile Forward"
+    "Preparando tu simulación Smile Fast"
 ];
 
 export function useWidgetState(props: WidgetContainerProps = {}) {

@@ -1,18 +1,13 @@
-/* Sober status pill — dot + label, Qoves language.
-   Replaces the saturated 4-color badges. */
+/* Pastilla de estado del lead — escala única de marca (lib/brand.ts). */
+import { LEAD_STATUS } from "@/lib/brand";
 
-export const LEAD_STATUS: Record<string, { label: string; dot: string }> = {
-    pending: { label: "Pendiente", dot: "#b6a98f" },
-    contacted: { label: "Contactado", dot: "#7b93b0" },
-    converted: { label: "Convertido", dot: "#5f917b" },
-    rejected: { label: "Rechazado", dot: "#bd8b86" },
-};
+export { LEAD_STATUS };
 
 export function StatusPill({ status }: { status: string }) {
     const s = LEAD_STATUS[status] || LEAD_STATUS.pending;
     return (
-        <span className="status-pill">
-            <span className="status-dot" style={{ background: s.dot }} />
+        <span className="status-pill" style={{ background: s.bg, borderColor: s.border, color: s.text }}>
+            <span className="status-dot" style={{ background: s.dot, boxShadow: status === "converted" ? "0 0 8px 1px rgba(185,207,221,0.8)" : undefined }} />
             {s.label}
         </span>
     );

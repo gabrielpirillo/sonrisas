@@ -71,22 +71,23 @@ export function SelfieCaptureFlow({ onCapture, onCancel }: SelfieCaptureFlowProp
     if (error) {
         return (
             <div className="flex flex-col items-center justify-center h-full p-4 text-center">
-                <p className="text-red-400 mb-4">Error: {error}</p>
+                <p className="mb-4" style={{ color: "#e8a59c" }}>Error: {error}</p>
                 <Button onClick={onCancel} variant="outline">Cerrar</Button>
             </div>
         )
     }
 
     return (
-        <div className="relative w-full h-full min-h-[500px] md:min-h-0 flex flex-col bg-black overflow-hidden rounded-xl">
+        <div className="relative w-full h-full min-h-[500px] md:min-h-0 flex flex-col bg-navy-3 overflow-hidden rounded-xl">
             {/* Close Button implementation if needed, but Widget usually handles navigation. 
                 Adding an absolute close button just in case. */}
             <button
                 onClick={onCancel}
-                className="absolute top-4 right-4 z-50 p-2 bg-black/50 text-white rounded-full backdrop-blur-md hover:bg-black/70 transition-colors"
+                className="absolute top-4 right-4 z-50 p-2 bg-navy-2/55 text-white rounded-full border border-white/20 backdrop-blur-md hover:bg-navy-2/80 hover:rotate-90 transition-all duration-300"
                 title="Cancelar"
+                aria-label="Cancelar"
             >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5" />
             </button>
 
             {imgSrc ? (
@@ -107,7 +108,7 @@ export function SelfieCaptureFlow({ onCapture, onCancel }: SelfieCaptureFlowProp
                             variant="default"
                             size="icon"
                             onClick={confirmPhoto}
-                            className="rounded-full h-16 w-16 bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/30 hover:scale-105 transition-all"
+                            className="rounded-full h-16 w-16 bg-blue-deep hover:bg-blue-ink text-white shadow-[0_14px_30px_-12px_rgba(79,107,127,0.8)] hover:scale-105 active:scale-95 transition-all"
                         >
                             <Check className="h-8 w-8" />
                         </Button>
@@ -144,14 +145,14 @@ export function SelfieCaptureFlow({ onCapture, onCancel }: SelfieCaptureFlowProp
                             className={`
                                 rounded-full h-20 w-20 p-0 border-4 transition-all duration-500 flex items-center justify-center group pointer-events-auto
                                 ${isAligned
-                                    ? 'bg-white border-emerald-500 scale-110 shadow-[0_0_30px_rgba(16,185,129,0.4)] cursor-pointer'
+                                    ? 'bg-white border-scan scale-110 shadow-[0_0_0_8px_rgba(6,182,212,0.18),0_0_34px_rgba(6,182,212,0.55)] cursor-pointer'
                                     : 'bg-transparent border-white/30 scale-100 opacity-60 cursor-not-allowed'
                                 }
                             `}
                         >
                             <div className={`
                                 h-16 w-16 rounded-full transition-all duration-500
-                                ${isAligned ? 'bg-emerald-500 scale-90 group-hover:scale-75' : 'bg-transparent'}
+                                ${isAligned ? 'bg-scan scale-90 group-hover:scale-75' : 'bg-transparent'}
                             `}>
                                 {isAligned && <Aperture className="text-white h-full w-full p-3 animate-pulse" />}
                             </div>
@@ -160,10 +161,10 @@ export function SelfieCaptureFlow({ onCapture, onCancel }: SelfieCaptureFlowProp
 
                     {/* Loading State */}
                     {isLoading && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-30 backdrop-blur-sm">
+                        <div className="absolute inset-0 flex items-center justify-center bg-navy-3/85 z-30 backdrop-blur-sm">
                             <div className="flex flex-col items-center gap-4">
-                                <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-                                <p className="text-white font-light tracking-wide">Iniciando cámara...</p>
+                                <div className="w-10 h-10 border-[3px] border-scan border-t-transparent rounded-full animate-spin" />
+                                <p className="text-white/85 font-mono text-[10px] uppercase tracking-[0.18em]">Iniciando cámara…</p>
                             </div>
                         </div>
                     )}

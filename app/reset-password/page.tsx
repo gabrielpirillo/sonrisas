@@ -4,12 +4,10 @@ import { Suspense, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
-import { Loader2 } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Loader2, Lock, ShieldCheck } from 'lucide-react';
 import { authClient } from '@/lib/auth/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { AuthShell } from '@/components/auth/AuthShell';
+import { AuthField } from '@/components/auth/AuthField';
 
 function ResetInner() {
     const params = useSearchParams();
@@ -29,48 +27,52 @@ function ResetInner() {
         setLoading(false);
         if (res.error) return toast.error(res.error.message || 'El enlace es inválido o caducó');
         toast.success('Contraseña restablecida. Inicia sesión.');
-        router.push('/login');
+        router.push('/acceso');
     }
 
     if (error || !token) {
         return (
-            <Card className="w-full max-w-md">
-                <CardHeader><CardTitle>Enlace inválido</CardTitle>
-                    <CardDescription>El enlace es inválido o caducó.</CardDescription></CardHeader>
-                <CardContent><Link href="/forgot-password"><Button>Solicitar uno nuevo</Button></Link></CardContent>
-            </Card>
+            <AuthShell
+                eyebrow="Recuperar acceso"
+                title="Enlace"
+                accent="no válido."
+                subtitle="El enlace es inválido o ya caducó. Solicita uno nuevo para continuar."
+                back={{ href: '/acceso', label: 'Volver al acceso' }}
+            >
+                <div className="sf-auth-form">
+                    <div className="sf-auth-note danger">
+                        <AlertTriangle size={18} />
+                        <span>Por seguridad, cada enlace solo sirve una vez y caduca en 1 hora.</span>
+                    </div>
+                    <Link href="/forgot-password" className="sf-auth-btn">Solicitar uno nuevo <ArrowRight size={17} className="arrow" /></Link>
+                </div>
+            </AuthShell>
         );
     }
 
     return (
-        <Card className="w-full max-w-md">
-            <CardHeader><CardTitle>Nueva contraseña</CardTitle>
-                <CardDescription>Ingresa tu nueva contraseña.</CardDescription></CardHeader>
-            <CardContent>
-                <form onSubmit={onSubmit} className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="pass">Nueva contraseña</Label>
-                        <Input id="pass" type="password" value={pass} onChange={(e) => setPass(e.target.value)} minLength={8} required />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="confirm">Confirmar contraseña</Label>
-                        <Input id="confirm" type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
-                    </div>
-                    <Button type="submit" className="w-full" disabled={loading}>
-                        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Restablecer'}
-                    </Button>
-                </form>
-            </CardContent>
-        </Card>
+        <AuthShell
+            eyebrow="Recuperar acceso"
+            title="Crea una"
+            accent="contraseña nueva."
+            subtitle="Usa al menos 8 caracteres. Después podrás entrar con ella a tu panel."
+            back={{ href: '/acceso', label: 'Volver al acceso' }}
+        >
+            <form onSubmit={onSubmit} className="sf-auth-form">
+                <AuthField id="pass" label="Nueva contraseña" icon={Lock} type="password" autoComplete="new-password" placeholder="Mínimo 8 caracteres" value={pass} onChange={(e) => setPass(e.target.value)} minLength={8} required />
+                <AuthField id="confirm" label="Confirmar contraseña" icon={ShieldCheck} type="password" autoComplete="new-password" placeholder="Repite la contraseña" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
+                <button type="submit" className="sf-auth-btn" disabled={loading}>
+                    {loading ? <Loader2 size={18} className="animate-spin" /> : <>Restablecer <ArrowRight size={17} className="arrow" /></>}
+                </button>
+            </form>
+        </AuthShell>
     );
 }
 
 export default function ResetPasswordPage() {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-muted/20 p-4">
-            <Suspense fallback={<Loader2 className="h-6 w-6 animate-spin" />}>
-                <ResetInner />
-            </Suspense>
-        </div>
+        <Suspense fallback={<div style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center' }}><Loader2 className="h-6 w-6 animate-spin" /></div>}>
+            <ResetInner />
+        </Suspense>
     );
 }

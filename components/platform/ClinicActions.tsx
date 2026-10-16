@@ -4,10 +4,6 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { setClinicPlan, grantClinicCredits, setClinicStatus } from '@/lib/platform/queries';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const PLANS = ['free', 'starter', 'pro', 'enterprise'];
 
@@ -49,31 +45,43 @@ export function ClinicActions({ clinicId, currentPlan, status }: { clinicId: str
         toast.success(`Saldo nuevo: ${res.balanceAfter}`); setDelta(''); setReason(''); router.refresh();
     }
 
+    const block = { padding: 18, borderRadius: 16, border: '1px solid var(--line)', background: '#fff', display: 'flex', flexDirection: 'column' as const, gap: 10 };
     return (
-        <div className="grid gap-6 sm:grid-cols-2">
-            <div className="space-y-2">
-                <Label>Plan</Label>
-                <Select value={plan} onValueChange={savePlan} disabled={savingPlan}>
-                    <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
-                    <SelectContent>{PLANS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}</SelectContent>
-                </Select>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 12 }}>
+            <div style={block}>
+                <span className="mono" style={{ fontSize: 9 }}>PLAN</span>
+                <div className="seg seg-tabs" role="radiogroup" aria-label="Plan de la clínica">
+                    {PLANS.map((p) => (
+                        <button key={p} type="button" role="radio" aria-checked={plan === p} className={plan === p ? 'seg-on' : ''} disabled={savingPlan} onClick={() => plan !== p && savePlan(p)}>
+                            {p}
+                        </button>
+                    ))}
+                </div>
+                {savingPlan && <span style={{ fontSize: 12.5, color: 'var(--ink-3)', display: 'inline-flex', gap: 6, alignItems: 'center' }}><Loader2 className="animate-spin" size={13} /> Guardando…</span>}
             </div>
-            <form onSubmit={grant} className="space-y-2">
-                <Label>Ajustar créditos (+ otorga / − descuenta)</Label>
-                <div className="flex gap-2">
-                    <Input type="number" placeholder="±100" value={delta} onChange={(e) => setDelta(e.target.value)} className="w-28" />
-                    <Input placeholder="Motivo" value={reason} onChange={(e) => setReason(e.target.value)} />
-                    <Button type="submit" disabled={granting}>{granting ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Aplicar'}</Button>
+
+            <form onSubmit={grant} style={block}>
+                <span className="mono" style={{ fontSize: 9 }}>AJUSTAR CRÉDITOS · + OTORGA / − DESCUENTA</span>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <input className="field" type="number" placeholder="±100" value={delta} onChange={(e) => setDelta(e.target.value)} style={{ width: 96, height: 42 }} aria-label="Créditos" />
+                    <input className="field" placeholder="Motivo" value={reason} onChange={(e) => setReason(e.target.value)} style={{ flex: '1 1 120px', height: 42 }} aria-label="Motivo" />
+                    <button type="submit" className="btn btn-primary btn-sm" disabled={granting} style={{ height: 42 }}>
+                        {granting ? <Loader2 className="animate-spin" size={15} /> : 'Aplicar'}
+                    </button>
                 </div>
             </form>
-            <div className="space-y-2">
-                <Label>Estado de la clínica</Label>
-                <div>
-                    <Button variant={status === 'active' ? 'destructive' : 'default'} size="sm" onClick={toggleStatus} disabled={togglingStatus}>
-                        {togglingStatus ? <Loader2 className="h-4 w-4 animate-spin" /> : status === 'active' ? 'Suspender' : 'Activar'}
-                    </Button>
-                    <p className="text-xs text-muted-foreground mt-1">Suspender bloquea las generaciones de esta clínica.</p>
-                </div>
+
+            <div style={{ ...block, borderColor: status === 'active' ? '#ecd3cf' : 'var(--blue-line)', background: status === 'active' ? 'linear-gradient(180deg, #fff, var(--danger-soft))' : 'var(--blue-tint)' }}>
+                <span className="mono" style={{ fontSize: 9 }}>ESTADO DE LA CLÍNICA</span>
+                <p style={{ fontSize: 13, color: 'var(--ink-2)', margin: 0, lineHeight: 1.5 }}>Suspender bloquea las generaciones de esta clínica.</p>
+                <button
+                    className="btn btn-sm"
+                    onClick={toggleStatus}
+                    disabled={togglingStatus}
+                    style={{ alignSelf: 'flex-start', background: status === 'active' ? 'var(--danger)' : 'var(--blue-deep)', color: '#fff', border: 'none' }}
+                >
+                    {togglingStatus ? <Loader2 className="animate-spin" size={15} /> : status === 'active' ? 'Suspender clínica' : 'Activar clínica'}
+                </button>
             </div>
         </div>
     );

@@ -1,9 +1,8 @@
 'use client';
 
-import { useCallback, useMemo } from 'react';
-import { Area, LinePath, Bar, Line } from '@visx/shape';
-import { curveMonotoneX } from '@visx/curve';
-import { scaleTime, scaleLinear } from '@visx/scale';
+import { useCallback, useMemo, useState } from 'react';
+import { Bar } from '@visx/shape';
+import { scaleBand, scaleLinear } from '@visx/scale';
 import { AxisBottom, AxisLeft } from '@visx/axis';
 import { GridRows } from '@visx/grid';
 import { LinearGradient } from '@visx/gradient';
@@ -12,6 +11,10 @@ import { ParentSize } from '@visx/responsive';
 import { useTooltip, TooltipWithBounds } from '@visx/tooltip';
 import { localPoint } from '@visx/event';
 import { motion } from 'framer-motion';
+import { C, CHART } from '@/lib/brand';
+
+/* Uso diario de la plataforma: barras apiladas (imágenes abajo, videos arriba)
+   con la paleta Smile Fast, entrada animada y tooltip navy. */
 
 interface Datum {
     date: string;
@@ -19,12 +22,13 @@ interface Datum {
     videos: number;
 }
 
-const IMAGES_COLOR = '#0ea5e9';
-const VIDEOS_COLOR = '#8b5cf6';
-const GRID_COLOR = '#e8eae8';
-const AXIS_COLOR = '#8a8f8c';
+const IMAGES_COLOR = CHART.primary;
+const VIDEOS_COLOR = C.blueLight;
+const GRID_COLOR = CHART.grid;
+const AXIS_COLOR = CHART.axis;
 
-const margin = { top: 16, right: 16, bottom: 28, left: 36 };
+const margin = { top: 16, right: 8, bottom: 28, left: 32 };
+const ease = [0.22, 1, 0.36, 1] as const;
 
 function Chart({ data, width, height }: { data: Datum[]; width: number; height: number }) {
     const innerWidth = Math.max(0, width - margin.left - margin.right);
@@ -36,53 +40,31 @@ function Chart({ data, width, height }: { data: Datum[]; width: number; height: 
     );
 
     const xScale = useMemo(
-        () =>
-            scaleTime({
-                range: [0, innerWidth],
-                domain: [
-                    parsed[0]?.dateObj ?? new Date(),
-                    parsed[parsed.length - 1]?.dateObj ?? new Date(),
-                ],
-            }),
+        () => scaleBand<number>({ domain: parsed.map((_, i) => i), range: [0, innerWidth], padding: parsed.length > 14 ? 0.3 : 0.2 }),
         [innerWidth, parsed]
     );
 
     const maxTotal = Math.max(1, ...parsed.map((d) => d.total));
     const yScale = useMemo(
-        () =>
-            scaleLinear({
-                range: [innerHeight, 0],
-                domain: [0, maxTotal + Math.max(1, Math.ceil(maxTotal * 0.15))],
-                nice: true,
-            }),
+        () => scaleLinear({ range: [innerHeight, 0], domain: [0, maxTotal + Math.max(1, Math.ceil(maxTotal * 0.15))], nice: true }),
         [innerHeight, maxTotal]
     );
 
-    const {
-        showTooltip,
-        hideTooltip,
-        tooltipData,
-        tooltipLeft = 0,
-    } = useTooltip<typeof parsed[number]>();
+    const [hover, setHover] = useState<number | null>(null);
+    const { showTooltip, hideTooltip, tooltipData, tooltipLeft = 0 } = useTooltip<typeof parsed[number]>();
 
     const handleTooltip = useCallback(
         (event: React.TouchEvent<SVGRectElement> | React.MouseEvent<SVGRectElement>) => {
             const point = localPoint(event);
             if (!point) return;
-            const x0 = xScale.invert(point.x - margin.left);
-            let nearest = parsed[0];
-            let best = Infinity;
-            for (const d of parsed) {
-                const dist = Math.abs(d.dateObj.getTime() - x0.getTime());
-                if (dist < best) {
-                    best = dist;
-                    nearest = d;
-                }
-            }
-            if (!nearest) return;
+            const step = xScale.step() || 1;
+            const index = Math.max(0, Math.min(parsed.length - 1, Math.floor((point.x - margin.left) / step)));
+            const d = parsed[index];
+            if (!d) return;
+            setHover(index);
             showTooltip({
-                tooltipData: nearest,
-                tooltipLeft: (xScale(nearest.dateObj) ?? 0) + margin.left,
+                tooltipData: d,
+                tooltipLeft: (xScale(index) ?? 0) + xScale.bandwidth() / 2 + margin.left,
                 tooltipTop: 0,
             });
         },
@@ -90,120 +72,71 @@ function Chart({ data, width, height }: { data: Datum[]; width: number; height: 
     );
 
     if (width < 10) return null;
+    const bw = xScale.bandwidth();
+    const r = Math.min(6, bw / 2);
+    const labelEvery = Math.max(1, Math.ceil(parsed.length / (width > 520 ? 6 : 4)));
 
     return (
         <div className="relative">
             <svg width={width} height={height} style={{ display: 'block' }}>
-                <LinearGradient id="usage-images" from={IMAGES_COLOR} fromOpacity={0.35} to={IMAGES_COLOR} toOpacity={0.05} />
-                <LinearGradient id="usage-videos" from={VIDEOS_COLOR} fromOpacity={0.35} to={VIDEOS_COLOR} toOpacity={0.05} />
+                <LinearGradient id="usage-images" from={C.blueDeep} to={C.blueAccent} />
+                <LinearGradient id="usage-images-on" from={C.navy2} to={C.blueDeep} />
                 <Group left={margin.left} top={margin.top}>
-                    <GridRows scale={yScale} width={innerWidth} numTicks={4} stroke={GRID_COLOR} strokeDasharray="3 3" />
+                    <GridRows scale={yScale} width={innerWidth} numTicks={4} stroke={GRID_COLOR} strokeDasharray="2 6" />
 
-                    {/* images band (bottom) */}
-                    <Area<typeof parsed[number]>
-                        data={parsed}
-                        x={(d) => xScale(d.dateObj) ?? 0}
-                        y0={() => yScale(0) ?? 0}
-                        y1={(d) => yScale(d.images) ?? 0}
-                        curve={curveMonotoneX}
-                    >
-                        {({ path }) => (
-                            <motion.path
-                                d={path(parsed) || ''}
-                                fill="url(#usage-images)"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ duration: 0.7, delay: 0.2 }}
-                            />
-                        )}
-                    </Area>
-
-                    {/* videos band (stacked on top of images) */}
-                    <Area<typeof parsed[number]>
-                        data={parsed}
-                        x={(d) => xScale(d.dateObj) ?? 0}
-                        y0={(d) => yScale(d.images) ?? 0}
-                        y1={(d) => yScale(d.total) ?? 0}
-                        curve={curveMonotoneX}
-                    >
-                        {({ path }) => (
-                            <motion.path
-                                d={path(parsed) || ''}
-                                fill="url(#usage-videos)"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ duration: 0.7, delay: 0.35 }}
-                            />
-                        )}
-                    </Area>
-
-                    {/* edge lines */}
-                    <LinePath<typeof parsed[number]>
-                        data={parsed}
-                        x={(d) => xScale(d.dateObj) ?? 0}
-                        y={(d) => yScale(d.images) ?? 0}
-                        curve={curveMonotoneX}
-                    >
-                        {({ path }) => (
-                            <motion.path
-                                d={path(parsed) || ''}
-                                fill="none"
-                                stroke={IMAGES_COLOR}
-                                strokeWidth={1.75}
-                                initial={{ pathLength: 0 }}
-                                animate={{ pathLength: 1 }}
-                                transition={{ duration: 1, ease: 'easeInOut' }}
-                            />
-                        )}
-                    </LinePath>
-                    <LinePath<typeof parsed[number]>
-                        data={parsed}
-                        x={(d) => xScale(d.dateObj) ?? 0}
-                        y={(d) => yScale(d.total) ?? 0}
-                        curve={curveMonotoneX}
-                    >
-                        {({ path }) => (
-                            <motion.path
-                                d={path(parsed) || ''}
-                                fill="none"
-                                stroke={VIDEOS_COLOR}
-                                strokeWidth={1.75}
-                                initial={{ pathLength: 0 }}
-                                animate={{ pathLength: 1 }}
-                                transition={{ duration: 1, ease: 'easeInOut', delay: 0.15 }}
-                            />
-                        )}
-                    </LinePath>
+                    {parsed.map((d, i) => {
+                        const x = xScale(i) ?? 0;
+                        const hImg = innerHeight - (yScale(d.images) ?? innerHeight);
+                        const hVid = innerHeight - (yScale(d.videos) ?? innerHeight);
+                        const on = hover === i;
+                        if (d.total === 0) {
+                            return <rect key={i} x={x} y={innerHeight - 3} width={bw} height={3} rx={1.5} fill={C.blueSoft} />;
+                        }
+                        return (
+                            <g key={i}>
+                                <motion.rect
+                                    x={x}
+                                    width={bw}
+                                    rx={hVid > 0 ? 0 : r}
+                                    fill={on ? 'url(#usage-images-on)' : 'url(#usage-images)'}
+                                    initial={{ height: 0, y: innerHeight }}
+                                    animate={{ height: hImg, y: innerHeight - hImg }}
+                                    transition={{ duration: 0.7, delay: 0.1 + i * 0.015, ease }}
+                                />
+                                {hVid > 0 && (
+                                    <motion.rect
+                                        x={x}
+                                        width={bw}
+                                        rx={r}
+                                        fill={VIDEOS_COLOR}
+                                        initial={{ height: 0, y: innerHeight - hImg }}
+                                        animate={{ height: hVid, y: innerHeight - hImg - hVid }}
+                                        transition={{ duration: 0.6, delay: 0.35 + i * 0.015, ease }}
+                                    />
+                                )}
+                            </g>
+                        );
+                    })}
 
                     <AxisLeft
                         scale={yScale}
                         numTicks={4}
                         hideAxisLine
                         hideTicks
-                        tickLabelProps={() => ({ fill: AXIS_COLOR, fontSize: 11, textAnchor: 'end', dx: -4, dy: 4 })}
+                        tickFormat={(v) => (Number.isInteger(Number(v)) ? String(v) : '')}
+                        tickLabelProps={() => ({ fill: AXIS_COLOR, fontSize: 11, textAnchor: 'end', dx: -6, dy: 4 })}
                     />
                     <AxisBottom
                         top={innerHeight}
                         scale={xScale}
-                        numTicks={width > 520 ? 6 : 4}
                         hideAxisLine
                         hideTicks
-                        tickFormat={(value) =>
-                            (value as Date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })
+                        tickValues={parsed.map((_, i) => i).filter((i) => i % labelEvery === 0)}
+                        tickFormat={(i) =>
+                            parsed[i as number]?.dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) ?? ''
                         }
                         tickLabelProps={() => ({ fill: AXIS_COLOR, fontSize: 11, textAnchor: 'middle', dy: 4 })}
                     />
-
-                    {tooltipData && (
-                        <Line
-                            from={{ x: tooltipLeft - margin.left, y: 0 }}
-                            to={{ x: tooltipLeft - margin.left, y: innerHeight }}
-                            stroke="#b8bcb9"
-                            strokeWidth={1}
-                            strokeDasharray="4 4"
-                            pointerEvents="none"
-                        />
-                    )}
 
                     <Bar
                         x={0}
@@ -212,7 +145,7 @@ function Chart({ data, width, height }: { data: Datum[]; width: number; height: 
                         height={innerHeight}
                         fill="transparent"
                         onMouseMove={handleTooltip}
-                        onMouseLeave={hideTooltip}
+                        onMouseLeave={() => { hideTooltip(); setHover(null); }}
                         onTouchStart={handleTooltip}
                         onTouchMove={handleTooltip}
                     />
@@ -225,19 +158,21 @@ function Chart({ data, width, height }: { data: Datum[]; width: number; height: 
                     top={margin.top}
                     style={{
                         position: 'absolute',
-                        background: 'white',
-                        borderRadius: 8,
-                        padding: '8px 12px',
-                        boxShadow: '0 4px 12px -2px rgb(0 0 0 / 0.15)',
+                        background: `linear-gradient(135deg, ${C.navy1}, ${C.navy2})`,
+                        color: '#fff',
+                        borderRadius: 12,
+                        padding: '10px 13px',
+                        boxShadow: '0 14px 30px -12px rgba(19,27,34,0.6)',
                         pointerEvents: 'none',
                         fontSize: 12,
+                        lineHeight: 1.6,
                     }}
                 >
                     <div style={{ fontWeight: 600, marginBottom: 4 }}>
                         {tooltipData.dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'long' })}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ width: 8, height: 8, borderRadius: 99, background: IMAGES_COLOR, display: 'inline-block' }} />
+                        <span style={{ width: 8, height: 8, borderRadius: 99, background: C.blueAccent, display: 'inline-block' }} />
                         Imágenes: <strong>{tooltipData.images}</strong>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -260,11 +195,11 @@ export function UsageChart({ data }: { data: Array<Datum> }) {
             </div>
             <div style={{ display: 'flex', gap: 18, marginTop: 12, justifyContent: 'center' }}>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: AXIS_COLOR }}>
-                    <span style={{ width: 9, height: 9, borderRadius: 99, background: IMAGES_COLOR, display: 'inline-block' }} />
+                    <span style={{ width: 9, height: 9, borderRadius: 3, background: IMAGES_COLOR, display: 'inline-block' }} />
                     Imágenes
                 </span>
                 <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: AXIS_COLOR }}>
-                    <span style={{ width: 9, height: 9, borderRadius: 99, background: VIDEOS_COLOR, display: 'inline-block' }} />
+                    <span style={{ width: 9, height: 9, borderRadius: 3, background: VIDEOS_COLOR, display: 'inline-block' }} />
                     Videos
                 </span>
             </div>

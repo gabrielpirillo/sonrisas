@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { AnimatePresence, MotionConfig, motion } from "framer-motion";
+import { BRAND_NAME } from "@/lib/brand";
 import { useWidgetState } from "./useWidgetState";
 import { useIsDesktop } from "./useIsDesktop";
 import { LoadingOverlay } from "./LoadingOverlay";
@@ -30,17 +32,31 @@ const SUCCESS_STEPS: Step[] = ["EMAIL_SENT", "PHOTO_SUCCESS", "CLINICAL_REQUEST_
 
 function Stepper({ labels, activeIdx, className }: { labels: string[]; activeIdx: number; className: string }) {
     return (
-        <div className={`stepper ${className}`}>
+        <ol className={`stepper ${className}`} aria-label="Progreso" style={{ listStyle: "none", margin: 0 }}>
             {labels.map((lbl, i) => (
-                <div key={i} className={"stepper-node" + (i < activeIdx ? " done" : i === activeIdx ? " active" : "")}>
-                    <span className="stepper-dot">{i < activeIdx ? <WIcon name="check" size={12} /> : i + 1}</span>
+                <li
+                    key={i}
+                    className={"stepper-node" + (i < activeIdx ? " done" : i === activeIdx ? " active" : "")}
+                    aria-current={i === activeIdx ? "step" : undefined}
+                >
+                    <span className="stepper-dot">{i < activeIdx ? <WIcon name="check" size={13} /> : i + 1}</span>
                     <span className="stepper-lbl">{lbl}</span>
-                    {i < labels.length - 1 && <span className="stepper-line" />}
-                </div>
+                    {i < labels.length - 1 && (
+                        <span className="stepper-line" aria-hidden="true"><span className="stepper-fill" /></span>
+                    )}
+                </li>
             ))}
-        </div>
+        </ol>
     );
 }
+
+// Transición entre pasos: fundido + leve desplazamiento (MotionConfig
+// reducedMotion="user" la reduce a solo opacidad si el sistema lo pide).
+const STEP_MOTION = {
+    initial: { opacity: 0, y: 16 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const } },
+    exit: { opacity: 0, y: -10, transition: { duration: 0.2, ease: [0.4, 0, 1, 1] as const } },
+};
 
 export default function WidgetContainer(props: WidgetContainerProps) {
     const state = useWidgetState(props);
@@ -76,6 +92,7 @@ export default function WidgetContainer(props: WidgetContainerProps) {
             const height = measured + 50;
             if (height > 0 && Math.abs(height - lastSentHeight) > 2) {
                 lastSentHeight = height;
+                // Nombre de evento heredado: lo escuchan los snippets de embed ya instalados.
                 window.parent.postMessage({ type: "smileforward-resize", height }, "*");
             }
         };
@@ -115,35 +132,67 @@ export default function WidgetContainer(props: WidgetContainerProps) {
         setStep("LEAD_FORM");
     };
 
+    // RESULT y LOCKED_RESULT comparten vista: misma clave para no re-animar.
+    const stageKey = step === "LOCKED_RESULT" ? "RESULT" : step;
+
     return (
+        <MotionConfig reducedMotion="user">
         <div
             ref={containerRef}
             data-embed={isEmbedded ? "true" : undefined}
-            className={`qoves-widget relative w-full flex flex-col ${isEmbedded ? "overflow-visible" : "min-h-[100dvh] rounded-[2rem] border border-zinc-200 overflow-hidden"}`}
+            className={`qoves-widget relative w-full flex flex-col ${isEmbedded ? "overflow-visible" : "min-h-[100dvh] rounded-[2rem] overflow-hidden"}`}
         >
             <LoadingOverlay visible={isSubmittingPhoto || isSubmittingVideo} message={loadingMessage} />
 
             {/* Header */}
             <header className="wf-header">
                 <div className="wf-header-left">
-                    {showBack ? (
-                        <button type="button" className="wf-back" onClick={goBack} aria-label="Atrás"><WIcon name="back" size={17} /></button>
-                    ) : (
-                        <LogoMark size={isDesktop ? 32 : 28} />
-                    )}
-                    <span className="wf-brand">Smile Forward</span>
+                    <AnimatePresence mode="wait" initial={false}>
+                        {showBack ? (
+                            <motion.button
+                                key="back"
+                                type="button"
+                                className="wf-back"
+                                onClick={goBack}
+                                aria-label="Atrás"
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                transition={{ duration: 0.2 }}
+                            >
+                                <WIcon name="back" size={17} />
+                            </motion.button>
+                        ) : (
+                            <motion.span
+                                key="logo"
+                                style={{ display: "inline-flex" }}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.8 }}
+                                transition={{ duration: 0.2 }}
+                            >
+                                <LogoMark size={isDesktop ? 32 : 30} />
+                            </motion.span>
+                        )}
+                    </AnimatePresence>
+                    <span className="wf-brand">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/brand/smilefast-black.png" alt={BRAND_NAME} />
+                    </span>
                 </div>
 
                 {/* Desktop stepper sits inside the header */}
                 {!isSuccess && <Stepper labels={DESKTOP_LABELS} activeIdx={desktopIdx} className="stepper-desktop" />}
 
-                <span className="wf-online"><span className="wf-online-dot" />ONLINE</span>
+                <span className="wf-online"><span className="wf-online-dot" />EN LÍNEA</span>
             </header>
 
             {/* Mobile stepper row */}
             {!isSuccess && <Stepper labels={MOBILE_LABELS} activeIdx={mobileIdx} className="stepper-mobile" />}
 
             {/* Steps */}
+            <AnimatePresence mode="wait" initial={false}>
+            <motion.div key={stageKey} className="wf-stage" {...STEP_MOTION}>
             {step === "LEAD_FORM" && (
                 <LeadFormStep
                     isDesktop={isDesktop}
@@ -189,6 +238,9 @@ export default function WidgetContainer(props: WidgetContainerProps) {
             {step === "EMAIL_SENT" && <SuccessStep variant="email_sent" userEmail={userEmail} onReset={restart} />}
             {step === "PHOTO_SUCCESS" && <SuccessStep variant="photo" userEmail={userEmail} onReset={restart} />}
             {step === "CLINICAL_REQUEST_SUCCESS" && <SuccessStep variant="clinical" userEmail={userEmail} onReset={restart} />}
+            </motion.div>
+            </AnimatePresence>
         </div>
+        </MotionConfig>
     );
 }

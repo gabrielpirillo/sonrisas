@@ -125,8 +125,10 @@ export default function LeadsPage() {
     return (
         <div className="admin-page">
             <PageHead
+                eyebrow="OPERACIÓN"
                 title="Leads"
-                subtitle="Cada simulación es un lead con su contacto"
+                accent="de tu clínica"
+                subtitle="Cada simulación es un paciente interesado, con su contacto"
                 action={<button className="btn btn-white btn-sm" onClick={handleExportCSV}>Exportar CSV</button>}
             />
 

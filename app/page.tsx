@@ -1,119 +1,81 @@
 "use client";
 
 import Link from "next/link";
-import WidgetContainer from "@/components/widget/WidgetContainer";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { ModeToggle } from "@/components/mode-toggle";
-import { useEffect, useState } from "react";
-import { Sparkles, LayoutDashboard, AppWindow, Smartphone } from "lucide-react";
-
+import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { ArrowRight } from "lucide-react";
+import WidgetContainer from "@/components/widget/WidgetContainer";
+import { Wordmark } from "@/components/admin/qoves/LogoMark";
 
+/* Página de demostración del widget. Con ?embed=widget|full se comporta como
+   antes (compatibilidad con embeds antiguos que apuntaban a la raíz). */
 function HomeContent() {
   const searchParams = useSearchParams();
-  const embedMode = searchParams.get('embed'); // 'full' | 'widget' | null
-  const isWidgetMode = embedMode === 'widget';
-  const isFullEmbed = embedMode === 'full';
-
-  const [lang, setLang] = useState("es"); // Default to Spanish as requested
+  const embedMode = searchParams.get("embed"); // 'full' | 'widget' | null
+  const isWidgetMode = embedMode === "widget";
 
   useEffect(() => {
-    // Simple browser language detection
-    const browserLang = navigator.language.split('-')[0];
-    if (browserLang === 'en') {
-      setLang('en');
-    }
-
-    // FORCE TRANSPARENCY for iframe embedding
+    // Fondo transparente cuando va dentro de un iframe
     if (isWidgetMode) {
-      document.documentElement.style.setProperty('background', 'transparent', 'important');
-      document.body.style.setProperty('background', 'transparent', 'important');
+      document.documentElement.style.setProperty("background", "transparent", "important");
+      document.body.style.setProperty("background", "transparent", "important");
     }
   }, [isWidgetMode]);
 
-  const t = {
-    es: {
-      badge: "Odontología Avanzada",
-      title: "¿Y si pudieras conocer hoy a tu mejor versión?",
-      subtitle: "Adelántate al tiempo con Smile Forward, una experiencia única que te ofrece Dental Corbella.",
-      cta: "Empezar",
-      learnMore: "Saber más",
-      admin: "Panel Admin",
-      widget: "Widget"
-    },
-    en: {
-      badge: "Advanced Dentistry",
-      title: "What if you could meet your best version today?",
-      subtitle: "Get ahead of time with Smile Forward, a unique experience offered by Dental Corbella.",
-      cta: "Get Started",
-      learnMore: "Learn More",
-      admin: "Admin Panel",
-      widget: "Widget"
-    }
-  }[lang as 'es' | 'en'] || { // Fallback
-    badge: "Odontología Avanzada",
-    title: "¿Y si pudieras conocer hoy a tu mejor versión?",
-    subtitle: "Adelántate al tiempo con Smile Forward, una experiencia única que te ofrece Dental Corbella.",
-    cta: "Empezar",
-    learnMore: "Saber más",
-    admin: "Panel Admin",
-    widget: "Widget"
-  };
+  if (isWidgetMode) {
+    return (
+      <main style={{ background: "transparent" }}>
+        <WidgetContainer />
+      </main>
+    );
+  }
 
   return (
-    <div className={`flex flex-col font-sans ${isWidgetMode ? 'bg-transparent' : 'min-h-screen bg-white dark:bg-zinc-950'} text-foreground selection:bg-teal-100 selection:text-teal-900 transition-colors duration-500`}>
-      {/* Header - Minimal & Premium */}
+    <div
+      style={{
+        minHeight: "100dvh",
+        background:
+          "radial-gradient(60% 45% at 85% 0%, rgba(142,164,180,0.28), transparent 70%), radial-gradient(45% 40% at 0% 30%, rgba(185,207,221,0.25), transparent 70%), linear-gradient(180deg, #f8fafb 0%, #eef3f6 100%)",
+      }}
+    >
       {!embedMode && (
-        <header className="fixed top-0 z-50 w-full bg-black/40 backdrop-blur-md border-b border-white/10 transition-all duration-300">
-          <div className="container flex h-20 items-center justify-between px-6 md:px-8">
-            <h1 className="text-xl md:text-2xl font-serif tracking-tight flex items-center gap-2 text-white">
-              <Sparkles className="w-5 h-5 text-teal-500" strokeWidth={1} /> Smile Forward
-            </h1>
-            <div className="flex items-center gap-4">
-              <ModeToggle />
-            </div>
-          </div>
-        </header>
+      <header style={{ position: "sticky", top: 0, zIndex: 40, backdropFilter: "blur(14px)", background: "rgba(255,255,255,0.7)", borderBottom: "1px solid var(--blue-line)" }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto", padding: "14px 20px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+          <Wordmark height={22} />
+          <Link
+            href="/acceso"
+            style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 999, background: "linear-gradient(135deg, var(--blue-deep), var(--blue-ink))", color: "#fff", fontSize: 14, fontWeight: 600, textDecoration: "none", boxShadow: "0 12px 26px -14px rgba(62,87,105,0.9)" }}
+          >
+            Acceder al panel <ArrowRight size={15} />
+          </Link>
+        </div>
+      </header>
       )}
 
-      <main className={`flex flex-col items-center ${isWidgetMode
-        ? 'p-0'
-        : 'flex-1 justify-start pt-20 px-0 md:px-8 gap-12 md:gap-16 pb-12 md:pb-24'
-        }`}>
-        {/* Intro Section - Hidden in Widget Mode */}
-        {!isWidgetMode && (
-          <section className="text-center max-w-4xl space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-            <div className="inline-flex items-center rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-sans font-medium text-zinc-500 uppercase tracking-widest shadow-sm dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
-              {t.badge}
-            </div>
+      <main style={{ maxWidth: 1180, margin: "0 auto", padding: "56px 20px 80px", display: "flex", flexDirection: "column", alignItems: "center", gap: 40 }}>
+        <section className="sf-stagger" style={{ textAlign: "center", maxWidth: 820, display: "flex", flexDirection: "column", alignItems: "center", gap: 18 }}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "6px 13px", borderRadius: 999, border: "1px solid var(--blue-line)", background: "rgba(255,255,255,0.8)", fontFamily: "var(--font-mono)", fontSize: 10.5, letterSpacing: "0.18em", textTransform: "uppercase", color: "var(--blue-deep)" }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--scan)", boxShadow: "0 0 8px var(--scan)" }} />
+            Demo en vivo
+          </span>
+          <h1 style={{ fontSize: "clamp(36px, 6vw, 72px)", lineHeight: 1.02, letterSpacing: "-0.045em", fontWeight: 600, margin: 0, color: "var(--ink)" }}>
+            Descubre tu nueva sonrisa <span style={{ color: "var(--blue-accent)" }}>en segundos.</span>
+          </h1>
+          <p style={{ fontSize: "clamp(16px, 2vw, 19px)", lineHeight: 1.6, color: "var(--ink-2)", margin: 0, maxWidth: 620 }}>
+            Así verán tus pacientes el widget de Smile Fast en tu web: suben una foto y reciben su simulación de sonrisa con IA.
+          </p>
+        </section>
 
-            <h2 className="text-4xl md:text-7xl lg:text-8xl font-serif font-light tracking-tight text-black dark:text-white leading-[1.1] md:leading-[1.05] px-4 md:px-0">
-              {t.title}
-            </h2>
-
-            <p className="text-lg md:text-[23px] font-sans font-light text-zinc-600 dark:text-zinc-400 max-w-2xl mx-auto leading-relaxed px-4 md:px-0">
-              {t.subtitle}
-            </p>
-          </section>
-        )}
-
-        {/* Floating Widget Container */}
-        <section className={`w-full ${isWidgetMode ? '' : 'mx-auto relative z-10'}`}>
-          {/* Subtle premium glow behind widget - Hidden in Widget Mode */}
-          {!isWidgetMode && (
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-tr from-teal-500/10 via-purple-500/5 to-transparent blur-3xl rounded-full opacity-60 pointer-events-none"></div>
-          )}
-
-          <Card className={`${isWidgetMode ? 'border-none shadow-none rounded-none bg-transparent' : 'relative border-0 md:border border-zinc-100 dark:border-zinc-800 shadow-none md:shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] overflow-hidden bg-white dark:bg-zinc-900 md:rounded-[2rem]'}`}>
-            <div className="p-0">
-              <WidgetContainer />
-            </div>
-          </Card>
+        <section style={{ width: "100%", position: "relative" }} className="sf-rise">
+          <div
+            aria-hidden="true"
+            style={{ position: "absolute", inset: "8% 6%", background: "radial-gradient(closest-side, rgba(79,107,127,0.22), transparent)", filter: "blur(40px)", pointerEvents: "none" }}
+          />
+          <div style={{ position: "relative", background: "#fff", borderRadius: 32, border: "1px solid var(--blue-line)", boxShadow: "0 40px 80px -40px rgba(27,38,48,0.45)", overflow: "hidden" }}>
+            <WidgetContainer />
+          </div>
         </section>
       </main>
-
     </div>
   );
 }
@@ -123,5 +85,5 @@ export default function Home() {
     <Suspense>
       <HomeContent />
     </Suspense>
-  )
+  );
 }

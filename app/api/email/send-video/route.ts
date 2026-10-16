@@ -10,6 +10,7 @@ import { escapeXml } from '@/lib/security';
 import nodemailer from 'nodemailer';
 import { db } from '@/lib/db';
 import { storage } from '@/lib/storage';
+import { brandedEmail, clinicName, mailFrom } from '@/lib/emailTemplate';
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -58,15 +59,16 @@ export async function POST(req: NextRequest) {
         });
 
         // 4. Send email
+        const clinic = await clinicName(lead.clinic_id);
         await transporter.sendMail({
-            from: process.env.SMTP_FROM || 'Smile Forward <smileforward@dentalcorbella.com>',
+            from: mailFrom(),
             to: lead.email,
-            subject: 'Tu Video Sonrisa Smile Forward está listo 🎬✨',
+            subject: clinic ? `Tu video de sonrisa · ${clinic}` : 'Tu video de sonrisa está listo',
             text: 'Tu video personalizado está adjunto.',
-            html: getVideoEmailTemplate(lead.name),
+            html: videoEmail(lead.name, clinic),
             attachments: [
                 {
-                    filename: 'smile-forward-video.mp4',
+                    filename: 'video-sonrisa.mp4',
                     content: videoBuffer,
                     contentType: 'video/mp4',
                 }
@@ -99,31 +101,13 @@ export async function POST(req: NextRequest) {
     }
 }
 
-function getVideoEmailTemplate(name: string | null): string {
-    return `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
-</head>
-<body style="font-family: 'Outfit', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #fff;">
-    <div style="text-align: center; padding: 40px 0; border-bottom: 2px solid #f0f0f0;">
-        <div style="font-size: 32px; font-weight: 700; font-family: 'Playfair Display', serif;">Smile Forward</div>
-    </div>
-    <div style="padding: 50px 0;">
-        <h1 style="font-family: 'Playfair Display', serif; font-size: 28px;">¡Hola${name ? ` ${escapeXml(name)}` : ''}! 🎬</h1>
-        <p style="color: #555; font-size: 16px;">Tu video personalizado de Smile Forward está listo. Adjuntamos tu video para que puedas verlo con todo detalle.</p>
-        <p style="color: #555; font-size: 16px;">Este video te muestra cómo podrías verte sonriendo en diferentes situaciones reales.</p>
-        <div style="text-align: center; margin: 30px 0;">
-            <a href="https://dentalcorbella.com/contacto/" style="display: inline-block; padding: 18px 36px; background: #000; color: #fff; text-decoration: none; border-radius: 50px; font-weight: 500; font-size: 16px;">
-                Reserva tu cita
-            </a>
-        </div>
-    </div>
-    <div style="text-align: center; padding: 40px 0; border-top: 2px solid #f0f0f0; color: #999; font-size: 14px;">
-        <p>Dental Corbella - Smile Forward</p>
-    </div>
-</body>
-</html>`;
+function videoEmail(name: string | null, clinic: string | null): string {
+    return brandedEmail({
+        preheader: 'Tu video personalizado está listo. Te lo adjuntamos.',
+        eyebrow: 'Video listo',
+        title: `¡Hola${name ? ` ${escapeXml(name)}` : ''}! Tu video está listo`,
+        body: `<p style="margin:0 0 14px;">Adjuntamos tu video personalizado: muestra cómo podrías verte sonriendo con naturalidad.</p>
+            <p style="margin:0;">Si tienes dudas o quieres avanzar con el tratamiento, responde a este correo y ${clinic ? escapeXml(clinic) : 'la clínica'} te contactará.</p>`,
+        signature: clinic ? escapeXml(clinic) : null,
+    });
 }

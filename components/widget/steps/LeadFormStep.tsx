@@ -2,6 +2,7 @@
 
 import { LeadFields } from "./LeadFields";
 import { PhotoPanel } from "./PhotoPanel";
+import { WIcon } from "../WIcon";
 import type { FormValues } from "../types";
 
 interface LeadFormStepProps {
@@ -56,19 +57,23 @@ export function LeadFormStep({
             <div className="dk-intake">
                 <div className="dk-grid">
                     <div className="dk-col">
-                        <span className="mono" style={{ fontSize: 9 }}>PASO 01 · TUS DATOS</span>
-                        <h2 className="wf-h2" style={{ marginTop: 10 }}>
-                            Comienza tu <span className="dim">transformación</span>
-                        </h2>
-                        <p className="wf-sub" style={{ marginBottom: 18 }}>Te enviaremos tu simulación a estos datos.</p>
+                        <div className="wf-intro wf-stagger">
+                            <span className="mono wf-eyebrow">PASO 01 <b>· TUS DATOS</b></span>
+                            <h2 className="wf-h2">
+                                Comienza tu <span className="dim">transformación</span>
+                            </h2>
+                            <p className="wf-sub">Te enviaremos tu simulación a estos datos.</p>
+                        </div>
                         {fields}
                     </div>
                     <div className="dk-col">
-                        <span className="mono" style={{ fontSize: 9 }}>PASO 02 · TU FOTO</span>
-                        <h2 className="wf-h2" style={{ marginTop: 10 }}>
-                            Tu <span className="dim">sonrisa</span>
-                        </h2>
-                        <p className="wf-sub" style={{ marginBottom: 18 }}>Foto frontal, buena luz, sonriendo de frente.</p>
+                        <div className="wf-intro wf-stagger">
+                            <span className="mono wf-eyebrow">PASO 02 <b>· TU FOTO</b></span>
+                            <h2 className="wf-h2">
+                                Tu <span className="dim">sonrisa</span>
+                            </h2>
+                            <p className="wf-sub">Foto frontal, buena luz, sonriendo de frente.</p>
+                        </div>
                         <PhotoPanel
                             variant="desktop"
                             selectedFile={selectedFile}
@@ -78,15 +83,18 @@ export function LeadFormStep({
                     </div>
                 </div>
                 <div className="dk-foot">
-                    <p className="mono" style={{ fontSize: 9 }}>VALIDACIÓN BIOMÉTRICA · DATOS CIFRADOS</p>
+                    <p className="mono" style={{ fontSize: 9, margin: 0 }}>
+                        <WIcon name="lock" size={13} /> VALIDACIÓN BIOMÉTRICA · DATOS CIFRADOS
+                    </p>
                     <button
                         type="button"
                         className="btn btn-primary"
                         disabled={!ready}
-                        style={{ opacity: ready ? 1 : 0.4, cursor: ready ? "pointer" : "not-allowed", padding: "16px 32px" }}
+                        style={{ padding: "16px 30px" }}
                         onClick={onSubmit}
                     >
                         Ver mi simulación
+                        <WIcon name="arrow" size={17} className="btn-arrow" />
                     </button>
                 </div>
             </div>
@@ -96,22 +104,25 @@ export function LeadFormStep({
     // ── Mobile: solo datos (la foto es el siguiente paso) ──
     return (
         <div className="wf-body">
-            <div className="wf-intro">
+            <div className="wf-intro wf-stagger">
+                <span className="mono wf-eyebrow">PASO 01 <b>· TUS DATOS</b></span>
                 <h2 className="wf-h2">
                     Comienza tu <span className="dim">transformación</span>
                 </h2>
                 <p className="wf-sub">Te enviaremos tu simulación a estos datos.</p>
             </div>
             {fields}
-            <button
-                type="button"
-                className="btn btn-primary wf-cta"
-                disabled={!formOk}
-                style={{ opacity: formOk ? 1 : 0.4, cursor: formOk ? "pointer" : "not-allowed" }}
-                onClick={onContinue}
-            >
-                Continuar
-            </button>
+            <div className="sf-rise" style={{ animationDelay: "0.36s" }}>
+                <button
+                    type="button"
+                    className="btn btn-primary wf-cta"
+                    disabled={!formOk}
+                    onClick={onContinue}
+                >
+                    Continuar
+                    <WIcon name="arrow" size={17} className="btn-arrow" />
+                </button>
+            </div>
         </div>
     );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { PhotoPanel } from "./PhotoPanel";
+import { WIcon } from "../WIcon";
 
 interface PhotoStepProps {
     selectedFile: File | null;
@@ -12,7 +13,8 @@ interface PhotoStepProps {
 export function PhotoStep({ selectedFile, setSelectedFile, onUse }: PhotoStepProps) {
     return (
         <div className="wf-body wf-photo">
-            <div className="wf-intro">
+            <div className="wf-intro wf-stagger">
+                <span className="mono wf-eyebrow">PASO 02 <b>· TU FOTO</b></span>
                 <h2 className="wf-h2">
                     Tu <span className="dim">sonrisa</span>
                 </h2>
@@ -24,7 +26,7 @@ export function PhotoStep({ selectedFile, setSelectedFile, onUse }: PhotoStepPro
                 setSelectedFile={setSelectedFile}
                 onUse={onUse}
             />
-            <p className="mono wf-foot">VALIDACIÓN BIOMÉTRICA · DATOS CIFRADOS</p>
+            <p className="mono wf-foot"><WIcon name="lock" size={12} /> VALIDACIÓN BIOMÉTRICA · DATOS CIFRADOS</p>
         </div>
     );
 }

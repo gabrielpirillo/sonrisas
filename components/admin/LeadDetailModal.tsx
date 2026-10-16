@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { AnimatePresence, motion, useReducedMotion, type Variants } from "framer-motion";
 import {
     Dialog,
     DialogContent,
@@ -8,48 +9,103 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
-    Mail, Phone, User, ImageIcon, MonitorPlay, Download,
+    Mail, Phone, User, ImageIcon, MonitorPlay,
     Share2, CheckCircle2, Loader2, Archive, Trees, Home,
     Briefcase, Wine, Palmtree, Trash2, XCircle, AlertCircle,
-    ChevronLeft, Send
+    ChevronLeft, Send, Check
 } from "lucide-react";
 import { BeforeAfterSlider } from "@/components/widget/BeforeAfterSlider";
-import { Button } from "@/components/ui/button";
 // Supabase client removed — using internal API routes
 import { toast } from "sonner";
 import { deleteLeadAction } from "@/app/(admin)/administracion/leads/actions";
+import { StatusPill } from "@/components/admin/qoves/StatusPill";
+import { LEAD_STATUS } from "@/lib/brand";
 
-/* ── Qoves lead-modal helpers (Opción A) ───────────────────────────── */
+/* ── Lead-modal helpers · lenguaje visual Smile Fast (navy / azul acero) ── */
 const Q_GOAL: Record<string, string> = { alignment: "Alineación", veneers: "Carillas", implants: "Implantes", full_smile: "Sonrisa completa", whitening: "Blanqueamiento" };
 const Q_TIME: Record<string, string> = { now: "Ahora", "1-3_months": "1-3 meses", later: "Más adelante" };
-const Q_STATUS: Record<string, [string, string]> = {
-    pending: ["Pendiente", "#b6a98f"],
-    contacted: ["Contactado", "#7b93b0"],
-    converted: ["Convertido", "#5f917b"],
-    rejected: ["Rechazado", "#bd8b86"],
-};
+const STATUS_CHOICES = ["pending", "contacted", "converted"] as const;
 
-function QStatusPill({ status }: { status: string }) {
-    const [lbl, dot] = Q_STATUS[status] || Q_STATUS.pending;
+const NAVY_BG =
+    "radial-gradient(80% 55% at 0% 0%, rgba(142,164,180,0.30), transparent 62%)," +
+    "radial-gradient(70% 50% at 100% 100%, rgba(185,207,221,0.16), transparent 65%)," +
+    "linear-gradient(165deg, var(--navy-1), var(--navy-2) 55%, var(--navy-3))";
+
+const SPRING = { type: "spring", stiffness: 380, damping: 32, mass: 0.8 } as const;
+
+/** Iniciales sobre círculo navy con brillo azul (avatar del lead). */
+function NavyAvatar({ initials, size = 44, glass = false }: { initials: string; size?: number; glass?: boolean }) {
     return (
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "5px 12px 5px 10px", border: "1px solid var(--line)", borderRadius: 99, fontSize: 12, color: "var(--ink-2)", background: "#fff", whiteSpace: "nowrap" }}>
-            <span style={{ width: 7, height: 7, borderRadius: "50%", background: dot }} />{lbl}
+        <span
+            aria-hidden
+            style={{
+                width: size, height: size, borderRadius: "50%", flexShrink: 0,
+                display: "grid", placeItems: "center",
+                color: glass ? "#fff" : "var(--blue-light)",
+                fontSize: Math.round(size * 0.32), fontWeight: 600, letterSpacing: "0.02em",
+                background: glass
+                    ? "rgba(255,255,255,0.14)"
+                    : "radial-gradient(120% 120% at 20% 0%, rgba(185,207,221,0.38), transparent 55%), linear-gradient(150deg, var(--navy-1), var(--navy-2) 60%, var(--navy-3))",
+                border: glass ? "1px solid rgba(255,255,255,0.22)" : "none",
+                backdropFilter: glass ? "blur(10px)" : undefined,
+                boxShadow: glass ? undefined : "0 10px 22px -12px rgba(19,27,34,0.85), inset 0 0 0 1px rgba(255,255,255,0.08)",
+            }}
+        >
+            {initials}
         </span>
     );
 }
 
 function DContactRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
     return (
-        <div style={{ display: "flex", alignItems: "center", gap: 13, padding: "13px 0", borderTop: "1px solid var(--line)" }}>
-            <span style={{ width: 36, height: 36, borderRadius: 10, background: "var(--bg-soft)", border: "1px solid var(--line)", display: "grid", placeItems: "center", color: "var(--ink-2)", flexShrink: 0 }}>{icon}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 13, padding: "12px 0", borderTop: "1px solid var(--line)" }}>
+            <span style={{ width: 38, height: 38, borderRadius: 12, background: "var(--blue-tint)", border: "1px solid var(--blue-line)", display: "grid", placeItems: "center", color: "var(--blue-deep)", flexShrink: 0 }}>{icon}</span>
             <div style={{ minWidth: 0 }}>
-                <div className="mono" style={{ fontSize: 8.5, marginBottom: 2 }}>{label}</div>
-                <div style={{ fontSize: 14, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</div>
+                <div className="mono" style={{ fontSize: 8.5, marginBottom: 3 }}>{label}</div>
+                <div style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</div>
             </div>
         </div>
+    );
+}
+
+/** Fila clave-valor con etiqueta mono (cuestionario). */
+function KVRow({ label, value, first = false }: { label: string; value: React.ReactNode; first?: boolean }) {
+    return (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "12px 16px", borderTop: first ? "none" : "1px solid var(--line)" }}>
+            <span className="mono" style={{ fontSize: 9, flexShrink: 0 }}>{label}</span>
+            <span style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink)", textAlign: "right", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{value || "—"}</span>
+        </div>
+    );
+}
+
+/** Pastilla seleccionable de estado (colores de LEAD_STATUS). */
+function StatusChoice({ status, active, disabled, onClick }: { status: string; active: boolean; disabled?: boolean; onClick: () => void }) {
+    const s = LEAD_STATUS[status] || LEAD_STATUS.pending;
+    return (
+        <motion.button
+            type="button"
+            whileTap={disabled ? undefined : { scale: 0.96 }}
+            onClick={onClick}
+            disabled={disabled}
+            aria-pressed={active}
+            style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                padding: "8px 14px 8px 11px", borderRadius: 99,
+                border: `1px solid ${active ? s.border : "var(--blue-line)"}`,
+                background: active ? s.bg : "#fff",
+                color: active ? s.text : "var(--ink-2)",
+                fontFamily: "var(--font-sans)", fontSize: 13, fontWeight: active ? 600 : 450,
+                cursor: disabled ? "progress" : active ? "default" : "pointer",
+                boxShadow: active ? "0 8px 18px -12px rgba(27,38,48,0.55)" : "none",
+                transition: "background .25s var(--ease), border-color .25s var(--ease), color .25s var(--ease), box-shadow .25s var(--ease)",
+                opacity: disabled && !active ? 0.6 : 1,
+            }}
+        >
+            <span style={{ width: 7, height: 7, borderRadius: "50%", background: s.dot, boxShadow: status === "converted" && active ? "0 0 8px 1px rgba(185,207,221,0.8)" : undefined }} />
+            {s.label}
+            {active && <Check size={13} strokeWidth={2.4} />}
+        </motion.button>
     );
 }
 
@@ -92,6 +148,7 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
     const [sendingPhoto, setSendingPhoto] = useState(false);
     const [mobileTab, setMobileTab] = useState<"info" | "video" | "gestion">("info");
     const [settingStatus, setSettingStatus] = useState(false);
+    const reduceMotion = useReducedMotion();
 
     // ── Browser Notification helpers ─────────────────────────────────────
     const notificationSoundRef = useRef<HTMLAudioElement | null>(null);
@@ -564,26 +621,6 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
     };
 
 
-    const StatusBadge = ({ status }: { status: string }) => {
-        const styles: Record<string, string> = {
-            pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-            contacted: "bg-blue-100 text-blue-800 border-blue-200",
-            converted: "bg-green-100 text-green-800 border-green-200",
-            rejected: "bg-red-100 text-red-800 border-red-200",
-        };
-        const labels: Record<string, string> = {
-            pending: "Pendiente",
-            contacted: "Contactado",
-            converted: "Convertido",
-            rejected: "Rechazado",
-        };
-        return (
-            <Badge variant="outline" className={`${styles[status] || styles.pending} text-sm px-3 py-1`}>
-                {labels[status] || status}
-            </Badge>
-        );
-    };
-
     const generation = lead.generations?.find(
         (g: any) => g.type === "image" && g.status === "completed"
     );
@@ -591,7 +628,7 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
     const isVideoCompleted = videoGen?.status === "completed";
     const canGenerate = !generatingVideo && !isVideoCompleted && !!selectedScenario;
 
-    // Display values for the Qoves split modal (desktop · Opción A)
+    // Display values for the split modal (desktop) and mobile info tab
     const leadInitials = (lead.name || "—").split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
     const sd = lead.survey_data || {};
     const ageLabel = sd.ageRange || "—";
@@ -600,122 +637,157 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
     const sourceLabel = sd.source || sd.clinicPreference || "Web";
     const requestDate = new Date(lead.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
 
+    // ── Motion presets (respetan prefers-reduced-motion) ──────────────────
+    const rise: Variants = reduceMotion
+        ? { hidden: { opacity: 1 }, show: { opacity: 1 } }
+        : {
+            hidden: { opacity: 0, y: 12 },
+            show: (i: number = 0) => ({ opacity: 1, y: 0, transition: { ...SPRING, delay: 0.06 + i * 0.06 } }),
+        };
+    const tabMotion = reduceMotion
+        ? { initial: false as const, animate: { opacity: 1 }, exit: { opacity: 1 } }
+        : { initial: { opacity: 0, x: 14 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -14 }, transition: { duration: 0.22, ease: [0.22, 1, 0.36, 1] as const } };
+    const mediaMotion = reduceMotion
+        ? { initial: false as const, animate: { opacity: 1 }, exit: { opacity: 1 } }
+        : { initial: { opacity: 0, scale: 0.97 }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: 0.98 }, transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] as const } };
+    const shimmer = reduceMotion ? undefined : "sf-shimmer 1.6s linear infinite";
+
+    const mobileTabs = [
+        { id: "info" as const, label: "Información", icon: User },
+        { id: "video" as const, label: "Video", icon: MonitorPlay },
+        { id: "gestion" as const, label: "Gestión", icon: Briefcase },
+    ];
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-full md:max-w-[1040px] w-full h-[100dvh] md:h-[620px] md:max-h-[92vh] overflow-hidden flex flex-col p-0 gap-0 rounded-none md:rounded-[22px] [&>button]:hidden">
+            <DialogContent className="max-w-full md:max-w-[1040px] w-full h-[100dvh] md:h-[620px] md:max-h-[92vh] overflow-hidden flex flex-col p-0 gap-0 rounded-none md:rounded-[24px] border-0 md:border md:border-[var(--blue-line)] bg-white shadow-[0_40px_90px_-30px_rgba(19,27,34,0.65)] [&>button]:hidden"
+                onOpenAutoFocus={(e) => { e.preventDefault(); (e.currentTarget as HTMLElement | null)?.focus(); }}
+            >
+                <DialogTitle className="sr-only">{lead.name || "Detalle del lead"}</DialogTitle>
+                <DialogDescription className="sr-only">Detalle, simulación y gestión del lead</DialogDescription>
+
+                <motion.div
+                    className="qoves-admin flex flex-col flex-1 min-h-0 h-full"
+                    initial={reduceMotion ? false : { opacity: 0, y: 14, scale: 0.985 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={reduceMotion ? { duration: 0 } : SPRING}
+                >
 
                 {/* ═══════════════════════════════════════════════════════ */}
                 {/* ══  MOBILE LAYOUT  ═══════════════════════════════════ */}
                 {/* ═══════════════════════════════════════════════════════ */}
-                <div className="md:hidden flex flex-col h-full bg-background">
+                <div className="md:hidden flex flex-col h-full bg-white">
 
-                    {/* ── Mobile Hero: Image Preview ── */}
-                    <div className="relative bg-zinc-950 flex-none" style={{ height: '42vh' }}>
+                    {/* ── Mobile Hero: Image Preview (navy) ── */}
+                    <div className="relative flex-none overflow-hidden" style={{ height: '42vh', background: NAVY_BG }}>
                         {/* Compact top bar overlay */}
-                        <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between p-3 bg-gradient-to-b from-black/70 to-transparent">
-                            <div className="flex items-center gap-2 min-w-0">
+                        <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-2 p-3 bg-gradient-to-b from-[rgba(19,27,34,0.82)] to-transparent">
+                            <div className="flex items-center gap-2.5 min-w-0">
                                 <button
                                     onClick={() => onOpenChange(false)}
-                                    className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center active:scale-90 transition-transform"
+                                    aria-label="Cerrar"
+                                    className="w-9 h-9 rounded-full bg-white/15 border border-white/20 backdrop-blur-md flex items-center justify-center active:scale-90 transition-transform"
                                 >
                                     <ChevronLeft className="w-5 h-5 text-white" />
                                 </button>
-                                <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
-                                    <User className="w-4 h-4 text-white" />
-                                </div>
+                                <NavyAvatar initials={leadInitials} size={34} glass />
                                 <div className="min-w-0">
-                                    <p className="text-white text-sm font-bold truncate">{lead.name}</p>
-                                    <p className="text-white/60 text-[10px]">{new Date(lead.created_at).toLocaleDateString()}</p>
+                                    <p className="text-white text-sm font-semibold tracking-[-0.01em] truncate">{lead.name}</p>
+                                    <p className="mono" style={{ fontSize: 8.5, color: "rgba(255,255,255,0.55)", letterSpacing: "0.16em" }}>{requestDate}</p>
                                 </div>
                             </div>
-                            <StatusBadge status={lead.status} />
+                            <StatusPill status={lead.status} />
                         </div>
 
                         {/* Image/Video toggle pills */}
                         {isVideoCompleted && (
-                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex bg-white/10 backdrop-blur-md p-0.5 rounded-full border border-white/10">
-                                <button
-                                    onClick={() => setViewMode("images")}
-                                    className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all ${viewMode === "images" ? "bg-white text-black" : "text-white/70"}`}
-                                >
-                                    Antes/Después
-                                </button>
-                                <button
-                                    onClick={() => setViewMode("video")}
-                                    className={`px-3 py-1 rounded-full text-[10px] font-bold transition-all ${viewMode === "video" ? "bg-white text-black" : "text-white/70"}`}
-                                >
-                                    Video
-                                </button>
+                            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex bg-white/10 backdrop-blur-md p-1 rounded-full border border-white/15">
+                                {([["images", "Antes/Después"], ["video", "Video"]] as const).map(([mode, label]) => (
+                                    <button
+                                        key={mode}
+                                        onClick={() => setViewMode(mode)}
+                                        className={`relative px-3.5 py-1.5 rounded-full text-[11px] font-semibold transition-colors ${viewMode === mode ? "text-navy-2" : "text-white/75"}`}
+                                    >
+                                        {viewMode === mode && (
+                                            <motion.span layoutId="lead-media-toggle" className="absolute inset-0 rounded-full bg-white shadow" transition={reduceMotion ? { duration: 0 } : SPRING} />
+                                        )}
+                                        <span className="relative">{label}</span>
+                                    </button>
+                                ))}
                             </div>
                         )}
 
                         {/* Image content */}
-                        <div className="w-full h-full flex items-center justify-center">
-                            {viewMode === "images" ? (
-                                generation ? (
-                                    <div className="relative w-full h-full flex items-center justify-center p-2">
-                                        {generation.input_path && generation.input_path !== "unknown" ? (
-                                            <div className="relative h-full w-auto aspect-[9/16] rounded-xl overflow-hidden bg-zinc-800 shadow-2xl">
-                                                <BeforeAfterSlider
-                                                    beforeImage={generation.input_path}
-                                                    afterImage={generation.output_path}
-                                                    className="w-full h-full"
+                        <div className="w-full h-full flex items-center justify-center pt-12 pb-2">
+                            <AnimatePresence mode="wait" initial={false}>
+                                {viewMode === "images" ? (
+                                    generation ? (
+                                        <motion.div key="m-images" {...mediaMotion} className="relative w-full h-full flex items-center justify-center p-2">
+                                            {generation.input_path && generation.input_path !== "unknown" ? (
+                                                <div className="relative h-full w-auto aspect-[9/16] rounded-2xl overflow-hidden bg-navy-3 border border-white/10 shadow-[0_24px_48px_-24px_rgba(0,0,0,0.8)]">
+                                                    <BeforeAfterSlider
+                                                        beforeImage={generation.input_path}
+                                                        afterImage={generation.output_path}
+                                                        className="w-full h-full"
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <img
+                                                    src={generation.output_path}
+                                                    alt="Generated Smile"
+                                                    className="w-full h-full object-contain rounded-2xl"
                                                 />
+                                            )}
+                                        </motion.div>
+                                    ) : (
+                                        <motion.div key="m-empty" {...mediaMotion} className="text-center text-white/55">
+                                            <div className="w-14 h-14 mx-auto mb-3 rounded-2xl grid place-items-center bg-white/10 border border-white/15">
+                                                <ImageIcon className="w-6 h-6" strokeWidth={1.5} />
                                             </div>
-                                        ) : (
-                                            <img
-                                                src={generation.output_path}
-                                                alt="Generated Smile"
-                                                className="w-full h-full object-contain"
-                                            />
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="text-center text-white/40">
-                                        <ImageIcon className="w-12 h-12 mx-auto mb-2 opacity-30" strokeWidth={1.5} />
-                                        <p className="text-xs">Sin imágenes</p>
-                                    </div>
-                                )
-                            ) : isVideoCompleted ? (
-                                <div className="relative h-full w-auto aspect-[9/16] rounded-xl overflow-hidden bg-black">
-                                    <video
-                                        key={videoGen.output_path}
-                                        src={`/api/storage/generated/${videoGen.output_path}`}
-                                        className="w-full h-full object-contain"
-                                        controls
-                                        autoPlay
-                                        muted
-                                        playsInline
-                                        loop
-                                    />
-                                    <Button
-                                        size="sm"
-                                        className="absolute top-2 right-2 h-7 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground text-[10px] font-bold px-2.5 z-30"
-                                        onClick={handleSendVideo}
-                                        disabled={sendingVideo}
-                                    >
-                                        {sendingVideo ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Send className="w-3 h-3 mr-1" />}
-                                        Enviar
-                                    </Button>
-                                </div>
-                            ) : null}
+                                            <p className="mono" style={{ fontSize: 9, color: "rgba(255,255,255,0.55)" }}>Sin imágenes</p>
+                                        </motion.div>
+                                    )
+                                ) : isVideoCompleted ? (
+                                    <motion.div key="m-video" {...mediaMotion} className="relative h-full w-auto aspect-[9/16] rounded-2xl overflow-hidden bg-navy-3 border border-white/10 shadow-[0_24px_48px_-24px_rgba(0,0,0,0.8)]">
+                                        <video
+                                            key={videoGen.output_path}
+                                            src={`/api/storage/generated/${videoGen.output_path}`}
+                                            className="w-full h-full object-contain"
+                                            controls
+                                            autoPlay
+                                            muted
+                                            playsInline
+                                            loop
+                                        />
+                                        <button
+                                            className="absolute top-2 right-2 h-7 inline-flex items-center rounded-full bg-blue-deep hover:bg-blue-ink text-white text-[10px] font-semibold px-3 z-30 shadow-lg transition-colors disabled:opacity-60"
+                                            onClick={handleSendVideo}
+                                            disabled={sendingVideo}
+                                        >
+                                            {sendingVideo ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Send className="w-3 h-3 mr-1" />}
+                                            Enviar
+                                        </button>
+                                    </motion.div>
+                                ) : null}
+                            </AnimatePresence>
                         </div>
                     </div>
 
-                    {/* ── Floating Quick Actions Bar ── */}
-                    <div className="flex-none border-b bg-background px-3 py-2.5">
-                        <div className="flex items-center gap-1.5">
-                            <button
+                    {/* ── Quick Actions Bar ── */}
+                    <div className="flex-none border-b border-blue-line bg-white px-3 py-3">
+                        <div className="flex items-center gap-2">
+                            <motion.button
+                                whileTap={reduceMotion ? undefined : { scale: 0.97 }}
                                 onClick={handleWhatsApp}
-                                className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl bg-green-600 text-white text-xs font-bold active:scale-95 transition-transform"
+                                className="flex-1 min-w-0 h-10 flex items-center justify-center gap-2 rounded-full bg-blue-deep hover:bg-blue-ink text-white text-[13px] font-medium shadow-[0_10px_22px_-14px_rgba(79,107,127,0.95)] transition-colors"
                             >
-                                <Share2 className="w-3.5 h-3.5" />
-                                <span className="hidden xs:inline">WhatsApp</span>
-                            </button>
+                                <Share2 className="w-4 h-4 shrink-0" />
+                                <span className="truncate">WhatsApp</span>
+                            </motion.button>
                             <a
                                 href={`tel:${lead.phone}`}
-                                className="flex items-center justify-center w-9 h-9 rounded-xl bg-blue-50 text-blue-600 active:scale-95 transition-transform shrink-0"
+                                aria-label="Llamar"
+                                className="flex items-center justify-center w-10 h-10 rounded-full border border-blue-line bg-white text-blue-deep active:scale-95 transition-transform shrink-0"
                             >
                                 <Phone className="w-4 h-4" />
                             </a>
@@ -723,7 +795,7 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                                 <button
                                     onClick={handleResendPhoto}
                                     disabled={sendingPhoto}
-                                    className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary text-primary-foreground active:scale-95 transition-transform disabled:opacity-50 shrink-0"
+                                    className="flex items-center justify-center w-10 h-10 rounded-full border border-blue-line bg-blue-soft text-blue-deep active:scale-95 transition-transform disabled:opacity-50 shrink-0"
                                     title="Reenviar imagen por email"
                                 >
                                     {sendingPhoto ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
@@ -733,7 +805,7 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                                 <button
                                     onClick={handleSendVideo}
                                     disabled={sendingVideo}
-                                    className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary text-primary-foreground active:scale-95 transition-transform disabled:opacity-50 shrink-0"
+                                    className="flex items-center justify-center w-10 h-10 rounded-full border border-blue-line bg-blue-soft text-blue-deep active:scale-95 transition-transform disabled:opacity-50 shrink-0"
                                     title="Reenviar video por email"
                                 >
                                     {sendingVideo ? <Loader2 className="w-4 h-4 animate-spin" /> : <MonitorPlay className="w-4 h-4" />}
@@ -741,7 +813,7 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                             )}
                             <a
                                 href={`mailto:${lead.email}`}
-                                className="flex items-center justify-center w-9 h-9 rounded-xl bg-secondary text-secondary-foreground active:scale-95 transition-transform shrink-0"
+                                className="flex items-center justify-center w-10 h-10 rounded-full border border-blue-line bg-white text-blue-deep active:scale-95 transition-transform shrink-0"
                                 title="Enviar email"
                             >
                                 <Mail className="w-4 h-4" />
@@ -749,9 +821,9 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                             <button
                                 onClick={handleMarkContacted}
                                 disabled={loadingAction || lead.status === "contacted"}
-                                className={`flex items-center justify-center w-9 h-9 rounded-xl active:scale-95 transition-transform shrink-0 ${lead.status === "contacted"
-                                    ? "bg-green-50 text-green-600"
-                                    : "bg-yellow-50 text-yellow-600"
+                                className={`flex items-center justify-center w-10 h-10 rounded-full active:scale-95 transition-all shrink-0 border ${lead.status === "contacted"
+                                    ? "bg-navy-2 border-navy-2 text-blue-light"
+                                    : "bg-white border-blue-line text-ink-3 hover:text-blue-deep"
                                     }`}
                                 title={lead.status === "contacted" ? "Ya contactado" : "Marcar contactado"}
                             >
@@ -761,52 +833,56 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                     </div>
 
                     {/* ── Mobile Tab Bar ── */}
-                    <div className="flex-none border-b bg-background">
+                    <div className="flex-none border-b border-blue-line bg-white">
                         <div className="flex">
-                            {([
-                                { id: "info" as const, label: "Información", icon: User },
-                                { id: "video" as const, label: "Video", icon: MonitorPlay },
-                                { id: "gestion" as const, label: "Gestión", icon: Briefcase },
-                            ]).map((tab) => (
+                            {mobileTabs.map((tab) => (
                                 <button
                                     key={tab.id}
                                     onClick={() => setMobileTab(tab.id)}
-                                    className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-semibold border-b-2 transition-colors ${mobileTab === tab.id
-                                        ? "border-primary text-primary"
-                                        : "border-transparent text-muted-foreground"
+                                    className={`relative flex-1 flex items-center justify-center gap-1.5 py-3 text-[12.5px] transition-colors ${mobileTab === tab.id
+                                        ? "text-blue-deep font-semibold"
+                                        : "text-ink-3 font-medium"
                                         }`}
                                 >
                                     <tab.icon className="w-3.5 h-3.5" />
                                     {tab.label}
+                                    {mobileTab === tab.id && (
+                                        <motion.span
+                                            layoutId="lead-tab-underline"
+                                            className="absolute left-4 right-4 -bottom-px h-[2px] rounded-full bg-blue-deep"
+                                            transition={reduceMotion ? { duration: 0 } : SPRING}
+                                        />
+                                    )}
                                 </button>
                             ))}
                         </div>
                     </div>
 
                     {/* ── Mobile Tab Content ── */}
-                    <div className="flex-1 overflow-y-auto">
+                    <div className="flex-1 overflow-y-auto overflow-x-hidden bg-[linear-gradient(180deg,#f8fafb_0%,#eef3f6_100%)]">
+                        <AnimatePresence mode="wait" initial={false}>
 
                         {/* ── Tab: Info ── */}
                         {mobileTab === "info" && (
-                            <div className="p-4 space-y-4">
+                            <motion.div key="tab-info" {...tabMotion} className="p-4 space-y-5">
                                 {/* Contact compact */}
-                                <div className="bg-card rounded-xl border shadow-sm divide-y">
-                                    <a href={`mailto:${lead.email}`} className="flex items-center gap-3 p-3 active:bg-muted/20 transition-colors">
-                                        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                                <div className="card overflow-hidden">
+                                    <a href={`mailto:${lead.email}`} className="flex items-center gap-3 p-3.5 active:bg-blue-tint transition-colors">
+                                        <div className="w-10 h-10 rounded-xl bg-blue-tint border border-blue-line flex items-center justify-center text-blue-deep shrink-0">
                                             <Mail className="w-4 h-4" />
                                         </div>
                                         <div className="min-w-0">
-                                            <p className="text-[10px] text-muted-foreground font-medium uppercase">Email</p>
-                                            <p className="text-sm font-semibold truncate">{lead.email}</p>
+                                            <p className="mono" style={{ fontSize: 8.5 }}>Email</p>
+                                            <p className="text-sm font-medium text-ink truncate">{lead.email}</p>
                                         </div>
                                     </a>
-                                    <a href={`tel:${lead.phone}`} className="flex items-center gap-3 p-3 active:bg-muted/20 transition-colors">
-                                        <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+                                    <a href={`tel:${lead.phone}`} className="flex items-center gap-3 p-3.5 border-t border-line active:bg-blue-tint transition-colors">
+                                        <div className="w-10 h-10 rounded-xl bg-blue-tint border border-blue-line flex items-center justify-center text-blue-deep shrink-0">
                                             <Phone className="w-4 h-4" />
                                         </div>
                                         <div>
-                                            <p className="text-[10px] text-muted-foreground font-medium uppercase">Teléfono</p>
-                                            <p className="text-sm font-semibold">{lead.phone}</p>
+                                            <p className="mono" style={{ fontSize: 8.5 }}>Teléfono</p>
+                                            <p className="text-sm font-medium text-ink">{lead.phone}</p>
                                         </div>
                                     </a>
                                 </div>
@@ -814,116 +890,94 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                                 {/* Survey Data */}
                                 {lead.survey_data && Object.keys(lead.survey_data).length > 0 && (
                                     <div className="space-y-2.5">
-                                        <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-1">
+                                        <h3 className="mono px-1" style={{ fontSize: 9 }}>
                                             Cuestionario
                                         </h3>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <div className="bg-card rounded-xl border p-3">
-                                                <p className="text-[9px] text-muted-foreground uppercase font-bold mb-0.5">Edad</p>
-                                                <p className="text-xs font-semibold">
-                                                    {lead.survey_data.ageRange === "18-30" ? "18-30"
-                                                        : lead.survey_data.ageRange === "30-55" ? "30-55"
-                                                            : lead.survey_data.ageRange === "55+" ? "55+"
-                                                                : lead.survey_data.ageRange}
-                                                </p>
-                                            </div>
-                                            <div className="bg-card rounded-xl border p-3">
-                                                <p className="text-[9px] text-muted-foreground uppercase font-bold mb-0.5">Objetivo</p>
-                                                <p className="text-xs font-semibold">
-                                                    {lead.survey_data.improvementGoal === "alignment" ? "Alineación"
-                                                        : lead.survey_data.improvementGoal === "veneers" ? "Carillas"
-                                                            : lead.survey_data.improvementGoal === "implants" ? "Implantes"
-                                                                : lead.survey_data.improvementGoal === "full_smile" ? "Sonrisa Completa"
-                                                                    : lead.survey_data.improvementGoal === "whitening" ? "Blanqueamiento"
-                                                                        : lead.survey_data.improvementGoal}
-                                                </p>
-                                            </div>
-                                            <div className="bg-card rounded-xl border p-3">
-                                                <p className="text-[9px] text-muted-foreground uppercase font-bold mb-0.5">Plazo</p>
-                                                <p className="text-xs font-semibold">
-                                                    {lead.survey_data.timeframe === "now" ? "Ahora"
-                                                        : lead.survey_data.timeframe === "1-3_months" ? "1-3 meses"
-                                                            : lead.survey_data.timeframe === "later" ? "Más adelante"
-                                                                : lead.survey_data.timeframe}
-                                                </p>
-                                            </div>
-                                            <div className="bg-card rounded-xl border p-3">
-                                                <p className="text-[9px] text-muted-foreground uppercase font-bold mb-0.5">Clínica</p>
-                                                <p className="text-xs font-semibold">{lead.survey_data.clinicPreference}</p>
-                                            </div>
+                                        <div className="card overflow-hidden">
+                                            <KVRow first label="Edad" value={lead.survey_data.ageRange} />
+                                            <KVRow label="Objetivo" value={goalLabel} />
+                                            <KVRow label="Plazo" value={timeLabel} />
+                                            <KVRow label="Clínica" value={lead.survey_data.clinicPreference} />
                                         </div>
                                     </div>
                                 )}
-                            </div>
+                            </motion.div>
                         )}
 
                         {/* ── Tab: Video ── */}
                         {mobileTab === "video" && (
-                            <div className="p-4 space-y-4">
+                            <motion.div key="tab-video" {...tabMotion} className="p-4 space-y-4">
                                 {generation ? (
                                     <>
                                         {/* Scenario selector */}
                                         <div className="space-y-2.5">
-                                            <h3 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground px-1">
+                                            <h3 className="mono px-1" style={{ fontSize: 9 }}>
                                                 Escenario
                                             </h3>
-                                            <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+                                            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
                                                 {scenarios.map((s) => (
-                                                    <button
+                                                    <motion.button
                                                         key={s.id}
+                                                        whileTap={reduceMotion ? undefined : { scale: 0.95 }}
                                                         onClick={() => setSelectedScenario(s.id)}
                                                         disabled={generatingVideo || isVideoCompleted}
-                                                        className={`flex flex-col items-center justify-center min-w-[60px] p-2 rounded-xl border transition-all shrink-0 ${selectedScenario === s.id
-                                                            ? "bg-primary/10 border-primary text-primary shadow-sm"
-                                                            : "bg-card border-muted text-muted-foreground"
+                                                        className={`flex flex-col items-center justify-center min-w-[66px] px-2 py-2.5 rounded-2xl border transition-colors shrink-0 ${selectedScenario === s.id
+                                                            ? "bg-blue-tint border-blue-deep text-blue-deep shadow-[0_8px_18px_-12px_rgba(79,107,127,0.8)]"
+                                                            : "bg-white border-blue-line text-ink-3"
                                                             } ${(generatingVideo || isVideoCompleted) ? "opacity-50" : ""}`}
                                                     >
-                                                        <s.icon className={`w-5 h-5 mb-1 ${selectedScenario === s.id ? "text-primary" : "text-muted-foreground"}`} />
-                                                        <span className="text-[9px] font-bold">{s.label}</span>
-                                                    </button>
+                                                        <s.icon className="w-5 h-5 mb-1" />
+                                                        <span className="text-[10px] font-semibold">{s.label}</span>
+                                                    </motion.button>
                                                 ))}
                                             </div>
                                         </div>
 
                                         {/* Error Message */}
-                                        {errorMessage && (
-                                            <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2 text-red-800 text-sm">
-                                                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-                                                <div>
-                                                    <p className="font-bold text-xs">Generación detenida</p>
-                                                    <p className="opacity-90 text-[11px] mt-0.5">{errorMessage}</p>
-                                                </div>
-                                            </div>
-                                        )}
+                                        <AnimatePresence>
+                                            {errorMessage && (
+                                                <motion.div
+                                                    initial={reduceMotion ? false : { opacity: 0, y: -6 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0 }}
+                                                    className="p-3 rounded-2xl flex items-start gap-2 text-sm border border-[#ecd3cf] bg-[var(--danger-soft)] text-[#8f4f47]"
+                                                >
+                                                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-[var(--danger)]" />
+                                                    <div>
+                                                        <p className="font-semibold text-xs">Generación detenida</p>
+                                                        <p className="opacity-90 text-[11px] mt-0.5">{errorMessage}</p>
+                                                    </div>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
 
                                         {/* Generate / Progress button */}
                                         <button
                                             onClick={handleGenerateVideo}
                                             disabled={!canGenerate}
                                             className={`
-                                                relative w-full h-12 rounded-xl overflow-hidden font-bold text-sm
+                                                relative w-full h-12 rounded-full overflow-hidden font-medium text-sm
                                                 transition-all duration-300 select-none
                                                 ${isVideoCompleted
-                                                    ? "bg-green-600 text-white"
+                                                    ? "bg-navy-2 text-white"
                                                     : canGenerate
-                                                        ? "bg-primary text-primary-foreground active:scale-[0.98]"
-                                                        : "bg-muted text-muted-foreground"
+                                                        ? "bg-blue-deep hover:bg-blue-ink text-white shadow-[0_12px_26px_-14px_rgba(79,107,127,0.95)] active:scale-[0.98]"
+                                                        : generatingVideo
+                                                            ? "bg-blue-ink text-white"
+                                                            : "bg-blue-tint border border-blue-line text-ink-3"
                                                 }
                                             `}
                                         >
                                             {generatingVideo && (
-                                                <>
-                                                    <span className="absolute inset-0 bg-black/20" />
-                                                    <span
-                                                        className="absolute inset-y-0 left-0 bg-white/20 transition-all duration-700 ease-linear"
-                                                        style={{ width: `${videoProgress}%` }}
-                                                    />
-                                                </>
+                                                <span
+                                                    className="absolute inset-y-0 left-0 bg-white/15 transition-all duration-700 ease-linear"
+                                                    style={{ width: `${videoProgress}%` }}
+                                                />
                                             )}
-                                            <span className="relative z-10 flex items-center justify-between px-4 h-full">
+                                            <span className="relative z-10 flex items-center justify-between px-5 h-full">
                                                 {generatingVideo ? (
                                                     <>
-                                                        <span className="flex items-center gap-2">
+                                                        <span className="flex items-center gap-2 min-w-0">
                                                             <Loader2 className="w-4 h-4 animate-spin shrink-0" />
                                                             <span className="truncate text-xs">{videoStage || "Iniciando..."}</span>
                                                         </span>
@@ -933,7 +987,7 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                                                     </>
                                                 ) : isVideoCompleted ? (
                                                     <span className="flex items-center gap-2 w-full justify-center">
-                                                        <CheckCircle2 className="w-4 h-4" />
+                                                        <CheckCircle2 className="w-4 h-4 text-blue-light" />
                                                         Vídeo Generado
                                                     </span>
                                                 ) : (
@@ -947,115 +1001,137 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
 
                                         {/* Cancel */}
                                         {generatingVideo && (
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="w-full text-xs text-muted-foreground hover:text-red-600"
+                                            <button
+                                                className="w-full h-9 inline-flex items-center justify-center rounded-full text-xs text-ink-3 hover:text-[var(--danger)] hover:bg-[var(--danger-soft)] transition-colors"
                                                 onClick={handleCancelGeneration}
                                             >
                                                 <XCircle className="w-3.5 h-3.5 mr-1.5" />
                                                 Cancelar
-                                            </Button>
+                                            </button>
                                         )}
 
                                         {generatingVideo && (
-                                            <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+                                            <div className="relative w-full h-1.5 bg-blue-soft rounded-full overflow-hidden">
                                                 <div
-                                                    className="h-full bg-primary rounded-full transition-all duration-700 ease-linear"
-                                                    style={{ width: `${videoProgress}%` }}
+                                                    className="h-full rounded-full transition-all duration-700 ease-linear"
+                                                    style={{
+                                                        width: `${videoProgress}%`,
+                                                        backgroundImage: "linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent), linear-gradient(90deg, var(--blue-deep), var(--blue-accent))",
+                                                        backgroundSize: "200% 100%, 100% 100%",
+                                                        animation: shimmer,
+                                                    }}
                                                 />
                                             </div>
                                         )}
                                     </>
                                 ) : (
-                                    <div className="text-center py-12 text-muted-foreground">
-                                        <MonitorPlay className="w-10 h-10 mx-auto mb-3 opacity-20" />
-                                        <p className="text-sm">No hay imágenes generadas para crear un video.</p>
+                                    <div className="empty-state">
+                                        <div className="empty-ic"><MonitorPlay className="w-6 h-6" /></div>
+                                        <p className="text-sm text-ink-2">No hay imágenes generadas para crear un video.</p>
                                     </div>
                                 )}
-                            </div>
+                            </motion.div>
                         )}
 
                         {/* ── Tab: Gestión ── */}
                         {mobileTab === "gestion" && (
-                            <div className="p-4 space-y-3">
-                                <Button
-                                    variant="outline"
-                                    className="w-full justify-start gap-2"
+                            <motion.div key="tab-gestion" {...tabMotion} className="p-4 space-y-3">
+                                <button
+                                    className="w-full h-12 px-5 inline-flex items-center gap-2.5 rounded-full border border-blue-line bg-white text-sm font-medium text-ink hover:border-blue-accent hover:text-blue-deep transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                                     onClick={handleMarkContacted}
                                     disabled={loadingAction || lead.status === "contacted"}
                                 >
                                     {loadingAction ? (
                                         <Loader2 className="w-4 h-4 animate-spin" />
                                     ) : lead.status === "contacted" ? (
-                                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                                        <CheckCircle2 className="w-4 h-4 text-blue-deep" />
                                     ) : (
                                         <CheckCircle2 className="w-4 h-4" />
                                     )}
                                     {lead.status === "contacted" ? "Ya contactado" : "Marcar como Contactado"}
-                                </Button>
+                                </button>
 
-                                <Button variant="secondary" className="w-full justify-start gap-2">
+                                <button className="w-full h-12 px-5 inline-flex items-center gap-2.5 rounded-full border border-blue-line bg-blue-tint text-sm font-medium text-ink-2 hover:text-blue-deep transition-colors">
                                     <Archive className="w-4 h-4" />
                                     Archivar Lead
-                                </Button>
+                                </button>
 
-                                <Separator className="my-2" />
+                                <div className="h-px bg-blue-line my-2" />
 
-                                <Button
-                                    variant="destructive"
-                                    className="w-full justify-start gap-2"
+                                <button
+                                    className="w-full h-12 px-5 inline-flex items-center gap-2.5 rounded-full border border-[#ecd3cf] bg-[var(--danger-soft)] text-sm font-medium text-[#8f4f47] hover:bg-[var(--danger)] hover:text-white hover:border-[var(--danger)] transition-colors disabled:opacity-60"
                                     onClick={() => setShowDeleteConfirm(true)}
                                     disabled={deleting}
                                 >
                                     <Trash2 className="w-4 h-4" />
                                     Eliminar Lead
-                                </Button>
-                            </div>
+                                </button>
+                            </motion.div>
                         )}
+                        </AnimatePresence>
                     </div>
                 </div>
 
                 {/* ═══════════════════════════════════════════════════════ */}
-                {/* ══  DESKTOP LAYOUT (unchanged)  ═════════════════════ */}
+                {/* ══  DESKTOP LAYOUT · media navy izq + rail de detalle  ═ */}
                 {/* ═══════════════════════════════════════════════════════ */}
-                {/* ═══════════════════════════════════════════════════════ */}
-                {/* ══  DESKTOP LAYOUT · Opción A (media izq + rail)  ════ */}
-                {/* ═══════════════════════════════════════════════════════ */}
-                <div className="qoves-admin hidden md:grid" style={{ gridTemplateColumns: "420px 1fr", flex: 1, minHeight: 0 }}>
+                <div className="hidden md:grid" style={{ gridTemplateColumns: "420px 1fr", flex: 1, minHeight: 0 }}>
                     {/* ── media pane ── */}
-                    <div style={{ position: "relative", background: "linear-gradient(160deg,#cdd5d6,#a9b6b8)", padding: 22, display: "flex", flexDirection: "column", gap: 14, minHeight: 0 }}>
-                        <div style={{ flex: 1, borderRadius: 16, overflow: "hidden", minHeight: 0, display: "flex" }}>
-                            {viewMode === "video" && isVideoCompleted ? (
-                                <video
-                                    key={videoGen.output_path}
-                                    src={`/api/storage/generated/${videoGen.output_path}`}
-                                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                                    controls autoPlay muted playsInline loop
-                                />
-                            ) : generation ? (
-                                (generation.input_path && generation.input_path !== "unknown") ? (
-                                    <BeforeAfterSlider beforeImage={generation.input_path} afterImage={generation.output_path} className="w-full h-full" />
+                    <div style={{ position: "relative", background: NAVY_BG, padding: 20, display: "flex", flexDirection: "column", gap: 14, minHeight: 0, overflow: "hidden" }}>
+                        <div style={{ position: "absolute", inset: "auto -30% -25% -30%", height: "45%", background: "radial-gradient(circle, rgba(150,190,215,0.14), transparent 65%)", pointerEvents: "none" }} />
+                        <div style={{ position: "relative", flex: 1, borderRadius: 18, overflow: "hidden", minHeight: 0, display: "flex", background: "var(--navy-3)", border: "1px solid rgba(255,255,255,0.08)", boxShadow: "0 26px 50px -28px rgba(0,0,0,0.85)" }}>
+                            <AnimatePresence mode="wait" initial={false}>
+                                {viewMode === "video" && isVideoCompleted ? (
+                                    <motion.div key="d-video" {...mediaMotion} style={{ width: "100%", height: "100%", display: "flex" }}>
+                                        <video
+                                            key={videoGen.output_path}
+                                            src={`/api/storage/generated/${videoGen.output_path}`}
+                                            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                                            controls autoPlay muted playsInline loop
+                                        />
+                                    </motion.div>
+                                ) : generation ? (
+                                    <motion.div key="d-images" {...mediaMotion} style={{ width: "100%", height: "100%", display: "flex" }}>
+                                        {(generation.input_path && generation.input_path !== "unknown") ? (
+                                            <BeforeAfterSlider beforeImage={generation.input_path} afterImage={generation.output_path} className="w-full h-full" />
+                                        ) : (
+                                            <img src={generation.output_path} alt="Sonrisa generada" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                        )}
+                                    </motion.div>
                                 ) : (
-                                    <img src={generation.output_path} alt="Sonrisa generada" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                                )
-                            ) : (
-                                <div style={{ flex: 1, display: "grid", placeItems: "center", color: "rgba(255,255,255,0.9)" }}>
-                                    <div style={{ textAlign: "center" }}>
-                                        <ImageIcon className="w-10 h-10 mx-auto mb-2 opacity-60" strokeWidth={1.5} />
-                                        <p style={{ fontSize: 13 }}>Sin imágenes generadas</p>
-                                    </div>
-                                </div>
-                            )}
+                                    <motion.div key="d-empty" {...mediaMotion} style={{ flex: 1, display: "grid", placeItems: "center", color: "rgba(255,255,255,0.7)" }}>
+                                        <div style={{ textAlign: "center" }}>
+                                            <div style={{ width: 56, height: 56, margin: "0 auto 12px", borderRadius: 18, display: "grid", placeItems: "center", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)" }}>
+                                                <ImageIcon size={24} strokeWidth={1.5} />
+                                            </div>
+                                            <p className="mono" style={{ fontSize: 9, color: "rgba(255,255,255,0.55)" }}>Sin imágenes generadas</p>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
 
                         {/* video control card (frosted) */}
-                        <div style={{ background: "rgba(255,255,255,0.82)", backdropFilter: "blur(6px)", borderRadius: 14, padding: "13px 15px" }}>
+                        <motion.div
+                            layout={!reduceMotion}
+                            transition={SPRING}
+                            style={{ position: "relative", background: "rgba(255,255,255,0.94)", backdropFilter: "blur(10px)", borderRadius: 18, padding: "14px 16px", boxShadow: "0 18px 40px -24px rgba(0,0,0,0.75)", border: "1px solid rgba(255,255,255,0.6)" }}
+                        >
                             {generatingVideo ? (
                                 <>
-                                    <div className="mono" style={{ fontSize: 9, marginBottom: 10 }}>{videoStage || "Generando vídeo…"}</div>
-                                    <div style={{ height: 6, background: "var(--line)", borderRadius: 99, overflow: "hidden" }}>
-                                        <div style={{ width: `${videoProgress}%`, height: "100%", background: "var(--ink)", borderRadius: 99, transition: "width .7s linear" }} />
+                                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                                        <div className="mono" style={{ fontSize: 9, color: "var(--blue-deep)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{videoStage || "Generando vídeo…"}</div>
+                                        <div className="mono" style={{ fontSize: 9, color: "var(--ink-2)", flexShrink: 0 }}>{Math.round(videoProgress)}%</div>
+                                    </div>
+                                    <div style={{ height: 6, background: "var(--blue-soft)", borderRadius: 99, overflow: "hidden" }}>
+                                        <div
+                                            style={{
+                                                width: `${videoProgress}%`, height: "100%", borderRadius: 99, transition: "width .7s linear",
+                                                backgroundImage: "linear-gradient(90deg, transparent, rgba(255,255,255,0.55), transparent), linear-gradient(90deg, var(--blue-deep), var(--blue-accent))",
+                                                backgroundSize: "200% 100%, 100% 100%",
+                                                animation: shimmer,
+                                            }}
+                                        />
                                     </div>
                                     <button className="btn btn-ghost btn-sm" style={{ background: "#fff", width: "100%", marginTop: 12 }} onClick={handleCancelGeneration}>
                                         <XCircle size={15} /> Cancelar
@@ -1063,107 +1139,161 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                                 </>
                             ) : isVideoCompleted ? (
                                 <>
-                                    <div className="mono" style={{ fontSize: 9, marginBottom: 10 }}>VÍDEO GENERADO</div>
-                                    <div style={{ display: "flex", gap: 8 }}>
-                                        <button className={"chip" + (viewMode === "images" ? " chip-on" : "")} onClick={() => setViewMode("images")} style={{ flex: 1, justifyContent: "center" }}>Antes/Después</button>
-                                        <button className={"chip" + (viewMode === "video" ? " chip-on" : "")} onClick={() => setViewMode("video")} style={{ flex: 1, justifyContent: "center" }}>Vídeo</button>
+                                    <div className="mono" style={{ fontSize: 9, marginBottom: 10, color: "var(--blue-deep)" }}>VÍDEO GENERADO</div>
+                                    <div className="seg" style={{ display: "flex", width: "100%" }}>
+                                        {([["images", "Antes/Después"], ["video", "Vídeo"]] as const).map(([mode, label]) => (
+                                            <button key={mode} onClick={() => setViewMode(mode)} className={viewMode === mode ? "seg-on" : ""} style={{ flex: 1, position: "relative" }}>
+                                                {label}
+                                            </button>
+                                        ))}
                                     </div>
-                                    <button className="btn btn-primary" style={{ width: "100%", marginTop: 12, height: 44 }} onClick={handleSendVideo} disabled={sendingVideo}>
+                                    <button className="btn btn-primary" style={{ width: "100%", marginTop: 12, height: 44, padding: "0 20px", fontSize: 14.5 }} onClick={handleSendVideo} disabled={sendingVideo}>
                                         {sendingVideo ? <Loader2 className="animate-spin" size={16} /> : <Send size={16} />} Reenviar vídeo
                                     </button>
                                 </>
                             ) : (
                                 <>
-                                    <div className="mono" style={{ fontSize: 9, marginBottom: 10 }}>VÍDEO · ESCENARIO POR EDAD</div>
-                                    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                                    <div className="mono" style={{ fontSize: 9, marginBottom: 10, color: "var(--blue-deep)" }}>VÍDEO · ESCENARIO POR EDAD</div>
+                                    <div style={{ display: "flex", gap: 7, flexWrap: "wrap" }}>
                                         {scenarios.map((sc) => {
                                             const Icon = sc.icon;
                                             return (
-                                                <button key={sc.id} onClick={() => setSelectedScenario(sc.id)} disabled={!generation} className={"chip" + (selectedScenario === sc.id ? " chip-on" : "")} style={{ gap: 8, padding: "8px 11px" }}>
-                                                    <Icon size={15} /> {sc.label}
-                                                </button>
+                                                <motion.button
+                                                    key={sc.id}
+                                                    whileTap={reduceMotion || !generation ? undefined : { scale: 0.95 }}
+                                                    onClick={() => setSelectedScenario(sc.id)}
+                                                    disabled={!generation}
+                                                    className={"chip focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-soft" + (selectedScenario === sc.id ? " chip-on" : "")}
+                                                    style={{ gap: 7, padding: "7px 11px", fontSize: 12.5, opacity: generation ? 1 : 0.55, cursor: generation ? "pointer" : "not-allowed" }}
+                                                >
+                                                    <Icon size={14} /> {sc.label}
+                                                </motion.button>
                                             );
                                         })}
                                     </div>
-                                    {errorMessage && <div style={{ fontSize: 12, color: "#b06b66", marginTop: 10 }}>{errorMessage}</div>}
-                                    <button className="btn btn-primary" style={{ width: "100%", marginTop: 12, height: 44 }} onClick={handleGenerateVideo} disabled={!canGenerate}>
+                                    <AnimatePresence>
+                                        {errorMessage && (
+                                            <motion.div
+                                                initial={reduceMotion ? false : { opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: "auto" }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                style={{ overflow: "hidden" }}
+                                            >
+                                                <div style={{ display: "flex", gap: 8, alignItems: "flex-start", fontSize: 12, lineHeight: 1.45, color: "#8f4f47", background: "var(--danger-soft)", border: "1px solid #ecd3cf", borderRadius: 12, padding: "9px 11px", marginTop: 10 }}>
+                                                    <AlertCircle size={14} style={{ color: "var(--danger)", flexShrink: 0, marginTop: 1 }} />
+                                                    {errorMessage}
+                                                </div>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
+                                    <button className="btn btn-primary" style={{ width: "100%", marginTop: 12, height: 44, padding: "0 20px", fontSize: 14.5 }} onClick={handleGenerateVideo} disabled={!canGenerate}>
                                         <MonitorPlay size={16} /> Generar vídeo
                                     </button>
                                 </>
                             )}
-                        </div>
+                        </motion.div>
                     </div>
 
                     {/* ── detail rail ── */}
-                    <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "24px 26px 18px", borderBottom: "1px solid var(--line)" }}>
-                            <div style={{ display: "flex", gap: 13 }}>
-                                <span className="avatar" style={{ width: 44, height: 44, fontSize: 14 }}>{leadInitials}</span>
-                                <div>
-                                    <div style={{ fontSize: 21, fontWeight: 600, letterSpacing: "-0.02em" }}>{lead.name}</div>
-                                    <div className="mono" style={{ fontSize: 9, marginTop: 3 }}>SOLICITUD · {requestDate}</div>
+                    <div style={{ display: "flex", flexDirection: "column", minWidth: 0, minHeight: 0, background: "linear-gradient(180deg, #fff 0%, #f8fafb 100%)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, padding: "22px 24px 18px", borderBottom: "1px solid var(--blue-line)" }}>
+                            <div style={{ display: "flex", gap: 14, alignItems: "center", minWidth: 0 }}>
+                                <NavyAvatar initials={leadInitials} size={48} />
+                                <div style={{ minWidth: 0 }}>
+                                    <div style={{ fontSize: 21, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{lead.name}</div>
+                                    <div className="mono" style={{ fontSize: 9, marginTop: 4 }}>SOLICITUD · {requestDate}</div>
                                 </div>
                             </div>
-                            <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                                <QStatusPill status={lead.status} />
+                            <div style={{ display: "flex", gap: 10, alignItems: "center", flexShrink: 0 }}>
+                                <AnimatePresence mode="wait" initial={false}>
+                                    <motion.span
+                                        key={lead.status}
+                                        initial={reduceMotion ? false : { opacity: 0, scale: 0.9 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.9 }}
+                                        transition={{ duration: 0.18 }}
+                                        style={{ display: "inline-flex" }}
+                                    >
+                                        <StatusPill status={lead.status} />
+                                    </motion.span>
+                                </AnimatePresence>
                                 <button onClick={() => onOpenChange(false)} className="icon-btn" aria-label="Cerrar">
                                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>
                                 </button>
                             </div>
                         </div>
 
-                        <div style={{ padding: "20px 26px", overflowY: "auto", flex: 1, display: "flex", flexDirection: "column", gap: 22 }}>
-                            <div>
-                                <div className="mono" style={{ fontSize: 9 }}>CONTACTO</div>
+                        <motion.div
+                            initial="hidden"
+                            animate="show"
+                            style={{ padding: "18px 24px 20px", overflowY: "auto", flex: 1, minHeight: 0, display: "flex", flexDirection: "column", gap: 20 }}
+                        >
+                            <motion.div variants={rise} custom={0}>
+                                <div className="mono" style={{ fontSize: 9, marginBottom: 4 }}>CONTACTO</div>
                                 <DContactRow icon={<Mail size={17} />} label="CORREO ELECTRÓNICO" value={lead.email || "—"} />
                                 <DContactRow icon={<Phone size={17} />} label="TELÉFONO" value={lead.phone || "—"} />
-                            </div>
-                            <div>
+                            </motion.div>
+                            <motion.div variants={rise} custom={1}>
                                 <div className="mono" style={{ fontSize: 9, marginBottom: 10 }}>DATOS DE LA SIMULACIÓN</div>
-                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px 16px" }}>
+                                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                                     {[["Rango edad", ageLabel], ["Objetivo", goalLabel], ["Plazo", timeLabel], ["Origen", sourceLabel]].map(([k, v], i) => (
-                                        <div key={i}><div className="mono" style={{ fontSize: 8.5, marginBottom: 3 }}>{k.toUpperCase()}</div><div style={{ fontSize: 13.5 }}>{v}</div></div>
+                                        <div key={i} style={{ background: "var(--blue-tint)", border: "1px solid var(--blue-line)", borderRadius: 14, padding: "10px 13px", minWidth: 0 }}>
+                                            <div className="mono" style={{ fontSize: 8.5, marginBottom: 4 }}>{k.toUpperCase()}</div>
+                                            <div style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{v}</div>
+                                        </div>
                                     ))}
                                 </div>
-                            </div>
-                            <div>
+                            </motion.div>
+                            <motion.div variants={rise} custom={2}>
                                 <div className="mono" style={{ fontSize: 9, marginBottom: 10 }}>CAMBIAR ESTADO</div>
-                                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                                    {[["pending", "Pendiente"], ["contacted", "Contactado"], ["converted", "Convertido"]].map(([k, l]) => (
-                                        <button key={k} onClick={() => handleSetStatus(k)} disabled={settingStatus} className={"chip" + (lead.status === k ? " chip-on" : "")}>{l}</button>
+                                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+                                    {STATUS_CHOICES.map((k) => (
+                                        <StatusChoice key={k} status={k} active={lead.status === k} disabled={settingStatus} onClick={() => handleSetStatus(k)} />
                                     ))}
+                                    {settingStatus && <Loader2 className="animate-spin" size={15} style={{ color: "var(--blue-deep)" }} />}
                                 </div>
-                            </div>
-                        </div>
+                            </motion.div>
+                        </motion.div>
 
-                        <div style={{ padding: "16px 26px", borderTop: "1px solid var(--line)", display: "flex", gap: 10 }}>
-                            <button className="btn btn-primary" style={{ flex: 1 }} onClick={handleWhatsApp}><Share2 size={17} /> Contactar por WhatsApp</button>
+                        <div style={{ padding: "14px 24px", borderTop: "1px solid var(--blue-line)", display: "flex", gap: 10, background: "#fff" }}>
+                            <button className="btn btn-primary" style={{ flex: 1, padding: "14px 24px", fontSize: 15 }} onClick={handleWhatsApp}><Share2 size={17} /> Contactar por WhatsApp</button>
                             {generation && (
-                                <button className="btn btn-ghost" style={{ background: "#fff", width: 52, padding: 0 }} title="Reenviar imagen" onClick={handleResendPhoto} disabled={sendingPhoto}>
+                                <button className="btn btn-ghost" style={{ background: "#fff", width: 50, padding: 0 }} title="Reenviar imagen" aria-label="Reenviar imagen" onClick={handleResendPhoto} disabled={sendingPhoto}>
                                     {sendingPhoto ? <Loader2 className="animate-spin" size={17} /> : <Send size={17} />}
                                 </button>
                             )}
                         </div>
                     </div>
                 </div>
+                </motion.div>
 
                 {/* Delete Confirmation Dialog (shared) */}
                 <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-                    <DialogContent className="max-w-[90vw] sm:max-w-md">
-                        <DialogHeader>
-                            <DialogTitle>¿Estás completamente seguro?</DialogTitle>
-                            <DialogDescription>
-                                Esta acción no se puede deshacer.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="flex justify-end gap-3 mt-4">
-                            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} disabled={deleting}>
-                                Cancelar
-                            </Button>
-                            <Button variant="destructive" onClick={handleDeleteLead} disabled={deleting}>
-                                {deleting && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                                Eliminar
-                            </Button>
+                    <DialogContent className="max-w-[90vw] sm:max-w-md rounded-[22px] border-[var(--blue-line)] p-0 overflow-hidden shadow-[0_40px_80px_-30px_rgba(19,27,34,0.6)]">
+                        <div className="qoves-admin" style={{ padding: 24 }}>
+                            <DialogHeader>
+                                <div className="mx-auto sm:mx-0" style={{ width: 44, height: 44, borderRadius: 14, display: "grid", placeItems: "center", background: "var(--danger-soft)", color: "var(--danger)", marginBottom: 6 }}>
+                                    <Trash2 size={20} />
+                                </div>
+                                <DialogTitle style={{ fontSize: 19, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--ink)" }}>¿Estás completamente seguro?</DialogTitle>
+                                <DialogDescription style={{ color: "var(--ink-2)" }}>
+                                    Esta acción no se puede deshacer.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="flex justify-end gap-2.5 mt-6">
+                                <button className="btn btn-ghost btn-sm" onClick={() => setShowDeleteConfirm(false)} disabled={deleting}>
+                                    Cancelar
+                                </button>
+                                <button
+                                    className="btn btn-sm"
+                                    style={{ background: "var(--danger)", color: "#fff", boxShadow: "0 10px 22px -14px rgba(181,103,94,0.95)", opacity: deleting ? 0.7 : 1 }}
+                                    onClick={handleDeleteLead}
+                                    disabled={deleting}
+                                >
+                                    {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    Eliminar
+                                </button>
+                            </div>
                         </div>
                     </DialogContent>
                 </Dialog>

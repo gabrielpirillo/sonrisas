@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles } from "lucide-react";
+import { WIcon } from "./WIcon";
 
 interface LoadingOverlayProps {
     visible: boolean;
@@ -16,23 +16,36 @@ export function LoadingOverlay({ visible, message }: LoadingOverlayProps) {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="absolute inset-0 z-50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center"
+                    transition={{ duration: 0.25 }}
+                    className="wf-overlay"
+                    role="status"
+                    aria-live="polite"
                 >
-                    <div className="bg-white dark:bg-zinc-900 p-8 rounded-[2rem] shadow-2xl border border-zinc-100 dark:border-zinc-800 max-w-sm w-full space-y-6">
-                        <div className="relative w-16 h-16 mx-auto">
-                            <div className="absolute inset-0 rounded-full border-4 border-zinc-100 dark:border-zinc-800"></div>
-                            <div className="absolute inset-0 rounded-full border-4 border-black dark:border-white border-t-transparent animate-spin"></div>
-                            <Sparkles className="absolute inset-0 m-auto w-6 h-6 text-black dark:text-white animate-pulse" />
+                    <motion.div
+                        className="wf-overlay-card"
+                        initial={{ opacity: 0, y: 14, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.98 }}
+                        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                        <div className="wf-spinner">
+                            <span><WIcon name="spark" size={20} /></span>
                         </div>
-                        <div className="space-y-2">
-                            <h3 className="text-xl font-serif font-bold text-black dark:text-white">
+                        <AnimatePresence mode="wait" initial={false}>
+                            <motion.h3
+                                key={message}
+                                className="wf-overlay-title"
+                                initial={{ opacity: 0, y: 6 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -6 }}
+                                transition={{ duration: 0.25 }}
+                            >
                                 {message}
-                            </h3>
-                            <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                                Estamos procesando tu solicitud...
-                            </p>
-                        </div>
-                    </div>
+                            </motion.h3>
+                        </AnimatePresence>
+                        <p className="wf-sub" style={{ margin: 0, fontSize: 13.5 }}>Estamos procesando tu solicitud…</p>
+                        <span className="mono" style={{ fontSize: 8.5 }}>NO CIERRES ESTA VENTANA</span>
+                    </motion.div>
                 </motion.div>
             )}
         </AnimatePresence>

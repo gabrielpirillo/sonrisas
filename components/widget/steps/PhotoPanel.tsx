@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { WIcon } from "../WIcon";
 import { SelfieCaptureFlow } from "@/components/selfie/SelfieCaptureFlow";
+import { fileObjectUrl } from "../objectUrl";
 
 interface PhotoPanelProps {
     variant: "mobile" | "desktop";
@@ -17,18 +18,7 @@ interface PhotoPanelProps {
 export function PhotoPanel({ variant, selectedFile, setSelectedFile, onUse, onReady }: PhotoPanelProps) {
     const [mode, setMode] = useState<"choose" | "cam">("choose");
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-
-    // build / revoke an object URL for the selected file preview
-    useEffect(() => {
-        if (!selectedFile) {
-            setPreviewUrl(null);
-            return;
-        }
-        const url = URL.createObjectURL(selectedFile);
-        setPreviewUrl(url);
-        return () => URL.revokeObjectURL(url);
-    }, [selectedFile]);
+    const previewUrl = fileObjectUrl(selectedFile);
 
     useEffect(() => {
         onReady?.(!!selectedFile);
@@ -42,7 +32,7 @@ export function PhotoPanel({ variant, selectedFile, setSelectedFile, onUse, onRe
     const hasPhoto = !!selectedFile;
 
     return (
-        <div className="photo-frame">
+        <div className={"photo-frame" + (hasPhoto ? " has-photo" : "") + (!hasPhoto && mode === "cam" ? " is-cam" : "")}>
             {[0, 1, 2, 3].map((i) => (
                 <span key={i} className="cam-tick" data-c={i} />
             ))}
@@ -65,7 +55,9 @@ export function PhotoPanel({ variant, selectedFile, setSelectedFile, onUse, onRe
             {/* — Preview (photo ready) — */}
             {hasPhoto && previewUrl && (
                 <>
-                    <img src={previewUrl} alt="Tu foto" className="pf-preview" />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img key={previewUrl} src={previewUrl} alt="Tu foto" className="pf-preview" />
+                    <span className="pf-shade" aria-hidden="true" />
                     <div className="pf-actions" style={{ justifyContent: variant === "desktop" ? "center" : undefined }}>
                         <button type="button" className="pf-redo" onClick={reset} aria-label="Cambiar foto">
                             <WIcon name="refresh" size={17} />
@@ -73,6 +65,7 @@ export function PhotoPanel({ variant, selectedFile, setSelectedFile, onUse, onRe
                         {variant === "mobile" ? (
                             <button type="button" className="btn btn-primary" onClick={onUse}>
                                 Usar esta foto
+                                <WIcon name="arrow" size={17} className="btn-arrow" />
                             </button>
                         ) : (
                             <span className="dk-shot-ok">

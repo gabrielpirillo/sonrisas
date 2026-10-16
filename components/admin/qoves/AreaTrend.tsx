@@ -1,9 +1,8 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { AreaClosed, LinePath, Bar, Line } from "@visx/shape";
-import { curveMonotoneX } from "@visx/curve";
-import { scaleLinear } from "@visx/scale";
+import { Bar } from "@visx/shape";
+import { scaleBand, scaleLinear } from "@visx/scale";
 import { LinearGradient } from "@visx/gradient";
 import { GridRows } from "@visx/grid";
 import { Group } from "@visx/group";
@@ -11,14 +10,13 @@ import { ParentSize } from "@visx/responsive";
 import { useTooltip, TooltipWithBounds } from "@visx/tooltip";
 import { localPoint } from "@visx/event";
 import { motion } from "framer-motion";
+import { C, CHART } from "@/lib/brand";
 
-/* Minimalist area chart (thin line, hairline gridlines) — Qoves analysis
-   aesthetic, now powered by visx with an animated draw (motion) and an
-   interactive crosshair tooltip. The segmented control re-buckets the daily
-   counts into Día / Semana / Mes views. */
+/* Barras redondeadas con la paleta Smile Fast (azul acero / navy): crecen al
+   entrar, se resaltan al pasar el cursor y muestran un tooltip navy. El control
+   segmentado re-agrupa los conteos diarios en Día / Semana / Mes. */
 
-const INK = "#1c1e1d";
-const GRID = "#e8eae8";
+const GRID = CHART.grid;
 
 function bucket(daily: number[], mode: "dia" | "semana" | "mes"): number[] {
     if (mode === "dia") return daily;
@@ -39,7 +37,7 @@ function bucket(daily: number[], mode: "dia" | "semana" | "mes"): number[] {
     return out.length > 1 ? out : daily;
 }
 
-const margin = { top: 12, right: 10, bottom: 12, left: 10 };
+const margin = { top: 14, right: 6, bottom: 8, left: 6 };
 
 function TrendChart({
     data,
@@ -56,25 +54,17 @@ function TrendChart({
     const innerHeight = Math.max(0, height - margin.top - margin.bottom);
 
     const xScale = useMemo(
-        () =>
-            scaleLinear({
-                domain: [0, Math.max(1, data.length - 1)],
-                range: [0, innerWidth],
-            }),
-        [data.length, innerWidth]
+        () => scaleBand<number>({ domain: data.map((_, i) => i), range: [0, innerWidth], padding: data.length > 14 ? 0.32 : 0.22 }),
+        [data, innerWidth]
     );
 
     const max = Math.max(...data, 1);
     const yScale = useMemo(
-        () =>
-            scaleLinear({
-                domain: [0, max * 1.15],
-                range: [innerHeight, 0],
-                nice: true,
-            }),
+        () => scaleLinear({ domain: [0, max * 1.15], range: [innerHeight, 0], nice: true }),
         [max, innerHeight]
     );
 
+    const [hover, setHover] = useState<number | null>(null);
     const {
         showTooltip,
         hideTooltip,
@@ -87,100 +77,49 @@ function TrendChart({
         (event: React.TouchEvent<SVGRectElement> | React.MouseEvent<SVGRectElement>) => {
             const point = localPoint(event);
             if (!point) return;
-            const index = Math.round(xScale.invert(point.x - margin.left));
-            const clamped = Math.max(0, Math.min(data.length - 1, index));
+            const step = xScale.step() || 1;
+            const index = Math.max(0, Math.min(data.length - 1, Math.floor((point.x - margin.left) / step)));
+            const value = data[index] ?? 0;
+            setHover(index);
             showTooltip({
-                tooltipData: { index: clamped, value: data[clamped] ?? 0 },
-                tooltipLeft: (xScale(clamped) ?? 0) + margin.left,
-                tooltipTop: (yScale(data[clamped] ?? 0) ?? 0) + margin.top,
+                tooltipData: { index, value },
+                tooltipLeft: (xScale(index) ?? 0) + xScale.bandwidth() / 2 + margin.left,
+                tooltipTop: (yScale(value) ?? 0) + margin.top,
             });
         },
         [data, showTooltip, xScale, yScale]
     );
 
     if (width < 10) return null;
+    const bw = xScale.bandwidth();
+    const radius = Math.min(8, bw / 2);
+    const minBar = 3; // los días en cero se ven como una línea base suave
 
     return (
         <div className="relative">
             <svg width={width} height={height} style={{ display: "block" }}>
-                <LinearGradient id="qoves-area" from={INK} fromOpacity={0.1} to={INK} toOpacity={0} />
+                <LinearGradient id="sf-bar" from={C.blueDeep} to={C.blueLight} />
+                <LinearGradient id="sf-bar-on" from={C.navy2} to={C.blueDeep} />
                 <Group left={margin.left} top={margin.top}>
-                    <GridRows scale={yScale} width={innerWidth} numTicks={3} stroke={GRID} strokeWidth={1} />
-
-                    <AreaClosed<number>
-                        data={data}
-                        x={(_, i) => xScale(i) ?? 0}
-                        y={(d) => yScale(d) ?? 0}
-                        yScale={yScale}
-                        curve={curveMonotoneX}
-                    >
-                        {({ path }) => (
-                            <motion.path
-                                key={`area-${animationKey}`}
-                                d={path(data) || ""}
-                                fill="url(#qoves-area)"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ duration: 0.7, delay: 0.2 }}
+                    <GridRows scale={yScale} width={innerWidth} numTicks={3} stroke={GRID} strokeWidth={1} strokeDasharray="2 6" />
+                    {data.map((v, i) => {
+                        const h = Math.max(minBar, innerHeight - (yScale(v) ?? innerHeight));
+                        const x = xScale(i) ?? 0;
+                        const on = hover === i;
+                        const empty = v === 0;
+                        return (
+                            <motion.rect
+                                key={`${animationKey}-${i}`}
+                                x={x}
+                                width={bw}
+                                rx={empty ? minBar / 2 : radius}
+                                fill={empty ? C.blueSoft : on ? "url(#sf-bar-on)" : "url(#sf-bar)"}
+                                initial={{ height: 0, y: innerHeight }}
+                                animate={{ height: h, y: innerHeight - h }}
+                                transition={{ duration: 0.7, delay: 0.15 + i * 0.018, ease: [0.22, 1, 0.36, 1] }}
                             />
-                        )}
-                    </AreaClosed>
-
-                    <LinePath<number>
-                        data={data}
-                        x={(_, i) => xScale(i) ?? 0}
-                        y={(d) => yScale(d) ?? 0}
-                        curve={curveMonotoneX}
-                    >
-                        {({ path }) => (
-                            <motion.path
-                                key={`line-${animationKey}`}
-                                d={path(data) || ""}
-                                fill="none"
-                                stroke={INK}
-                                strokeWidth={1.75}
-                                strokeLinejoin="round"
-                                strokeLinecap="round"
-                                initial={{ pathLength: 0 }}
-                                animate={{ pathLength: 1 }}
-                                transition={{ duration: 1, ease: "easeInOut" }}
-                            />
-                        )}
-                    </LinePath>
-
-                    {/* end dot */}
-                    <motion.circle
-                        cx={xScale(data.length - 1) ?? 0}
-                        cy={yScale(data[data.length - 1] ?? 0) ?? 0}
-                        r={3.5}
-                        fill={INK}
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        transition={{ delay: 1, duration: 0.3 }}
-                    />
-
-                    {tooltipData && (
-                        <g>
-                            <Line
-                                from={{ x: tooltipLeft - margin.left, y: 0 }}
-                                to={{ x: tooltipLeft - margin.left, y: innerHeight }}
-                                stroke="#b8bcb9"
-                                strokeWidth={1}
-                                strokeDasharray="4 4"
-                                pointerEvents="none"
-                            />
-                            <circle
-                                cx={tooltipLeft - margin.left}
-                                cy={tooltipTop - margin.top}
-                                r={4.5}
-                                fill={INK}
-                                stroke="#fff"
-                                strokeWidth={2}
-                                pointerEvents="none"
-                            />
-                        </g>
-                    )}
-
+                        );
+                    })}
                     <Bar
                         x={0}
                         y={0}
@@ -188,7 +127,7 @@ function TrendChart({
                         height={innerHeight}
                         fill="transparent"
                         onMouseMove={handleTooltip}
-                        onMouseLeave={hideTooltip}
+                        onMouseLeave={() => { hideTooltip(); setHover(null); }}
                         onTouchStart={handleTooltip}
                         onTouchMove={handleTooltip}
                     />
@@ -198,15 +137,16 @@ function TrendChart({
             {tooltipData && (
                 <TooltipWithBounds
                     left={tooltipLeft}
-                    top={tooltipTop}
+                    top={tooltipTop - 44}
                     style={{
                         position: "absolute",
-                        background: INK,
+                        background: `linear-gradient(135deg, ${C.navy1}, ${C.navy2})`,
                         color: "#fff",
-                        borderRadius: 7,
-                        padding: "6px 10px",
+                        borderRadius: 10,
+                        padding: "7px 11px",
                         fontSize: 12,
                         fontWeight: 600,
+                        boxShadow: "0 10px 24px -10px rgba(19,27,34,0.55)",
                         pointerEvents: "none",
                     }}
                 >
@@ -223,10 +163,12 @@ export function AreaTrend({ daily, height = 220 }: { daily: number[]; height?: n
 
     return (
         <div className="card" style={{ padding: 24 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 20 }}>
                 <div>
-                    <h3 style={{ fontSize: 18, fontWeight: 600, letterSpacing: "-0.02em", margin: 0 }}>Simulaciones por día</h3>
-                    <span className="mono" style={{ fontSize: 9 }}>GENERACIONES · 30 DÍAS</span>
+                    <span className="mono" style={{ fontSize: 9.5, color: C.blueDeep }}>GENERACIONES · 30 DÍAS</span>
+                    <h3 style={{ fontSize: 19, fontWeight: 600, letterSpacing: "-0.02em", margin: "4px 0 0" }}>
+                        Simulaciones <span style={{ color: C.ink3 }}>por {mode === "dia" ? "día" : mode === "semana" ? "semana" : "mes"}</span>
+                    </h3>
                 </div>
                 <div className="seg">
                     <button className={mode === "dia" ? "seg-on" : ""} onClick={() => setMode("dia")}>Día</button>

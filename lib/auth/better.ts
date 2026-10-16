@@ -14,6 +14,8 @@ import { nextCookies } from 'better-auth/next-js';
 import { Pool } from 'pg';
 import { db } from '@/lib/db';
 import { sendMail } from '@/lib/email';
+import { brandedEmail } from '@/lib/emailTemplate';
+import { escapeXml } from '@/lib/security';
 
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
@@ -33,7 +35,7 @@ function slugify(input: string): string {
 }
 
 export const auth = betterAuth({
-    appName: 'Smile Forward',
+    appName: 'Smile Fast',
     basePath: '/api/better-auth',
     database: pool,
     secret: process.env.BETTER_AUTH_SECRET || process.env.NEXTAUTH_SECRET,
@@ -48,16 +50,16 @@ export const auth = betterAuth({
         sendResetPassword: async ({ user, url }) => {
             await sendMail({
                 to: user.email,
-                subject: 'Restablecer contraseña — Smile Forward',
-                html: `
-                    <h2>Restablecer contraseña</h2>
-                    <p>Hola ${user.name || ''},</p>
-                    <p>Recibimos una solicitud para restablecer tu contraseña. Haz clic en el enlace
-                    (válido por 1 hora):</p>
-                    <p><a href="${url}" style="background:#111;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none">Restablecer contraseña</a></p>
-                    <p>O copia este enlace: <br><small>${url}</small></p>
-                    <p><small>Si no lo solicitaste, ignora este correo.</small></p>
-                `,
+                subject: 'Restablece tu contraseña · Smile Fast',
+                html: brandedEmail({
+                    preheader: 'Enlace para crear una contraseña nueva (válido 1 hora).',
+                    eyebrow: 'Recuperar acceso',
+                    title: 'Crea una contraseña nueva',
+                    body: `<p style="margin:0 0 14px;">Hola${user.name ? ` ${escapeXml(user.name)}` : ''},</p>
+                        <p style="margin:0 0 14px;">Recibimos una solicitud para restablecer la contraseña de tu panel. El enlace es válido durante 1 hora.</p>
+                        <p style="margin:0;font-size:13px;color:#8a8f8c;">Si no lo solicitaste, ignora este correo: tu contraseña no cambiará.</p>`,
+                    cta: { href: url, label: 'Restablecer contraseña' },
+                }),
             });
         },
     },

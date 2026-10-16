@@ -1,37 +1,24 @@
-"use client";
-
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowRight, MailPlus } from "lucide-react";
+import { AuthShell } from "@/components/auth/AuthShell";
 
 export default function SignupPage() {
-    // Public signup is disabled — users are invited by admins
+    // El alta de miembros es por invitación; las clínicas nuevas se crean desde /acceso.
     return (
-        <div className="min-h-screen flex items-center justify-center bg-muted/20 p-4">
-            <Card className="w-full max-w-md shadow-lg border-border/50">
-                <CardHeader className="space-y-1">
-                    <Link href="/login" className="text-sm text-muted-foreground flex items-center gap-1 hover:text-primary mb-2 transition-colors">
-                        <ArrowLeft className="w-4 h-4" /> Volver al Login
-                    </Link>
-                    <CardTitle className="text-2xl font-bold text-center">Registro Admin</CardTitle>
-                    <CardDescription className="text-center">
-                        Crea una nueva cuenta de administrador
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="text-center py-6">
-                        <p className="text-muted-foreground">
-                            El registro de nuevas cuentas está deshabilitado.
-                            <br />
-                            Solo los administradores pueden enviar invitaciones.
-                        </p>
-                        <Button asChild className="mt-6 w-full">
-                            <Link href="/login">Ir al Login</Link>
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
+        <AuthShell
+            eyebrow="Equipo de la clínica"
+            title="El acceso del equipo"
+            accent="es por invitación."
+            subtitle="Pide a un administrador de tu clínica que te invite desde Configuración. Si quieres registrar una clínica nueva, créala desde el acceso."
+            back={{ href: "/acceso", label: "Volver al acceso" }}
+        >
+            <div className="sf-auth-form">
+                <div className="sf-auth-note">
+                    <MailPlus size={18} />
+                    <span>Recibirás un correo con tus datos de acceso cuando te inviten.</span>
+                </div>
+                <Link href="/acceso" className="sf-auth-btn">Ir al acceso <ArrowRight size={17} className="arrow" /></Link>
+            </div>
+        </AuthShell>
     );
 }

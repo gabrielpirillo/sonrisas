@@ -3,6 +3,7 @@
  * configurado, registra el contenido en consola y devuelve false (no lanza).
  */
 import nodemailer from 'nodemailer';
+import { mailFrom } from '@/lib/emailTemplate';
 
 export async function sendMail(params: { to: string; subject: string; html: string }): Promise<boolean> {
     const host = process.env.SMTP_HOSTNAME;
@@ -22,7 +23,7 @@ export async function sendMail(params: { to: string; subject: string; html: stri
             auth: { user, pass },
         });
         await transporter.sendMail({
-            from: process.env.SMTP_FROM || 'Smile Forward <no-reply@smileforward>',
+            from: mailFrom(),
             to: params.to,
             subject: params.subject,
             html: params.html,

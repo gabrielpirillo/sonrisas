@@ -10,12 +10,12 @@ export default async function ConfigPage() {
     const [costs, health] = await Promise.all([getCreditCosts(), getSystemHealth()]);
     return (
         <div className="admin-page">
-            <PageHead title="Configuración" subtitle="Costos por uso y salud del sistema" />
+            <PageHead eyebrow="CONSOLA DE OPERADOR" title="Configuración" accent="de la plataforma" subtitle="Costos por uso y salud del sistema" />
 
             <div className="config-grid">
                 {/* Costos */}
                 <div className="card" style={{ padding: 24 }}>
-                    <span className="mono" style={{ fontSize: 9 }}>COSTOS POR USO</span>
+                    <span className="mono" style={{ fontSize: 9.5, color: 'var(--blue-deep)' }}>COSTOS POR USO</span>
                     <h3 style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.02em', margin: '10px 0 6px' }}>Créditos por acción</h3>
                     <p className="lead" style={{ fontSize: 13.5, marginBottom: 18 }}>Aplica a todas las clínicas.</p>
                     <CostsForm costs={costs} />
@@ -23,14 +23,14 @@ export default async function ConfigPage() {
 
                 {/* Salud del sistema */}
                 <div className="card" style={{ padding: 24 }}>
-                    <span className="mono" style={{ fontSize: 9 }}>SALUD DEL SISTEMA</span>
+                    <span className="mono" style={{ fontSize: 9.5, color: 'var(--blue-deep)' }}>SALUD DEL SISTEMA</span>
                     <h3 style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.02em', margin: '10px 0 18px' }}>Estado de integraciones</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div className="sf-list">
                         {Object.entries(health).map(([k, ok]) => (
-                            <div key={k} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                <span style={{ fontSize: 14 }}>{LABELS[k] ?? k}</span>
+                            <div key={k} className="sf-row" style={{ padding: '12px 14px' }}>
+                                <span style={{ fontSize: 14, fontWeight: 500 }}>{LABELS[k] ?? k}</span>
                                 <span className="status-pill">
-                                    <span className="status-dot" style={{ background: ok ? '#5f917b' : '#bd8b86' }} />
+                                    <span className="status-dot" style={{ background: ok ? 'var(--blue-deep)' : 'var(--danger)' }} />
                                     {ok ? 'OK' : 'No configurado'}
                                 </span>
                             </div>

@@ -10,7 +10,7 @@ export default async function CuentaPage() {
 
     return (
         <div className="admin-page">
-            <PageHead title="Cuenta" subtitle="Tu acceso y seguridad" />
+            <PageHead eyebrow="CUENTA" title="Mi" accent="cuenta" subtitle="Tu acceso y seguridad" />
             <AccountCards name={ctx?.name} email={ctx?.email} impersonating={impersonating} />
         </div>
     );

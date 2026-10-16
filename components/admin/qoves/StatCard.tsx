@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import NumberFlow from "@number-flow/react";
+import NumberFlow, { type Format } from "@number-flow/react";
 
 export function StatCard({
     label,
@@ -19,7 +19,7 @@ export function StatCard({
     label: string;
     value: string | number;
     hint?: string;
-    format?: Intl.NumberFormatOptions;
+    format?: Format;
     locales?: string;
     index?: number;
 }) {
@@ -38,9 +38,13 @@ export function StatCard({
             style={{ padding: 22, display: "flex", flexDirection: "column", gap: 10, minHeight: 110 }}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
+            whileHover={{ y: -3 }}
             transition={{ duration: 0.45, delay: index * 0.06, ease: [0.16, 1, 0.3, 1] }}
         >
-            <span className="mono" style={{ fontSize: 9 }}>{label}</span>
+            <span className="mono" style={{ fontSize: 9, display: "flex", alignItems: "center", gap: 7 }}>
+                <span style={{ width: 6, height: 6, borderRadius: 2, background: "var(--blue-deep)", opacity: 0.8 }} />
+                {label}
+            </span>
             <div style={{ fontSize: 32, fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1 }}>
                 {numeric ? <NumberFlow value={display} format={format} locales={locales} /> : value}
             </div>

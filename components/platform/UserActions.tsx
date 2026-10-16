@@ -5,7 +5,6 @@ import { toast } from 'sonner';
 import { Loader2, UserCog, Ban, ShieldCheck, Trash2 } from 'lucide-react';
 import { authClient } from '@/lib/auth/client';
 import { logImpersonationStart } from '@/lib/platform/queries';
-import { Button } from '@/components/ui/button';
 
 export function UserActions({ userId, email, banned }: { userId: string; email: string; banned: boolean }) {
     const router = useRouter();
@@ -42,16 +41,16 @@ export function UserActions({ userId, email, banned }: { userId: string; email: 
     }
 
     return (
-        <div className="flex gap-1 justify-end">
-            <Button variant="ghost" size="sm" title="Impersonar" onClick={impersonate} disabled={!!busy}>
-                {busy === 'imp' ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserCog className="h-4 w-4" />}
-            </Button>
-            <Button variant="ghost" size="sm" title={banned ? 'Reactivar' : 'Bloquear'} onClick={toggleBan} disabled={!!busy}>
-                {busy === 'ban' ? <Loader2 className="h-4 w-4 animate-spin" /> : banned ? <ShieldCheck className="h-4 w-4 text-green-600" /> : <Ban className="h-4 w-4 text-amber-600" />}
-            </Button>
-            <Button variant="ghost" size="sm" title="Eliminar" onClick={remove} disabled={!!busy}>
-                {busy === 'del' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-destructive" />}
-            </Button>
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+            <button className="icon-btn" title="Impersonar" aria-label={`Impersonar a ${email}`} onClick={impersonate} disabled={!!busy}>
+                {busy === 'imp' ? <Loader2 className="animate-spin" size={15} /> : <UserCog size={15} />}
+            </button>
+            <button className="icon-btn" title={banned ? 'Reactivar' : 'Bloquear'} aria-label={banned ? `Reactivar a ${email}` : `Bloquear a ${email}`} onClick={toggleBan} disabled={!!busy}>
+                {busy === 'ban' ? <Loader2 className="animate-spin" size={15} /> : banned ? <ShieldCheck size={15} /> : <Ban size={15} />}
+            </button>
+            <button className="icon-btn icon-btn-danger" title="Eliminar" aria-label={`Eliminar a ${email}`} onClick={remove} disabled={!!busy}>
+                {busy === 'del' ? <Loader2 className="animate-spin" size={15} /> : <Trash2 size={15} />}
+            </button>
         </div>
     );
 }

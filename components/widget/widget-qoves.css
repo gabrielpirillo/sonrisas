@@ -1,49 +1,53 @@
 /* ============================================================
-   Smile Forward · Widget — Qoves design language (scoped)
-   Mobile: Opción 1 (stepper guiado). Desktop: Datos + Foto juntos.
-   Everything is scoped under .qoves-widget so the rest of the app
-   (admin / landing) keeps its own styles.
+   Smile Fast · Widget — lenguaje de marca de la landing (scoped)
+   Blanco + azul acero + paneles navy, General Sans / JetBrains Mono.
+   Mobile: stepper guiado. Desktop: Datos + Foto juntos.
+   Todo vive bajo .qoves-widget para no afectar al panel ni a la landing.
+   Los colores base (--ink, --blue-*, --navy-*, --scan…) vienen de
+   app/globals.css :root; aquí solo se definen alias del widget.
    ============================================================ */
 
-@import url('https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
-
 .qoves-widget {
-  /* ---- Color: white / ink / sage-gray ramp ---- */
-  --bg:            #ffffff;
-  --bg-soft:       #f5f6f6;
-  --bg-tint:       #eef1f1;
-  --photo:         #aeb9bb;
-  --photo-2:       #c3cccd;
+  --bg: #ffffff;
+  --bg-soft: #f5f6f6;
+  --w-line: var(--line, #e8eae8);
+  --w-line-strong: var(--line-strong, #d6d9d6);
 
-  --ink:           #1c1e1d;
-  --ink-2:         #565b59;
-  --ink-3:         #8a8f8c;
-  --sage:          #97a39e;
-  --sage-deep:     #7e8c86;
+  /* Panel de foto en azul acero (como los paneles de foto de la landing) */
+  --w-photo:
+    radial-gradient(110% 80% at 20% 0%, rgba(185, 207, 221, 0.4), transparent 60%),
+    linear-gradient(165deg, var(--blue, #8ea4b4) 0%, #6f899c 34%, var(--blue-ink, #3e5769) 72%, var(--navy-1, #2a3a47) 100%);
+  /* Escenario oscuro (análisis) */
+  --w-stage:
+    radial-gradient(90% 120% at 12% 0%, var(--navy-1, #2a3a47) 0%, var(--navy-2, #1b2630) 58%, var(--navy-3, #131b22) 100%);
 
-  --line:          #e8eae8;
-  --line-strong:   #d6d9d6;
+  --w-shadow-btn: 0 16px 34px -16px rgba(79, 107, 127, 0.75);
+  --w-shadow-lift: 0 30px 70px -34px rgba(27, 38, 48, 0.45);
+  --w-ring: 0 0 0 4px var(--blue-soft, #e7eef3);
 
-  --accent:        #8f9d97;
-
-  --font-sans: "General Sans", "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --font-sans: var(--font-general-sans), "Helvetica Neue", Arial, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "SF Mono", Menlo, monospace;
 
   --r-pill: 999px;
-  --r-card: 18px;
+  --r-card: 20px;
 
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 
   font-family: var(--font-sans);
   color: var(--ink);
   background: #fff;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  width: 100%;
 }
 .qoves-widget *,
 .qoves-widget *::before,
 .qoves-widget *::after { box-sizing: border-box; }
+.qoves-widget ::selection { background: var(--blue-soft); color: var(--ink); }
 
 /* ---------- Mono technical label ---------- */
 .qoves-widget .mono {
@@ -58,16 +62,23 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
-  border: 1px solid var(--line);
+  padding: 7px 14px;
+  border: 1px solid var(--blue-line);
   border-radius: var(--r-pill);
-  background: var(--bg);
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--blue-deep);
   white-space: nowrap;
 }
-.qoves-widget .dim { color: var(--sage); }
+.qoves-widget .mono-pill .pill-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--blue-deep);
+  animation: sf-ping 2.2s var(--ease-out) infinite;
+}
+.qoves-widget .dim { color: var(--blue-accent); }
 
 /* ---------- Buttons ---------- */
 .qoves-widget .btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -79,28 +90,46 @@
   border-radius: var(--r-pill);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all 0.25s var(--ease);
+  overflow: hidden;
+  isolation: isolate;
+  transition: background 0.25s var(--ease), color 0.25s var(--ease), border-color 0.25s var(--ease),
+    box-shadow 0.3s var(--ease), transform 0.3s var(--ease-out), opacity 0.3s var(--ease);
   white-space: nowrap;
   text-decoration: none;
   line-height: 1;
+  -webkit-tap-highlight-color: transparent;
 }
-.qoves-widget .btn-primary { background: var(--ink); color: #fff; padding: 16px 30px; }
-.qoves-widget .btn-primary:not(:disabled):hover { background: #000; transform: translateY(-1px); }
-.qoves-widget .btn-primary:not(:disabled):active { transform: scale(0.985); }
+.qoves-widget .btn:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--blue-soft), 0 0 0 5px var(--blue-accent); }
+.qoves-widget .btn:disabled { opacity: 0.38; cursor: not-allowed; box-shadow: none; }
+.qoves-widget .btn-primary { background: var(--blue-deep); color: #fff; padding: 16px 30px; }
+.qoves-widget .btn-primary:not(:disabled):hover { background: var(--blue-ink); transform: translateY(-2px); box-shadow: var(--w-shadow-btn); }
+.qoves-widget .btn-primary:not(:disabled):active { transform: translateY(0) scale(0.985); box-shadow: none; }
+/* brillo que cruza el botón al pasar el cursor */
+.qoves-widget .btn-primary::after {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.22) 50%, transparent 70%);
+  transform: translateX(-120%);
+}
+.qoves-widget .btn-primary:not(:disabled):hover::after { transform: translateX(120%); transition: transform 0.8s var(--ease-out); }
+.qoves-widget .btn .btn-arrow { transition: transform 0.3s var(--ease-out); }
+.qoves-widget .btn:not(:disabled):hover .btn-arrow { transform: translateX(4px); }
+
 .qoves-widget .btn-ghost {
-  background: rgba(255,255,255,0.6);
+  background: rgba(255, 255, 255, 0.7);
   color: var(--ink);
-  border-color: var(--line-strong);
+  border-color: var(--w-line-strong);
   padding: 16px 30px;
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
-.qoves-widget .btn-ghost:hover { background: #fff; border-color: var(--ink); }
+.qoves-widget .btn-ghost:not(:disabled):hover { background: var(--blue-tint); border-color: var(--blue-accent); color: var(--blue-ink); transform: translateY(-1px); }
+.qoves-widget .btn-ghost:not(:disabled):active { transform: scale(0.985); }
 
 /* ---------- Inputs ---------- */
 .qoves-widget .field {
   width: 100%;
   height: 52px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--w-line);
   background: var(--bg-soft);
   border-radius: var(--r-pill);
   padding: 0 22px;
@@ -108,20 +137,37 @@
   font-size: 15px;
   color: var(--ink);
   outline: none;
-  transition: all 0.2s var(--ease);
+  transition: border-color 0.2s var(--ease), background 0.2s var(--ease), box-shadow 0.25s var(--ease);
 }
 .qoves-widget .field::placeholder { color: var(--ink-3); }
-.qoves-widget .field:focus { border-color: var(--ink); background: #fff; }
+.qoves-widget .field:hover { border-color: var(--blue-line); }
+.qoves-widget .field:focus { border-color: var(--blue-deep); background: #fff; box-shadow: var(--w-ring); }
+.qoves-widget .field:user-invalid { border-color: var(--danger); background: #fff; box-shadow: 0 0 0 4px var(--danger-soft); }
+
+/* input con icono */
+.qoves-widget .wf-input { position: relative; display: block; }
+.qoves-widget .wf-input .field { padding-left: 44px; padding-right: 40px; }
+.qoves-widget .wf-input-ic {
+  position: absolute; left: 18px; top: 50%; transform: translateY(-50%);
+  color: var(--ink-3); pointer-events: none; display: grid; place-items: center;
+  transition: color 0.2s var(--ease);
+}
+.qoves-widget .wf-input:focus-within .wf-input-ic { color: var(--blue-deep); }
+.qoves-widget .wf-input-ok {
+  position: absolute; right: 16px; top: 50%; margin-top: -10px;
+  width: 20px; height: 20px; border-radius: 50%;
+  display: grid; place-items: center; color: #fff; background: var(--blue-deep);
+  pointer-events: none; animation: sf-pop 0.35s var(--ease-out) both;
+}
+.qoves-widget .wf-phone { display: flex; gap: 8px; }
+.qoves-widget .wf-select { position: relative; width: 96px; flex-shrink: 0; }
+.qoves-widget .wf-select select { appearance: none; -webkit-appearance: none; padding: 0 28px 0 18px; cursor: pointer; }
+.qoves-widget .wf-select-chev { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--ink-3); pointer-events: none; }
+.qoves-widget .wf-phone .wf-input { flex: 1; min-width: 0; }
 
 /* ============================================================
    Widget shell
    ============================================================ */
-.qoves-widget {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-  width: 100%;
-}
 .qoves-widget .wf-header {
   display: flex;
   align-items: center;
@@ -130,192 +176,508 @@
   padding: 16px 20px;
   flex-shrink: 0;
 }
-.qoves-widget .wf-header-left { display: flex; align-items: center; gap: 9px; min-width: 0; }
-.qoves-widget .wf-brand { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; white-space: nowrap; }
-.qoves-widget .logo-mark {
-  width: 28px; height: 28px; border-radius: 50%;
-  display: grid; place-items: center; background: var(--ink); flex-shrink: 0;
-}
+.qoves-widget .wf-header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.qoves-widget .wf-brand { display: inline-flex; align-items: center; }
+.qoves-widget .wf-brand img { height: 17px; width: auto; display: block; }
 .qoves-widget .wf-back {
-  width: 32px; height: 32px; border-radius: 50%;
-  border: 1px solid var(--line); background: #fff; cursor: pointer;
+  width: 34px; height: 34px; border-radius: 50%;
+  border: 1px solid var(--w-line); background: #fff; cursor: pointer;
   display: grid; place-items: center; color: var(--ink-2); flex-shrink: 0;
+  transition: border-color 0.2s var(--ease), color 0.2s var(--ease), transform 0.25s var(--ease-out), background 0.2s var(--ease);
 }
-.qoves-widget .wf-back:hover { border-color: var(--ink); color: var(--ink); }
+.qoves-widget .wf-back:hover { border-color: var(--blue-accent); color: var(--blue-deep); background: var(--blue-tint); transform: translateX(-2px); }
+.qoves-widget .wf-back:focus-visible { outline: none; box-shadow: var(--w-ring); }
 .qoves-widget .wf-online {
   display: inline-flex; align-items: center; gap: 7px;
-  font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.16em; color: var(--ink-3);
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.16em; color: var(--blue-deep);
+  padding: 6px 11px; border-radius: 99px; border: 1px solid var(--blue-line); background: var(--blue-tint);
   white-space: nowrap;
 }
 .qoves-widget .wf-online-dot {
-  width: 7px; height: 7px; border-radius: 50%; background: var(--sage);
-  animation: wfpulse 1.6s ease-in-out infinite;
+  width: 6px; height: 6px; border-radius: 50%; background: var(--blue-deep);
+  animation: sf-ping 2.2s var(--ease-out) infinite;
 }
-@keyframes wfpulse { 50% { opacity: 0.35; } }
 
 /* ---------- Stepper ---------- */
-.qoves-widget .stepper { display: flex; padding: 6px 22px 18px; }
+.qoves-widget .stepper { display: flex; padding: 4px 18px 18px; }
 .qoves-widget .stepper-node { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
 .qoves-widget .stepper-dot {
   width: 28px; height: 28px; border-radius: 50%;
-  border: 1px solid var(--line-strong); background: #fff;
+  border: 1px solid var(--w-line-strong); background: #fff;
   display: grid; place-items: center; font-family: var(--font-mono);
-  font-size: 11px; color: var(--ink-3); z-index: 2; transition: all .25s var(--ease);
+  font-size: 11px; color: var(--ink-3); z-index: 2; position: relative;
+  transition: background 0.4s var(--ease), border-color 0.4s var(--ease), color 0.4s var(--ease), box-shadow 0.4s var(--ease), transform 0.4s var(--ease-out);
 }
-.qoves-widget .stepper-lbl { font-size: 10px; color: var(--ink-3); margin-top: 7px; letter-spacing: -0.01em; text-align: center; }
-.qoves-widget .stepper-line { position: absolute; top: 14px; left: 50%; width: 100%; height: 1px; background: var(--line-strong); z-index: 1; }
-.qoves-widget .stepper-node.done .stepper-dot { background: var(--ink); border-color: var(--ink); color: #fff; }
-.qoves-widget .stepper-node.active .stepper-dot { border-color: var(--ink); color: var(--ink); box-shadow: 0 0 0 4px var(--bg-soft); }
+.qoves-widget .stepper-dot svg { animation: sf-pop 0.4s var(--ease-out) both; }
+.qoves-widget .stepper-lbl { font-size: 10.5px; color: var(--ink-3); margin-top: 7px; letter-spacing: -0.01em; text-align: center; transition: color 0.3s var(--ease); }
+.qoves-widget .stepper-line {
+  position: absolute; top: 14px; left: calc(50% + 18px); width: calc(100% - 36px);
+  height: 2px; margin-top: -1px; border-radius: 2px; background: var(--w-line); z-index: 1; overflow: hidden;
+}
+.qoves-widget .stepper-fill {
+  position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(90deg, var(--blue-deep), var(--blue));
+  transform: scaleX(0); transform-origin: left center;
+  transition: transform 0.7s var(--ease-out) 0.1s;
+}
+.qoves-widget .stepper-node.done .stepper-fill { transform: scaleX(1); }
+.qoves-widget .stepper-node.done .stepper-dot { background: var(--blue-deep); border-color: var(--blue-deep); color: #fff; }
+.qoves-widget .stepper-node.active .stepper-dot {
+  border-color: var(--blue-deep); color: var(--blue-deep); background: #fff;
+  box-shadow: 0 0 0 4px var(--blue-soft);
+  transform: scale(1.06);
+}
+.qoves-widget .stepper-node.active .stepper-dot::after {
+  content: ""; position: absolute; inset: -1px; border-radius: 50%;
+  animation: sf-ping 2.4s var(--ease-out) infinite;
+}
 .qoves-widget .stepper-node.active .stepper-lbl,
 .qoves-widget .stepper-node.done .stepper-lbl { color: var(--ink); font-weight: 500; }
 
-/* desktop stepper lives inside header, hidden on mobile */
+/* el stepper de escritorio vive en el header; oculto en móvil */
 .qoves-widget .stepper-desktop { display: none; }
+
+/* ---------- Contenedor de pasos (transición) ---------- */
+.qoves-widget .wf-stage { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 
 /* ============================================================
    Body / steps
    ============================================================ */
 .qoves-widget .wf-body { flex: 1; display: flex; flex-direction: column; padding: 6px 22px 22px; }
-.qoves-widget .wf-intro { margin-bottom: 16px; }
-.qoves-widget .wf-h2 { font-family: var(--font-sans); font-size: 26px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.05; margin: 0; color: var(--ink); }
-.qoves-widget .wf-h2 .dim { color: var(--sage); }
-.qoves-widget .wf-sub { font-size: 14px; color: var(--ink-2); line-height: 1.45; margin: 8px 0 0; }
+.qoves-widget .wf-intro { margin-bottom: 18px; }
+.qoves-widget .wf-eyebrow { font-size: 9px; display: inline-flex; align-items: center; gap: 8px; color: var(--blue-deep); }
+.qoves-widget .wf-eyebrow b { font-weight: 500; color: var(--ink-3); }
+.qoves-widget .wf-h2 {
+  font-family: var(--font-sans); font-size: 28px; font-weight: 600;
+  letter-spacing: -0.035em; line-height: 1.04; margin: 0; color: var(--ink);
+}
+.qoves-widget .wf-intro .wf-eyebrow + .wf-h2 { margin-top: 10px; }
+.qoves-widget .wf-sub { font-size: 14.5px; color: var(--ink-2); line-height: 1.5; margin: 8px 0 0; letter-spacing: -0.005em; }
 .qoves-widget .wf-fields { display: flex; flex-direction: column; gap: 12px; }
-.qoves-widget .wf-field { height: 50px; font-size: 15px; }
-.qoves-widget .wf-consent { display: flex; gap: 11px; align-items: center; font-size: 13px; color: var(--ink-2); cursor: pointer; padding: 3px 0; line-height: 1.4; }
-.qoves-widget .wf-consent u { cursor: pointer; }
-.qoves-widget .wf-cta { width: 100%; margin-top: 20px; padding: 16px 24px; }
-.qoves-widget .wf-foot { font-size: 8px; text-align: center; margin-top: 14px; letter-spacing: 0.16em; }
+.qoves-widget .wf-field { height: 52px; font-size: 15px; }
+.qoves-widget .wf-consents { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+.qoves-widget .wf-consent {
+  display: flex; gap: 11px; align-items: center; font-size: 13px; color: var(--ink-2);
+  cursor: pointer; padding: 5px 6px; margin: 0 -6px; line-height: 1.4; border-radius: 12px;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+  -webkit-tap-highlight-color: transparent; user-select: none;
+}
+.qoves-widget .wf-consent:hover { background: var(--blue-tint); color: var(--ink); }
+.qoves-widget .wf-consent:focus-visible { outline: none; box-shadow: var(--w-ring); }
+.qoves-widget .wf-consent a { color: var(--blue-deep); text-underline-offset: 2px; }
+.qoves-widget .wf-consent a:hover { color: var(--blue-ink); }
+.qoves-widget .wf-cta { width: 100%; margin-top: 22px; padding: 17px 24px; }
+.qoves-widget .wf-foot { font-size: 8.5px; text-align: center; margin-top: 16px; letter-spacing: 0.16em; display: flex; align-items: center; justify-content: center; gap: 7px; }
+.qoves-widget .wf-foot svg { color: var(--blue-accent); flex-shrink: 0; }
+
+/* check redondo (consentimientos) */
 .qoves-widget .wf-check {
   width: 22px; height: 22px; flex-shrink: 0; border-radius: 50%;
-  display: grid; place-items: center; transition: all .2s var(--ease);
+  display: grid; place-items: center;
+  border: 1.5px solid var(--w-line-strong); background: #fff;
+  transition: background 0.25s var(--ease), border-color 0.25s var(--ease), transform 0.3s var(--ease-out);
 }
+.qoves-widget .wf-consent:hover .wf-check:not(.on) { border-color: var(--blue-accent); }
+.qoves-widget .wf-check.on { background: var(--blue-deep); border-color: var(--blue-deep); animation: wfCheckPop 0.35s var(--ease-out); }
+.qoves-widget .wf-check path { stroke-dasharray: 22; stroke-dashoffset: 22; }
+.qoves-widget .wf-check.on path { animation: wfDraw 0.35s var(--ease-out) 0.05s forwards; }
+@keyframes wfCheckPop { 0% { transform: scale(0.8); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
+@keyframes wfDraw { to { stroke-dashoffset: 0; } }
 
-/* ---------- Photo step ---------- */
+/* entrada escalonada local (además de .sf-stagger global) */
+.qoves-widget .wf-stagger > * { animation: sf-rise 0.6s var(--ease-out) both; }
+.qoves-widget .wf-stagger > *:nth-child(1) { animation-delay: 0.04s; }
+.qoves-widget .wf-stagger > *:nth-child(2) { animation-delay: 0.1s; }
+.qoves-widget .wf-stagger > *:nth-child(3) { animation-delay: 0.16s; }
+.qoves-widget .wf-stagger > *:nth-child(4) { animation-delay: 0.22s; }
+.qoves-widget .wf-stagger > *:nth-child(5) { animation-delay: 0.28s; }
+.qoves-widget .wf-stagger > *:nth-child(n+6) { animation-delay: 0.34s; }
+/* los botones solo funden (su transform queda libre para el hover) */
+.qoves-widget .wf-stagger > .btn { animation-name: sf-fade; }
+
+/* ============================================================
+   Panel de foto (azul acero)
+   ============================================================ */
 .qoves-widget .wf-photo .wf-intro { margin-bottom: 14px; }
 .qoves-widget .photo-frame {
-  position: relative; width: 100%; height: 396px;
-  border-radius: 18px; overflow: hidden; border: 1px solid var(--line);
-  background: linear-gradient(150deg,#c8d0d1,#aab6b8);
+  position: relative; width: 100%; height: 400px;
+  border-radius: var(--r-card); overflow: hidden;
+  background: var(--w-photo);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 24px 50px -32px rgba(27, 38, 48, 0.6);
+  isolation: isolate;
+  animation: sf-pop 0.6s var(--ease-out) both;
 }
-.qoves-widget .photo-frame img.pf-preview { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.qoves-widget .cam-tick { position: absolute; width: 14px; height: 14px; border: 1.5px solid rgba(255,255,255,0.8); z-index: 5; pointer-events: none; }
-.qoves-widget .cam-tick[data-c="0"] { top: 14px; left: 14px; border-right: none; border-bottom: none; }
-.qoves-widget .cam-tick[data-c="1"] { top: 14px; right: 14px; border-left: none; border-bottom: none; }
-.qoves-widget .cam-tick[data-c="2"] { bottom: 14px; left: 14px; border-right: none; border-top: none; }
-.qoves-widget .cam-tick[data-c="3"] { bottom: 14px; right: 14px; border-left: none; border-top: none; }
+/* retícula de puntos + barrido de luz suave */
+.qoves-widget .photo-frame::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.22) 1px, transparent 1.2px);
+  background-size: 18px 18px;
+  -webkit-mask-image: radial-gradient(75% 70% at 50% 45%, #000 30%, transparent 85%);
+  mask-image: radial-gradient(75% 70% at 50% 45%, #000 30%, transparent 85%);
+  opacity: 0.55;
+}
+.qoves-widget .photo-frame::after {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 22%; z-index: 1; pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(6, 182, 212, 0.1) 85%, rgba(165, 243, 252, 0.45) 99%, transparent);
+  animation: wfSweep 6s var(--ease) infinite;
+}
+.qoves-widget .photo-frame.has-photo::after,
+.qoves-widget .photo-frame.is-cam::after,
+.qoves-widget .photo-frame.has-photo::before,
+.qoves-widget .photo-frame.is-cam::before { display: none; }
+@keyframes wfSweep { 0% { transform: translateY(-100%); opacity: 0; } 10% { opacity: 1; } 55% { opacity: 1; } 70%, 100% { transform: translateY(460%); opacity: 0; } }
+
+.qoves-widget .photo-frame img.pf-preview {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 2;
+  animation: wfReveal 0.7s var(--ease-out) both;
+}
+@keyframes wfReveal { from { opacity: 0; transform: scale(1.06); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
+.qoves-widget .pf-shade { position: absolute; inset: auto 0 0 0; height: 45%; z-index: 3; pointer-events: none; background: linear-gradient(180deg, transparent, rgba(19, 27, 34, 0.55)); }
+
+/* esquinas tipo visor (cian, como el análisis de la landing) */
+.qoves-widget .cam-tick {
+  position: absolute; width: 20px; height: 20px; z-index: 5; pointer-events: none;
+  border: 0 solid rgba(255, 255, 255, 0.85);
+  animation: sf-glow 3s var(--ease) infinite;
+}
+.qoves-widget .photo-frame.has-photo .cam-tick { border-color: rgba(6, 182, 212, 0.9); }
+.qoves-widget .photo-frame.has-photo .cam-tick[data-c="2"],
+.qoves-widget .photo-frame.has-photo .cam-tick[data-c="3"] { display: none; }
+.qoves-widget .cam-tick[data-c="0"] { top: 16px; left: 16px; border-top-width: 2px; border-left-width: 2px; border-top-left-radius: 7px; }
+.qoves-widget .cam-tick[data-c="1"] { top: 16px; right: 16px; border-top-width: 2px; border-right-width: 2px; border-top-right-radius: 7px; }
+.qoves-widget .cam-tick[data-c="2"] { bottom: 16px; left: 16px; border-bottom-width: 2px; border-left-width: 2px; border-bottom-left-radius: 7px; }
+.qoves-widget .cam-tick[data-c="3"] { bottom: 16px; right: 16px; border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 7px; }
 
 .qoves-widget .pf-chooser {
   position: absolute; inset: 0; z-index: 5;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 8px; text-align: center; padding: 26px;
+  gap: 8px; text-align: center; padding: 26px; color: #fff;
 }
-.qoves-widget .pf-ic { width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,0.85); display: grid; place-items: center; color: var(--ink); margin-bottom: 6px; }
-.qoves-widget .pf-choose-txt { font-size: 19px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
-.qoves-widget .pf-choose-sub { font-size: 13px; color: var(--ink); opacity: 0.68; margin-bottom: 12px; }
-.qoves-widget .pf-btns { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 248px; }
+.qoves-widget .pf-chooser > * { animation: sf-rise 0.6s var(--ease-out) both; }
+.qoves-widget .pf-chooser > *:nth-child(2) { animation-delay: 0.06s; }
+.qoves-widget .pf-chooser > *:nth-child(3) { animation-delay: 0.12s; }
+.qoves-widget .pf-chooser > *:nth-child(4) { animation-delay: 0.18s; }
+.qoves-widget .pf-ic {
+  position: relative; width: 60px; height: 60px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.4);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  display: grid; place-items: center; color: #fff; margin-bottom: 8px;
+}
+.qoves-widget .pf-ic::after {
+  content: ""; position: absolute; inset: -1px; border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  animation: wfRing 2.6s var(--ease-out) infinite;
+}
+@keyframes wfRing { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.7); opacity: 0; } }
+.qoves-widget .pf-choose-txt { font-size: 21px; font-weight: 600; letter-spacing: -0.03em; color: #fff; }
+.qoves-widget .pf-choose-sub { font-size: 13.5px; color: rgba(255, 255, 255, 0.86); margin-bottom: 14px; }
+.qoves-widget .pf-btns { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 252px; }
 .qoves-widget .pf-btn {
   display: flex; align-items: center; justify-content: center; gap: 9px;
-  padding: 13px 18px; border-radius: 99px;
-  border: 1px solid rgba(255,255,255,0.75); background: rgba(255,255,255,0.94);
-  color: var(--ink); font-family: var(--font-sans); font-size: 14.5px; font-weight: 500;
-  cursor: pointer; transition: all .2s var(--ease);
+  padding: 14px 18px; border-radius: 99px;
+  border: 1px solid rgba(255, 255, 255, 0.4); background: rgba(255, 255, 255, 0.12);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  color: #fff; font-family: var(--font-sans); font-size: 14.5px; font-weight: 500;
+  cursor: pointer; transition: background 0.25s var(--ease), transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease), border-color 0.25s var(--ease);
 }
-.qoves-widget .pf-btn:hover { background: #fff; transform: translateY(-1px); }
-.qoves-widget .pf-btn-primary { background: var(--ink); color: #fff; border-color: var(--ink); }
-.qoves-widget .pf-btn-primary:hover { background: #000; }
+.qoves-widget .pf-btn:hover { background: rgba(255, 255, 255, 0.22); border-color: rgba(255, 255, 255, 0.7); transform: translateY(-2px); }
+.qoves-widget .pf-btn:active { transform: scale(0.98); }
+.qoves-widget .pf-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.45); }
+.qoves-widget .pf-btn-primary { background: #fff; color: var(--navy-2); border-color: #fff; }
+.qoves-widget .pf-btn-primary:hover { background: #fff; box-shadow: 0 16px 30px -14px rgba(19, 27, 34, 0.65); }
 
-.qoves-widget .pf-change {
-  position: absolute; top: 13px; left: 13px; z-index: 7;
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 6px 12px 6px 9px; border-radius: 99px;
-  background: rgba(20,24,23,0.5); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
-  color: #fff; font-family: var(--font-sans); font-size: 11.5px; border: none; cursor: pointer;
+.qoves-widget .pf-actions {
+  position: absolute; bottom: 16px; left: 16px; right: 16px; z-index: 8;
+  display: flex; gap: 11px; align-items: center;
+  animation: sf-rise 0.55s var(--ease-out) 0.25s both;
 }
-.qoves-widget .pf-change:hover { background: rgba(20,24,23,0.72); }
-
-.qoves-widget .pf-actions { position: absolute; bottom: 14px; left: 14px; right: 14px; z-index: 8; display: flex; gap: 11px; align-items: center; }
 .qoves-widget .pf-redo {
   width: 50px; height: 50px; border-radius: 50%;
-  border: 1px solid rgba(255,255,255,0.75); background: rgba(255,255,255,0.94);
-  color: var(--ink); display: grid; place-items: center; cursor: pointer; flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.55); background: rgba(255, 255, 255, 0.92);
+  color: var(--navy-2); display: grid; place-items: center; cursor: pointer; flex-shrink: 0;
+  transition: background 0.2s var(--ease), transform 0.4s var(--ease-out);
 }
-.qoves-widget .pf-redo:hover { background: #fff; }
+.qoves-widget .pf-redo:hover { background: #fff; transform: rotate(-90deg); }
+.qoves-widget .pf-redo:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.55); }
 .qoves-widget .pf-actions .btn { flex: 1; }
-.qoves-widget .dk-shot-ok { display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 99px; background: rgba(28,30,29,0.86); color: #fff; font-size: 13px; font-weight: 500; }
-.qoves-widget .dk-shot-ok svg { color: #fff; }
+.qoves-widget .dk-shot-ok {
+  display: inline-flex; align-items: center; gap: 9px; padding: 11px 18px; border-radius: 99px;
+  background: rgba(19, 27, 34, 0.72); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #fff; font-size: 13px; font-weight: 500;
+}
+.qoves-widget .dk-shot-ok svg { color: var(--scan); }
 
-/* live camera (real SelfieCaptureFlow) mounted inside the frame */
-.qoves-widget .pf-camera { position: absolute; inset: 0; z-index: 6; }
+/* cámara en vivo (SelfieCaptureFlow) dentro del panel */
+.qoves-widget .pf-camera { position: absolute; inset: 0; z-index: 6; animation: sf-fade 0.4s var(--ease) both; }
 .qoves-widget .pf-camera > div { min-height: 0 !important; height: 100% !important; border-radius: 0 !important; }
 
-/* ---------- Result ---------- */
-.qoves-widget .wf-result { height: 300px; }
-.qoves-widget .wf-result-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
-.qoves-widget .wf-result-actions .btn-ghost { background: #fff; width: 100%; padding: 15px 20px; }
-
-/* ---------- Success ---------- */
-.qoves-widget .wf-success { align-items: center; justify-content: center; gap: 18px; text-align: center; padding-top: 48px; flex: 1; }
-.qoves-widget .wf-success-mark { width: 64px; height: 64px; border-radius: 50%; background: var(--ink); display: grid; place-items: center; color: #fff; }
-
 /* ============================================================
-   Processing — escáner inmersivo
+   Procesando — escáner inmersivo
    ============================================================ */
 .qoves-widget .proc-a { padding-top: 4px; }
-.qoves-widget .proc-a-stage { position: relative; width: 100%; height: 440px; border-radius: 20px; overflow: hidden; background: linear-gradient(155deg,#cdd5d6,#a4b1b3); }
-.qoves-widget .proc-a-stage > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.85; }
-.qoves-widget .proc-a-bar { position: absolute; left: 0; right: 0; bottom: 0; padding: 50px 20px 20px; background: linear-gradient(180deg,transparent,rgba(20,24,23,0.55)); z-index: 6; }
-.qoves-widget .proc-track { height: 3px; background: rgba(255,255,255,0.25); border-radius: 99px; }
-.qoves-widget .proc-track > div { height: 100%; background: #fff; border-radius: 99px; transition: width .8s var(--ease); }
-.qoves-widget .proc-phrase { font-size: 17px; font-weight: 500; letter-spacing: -0.02em; text-align: center; color: var(--ink); margin-top: 22px; animation: fadeUp .5s var(--ease); }
-@keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
-.qoves-widget .proc-scanline {
-  position: absolute; left: 0; right: 0; height: 2px; top: 50%; z-index: 4;
-  background: linear-gradient(90deg,transparent,rgba(255,255,255,0.95),transparent);
-  box-shadow: 0 0 18px 3px rgba(255,255,255,0.55);
-  animation: procScan 2s var(--ease) infinite alternate;
+.qoves-widget .proc-a-stage {
+  position: relative; width: 100%; height: 400px; border-radius: var(--r-card); overflow: hidden;
+  background: var(--w-stage); isolation: isolate;
+  box-shadow: 0 30px 60px -34px rgba(19, 27, 34, 0.7);
+  animation: sf-pop 0.6s var(--ease-out) both;
 }
-@keyframes procScan { 0% { top: 6%; } 100% { top: 94%; } }
-.qoves-widget .proc-tag {
-  position: absolute; z-index: 5; font-family: var(--font-mono); font-size: 8.5px;
-  letter-spacing: 0.12em; color: #fff; background: rgba(20,24,23,0.42);
-  border: 1px solid rgba(255,255,255,0.4); padding: 3px 8px; border-radius: 99px; white-space: nowrap;
+.qoves-widget .proc-a-stage > img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.82;
+  animation: wfBreath 6s var(--ease) infinite alternate;
+}
+@keyframes wfBreath { from { transform: scale(1); } to { transform: scale(1.045); } }
+.qoves-widget .proc-tint { position: absolute; inset: 0; z-index: 1; background: linear-gradient(180deg, rgba(27, 38, 48, 0.25), rgba(27, 38, 48, 0.05) 40%, rgba(19, 27, 34, 0.5)); }
+.qoves-widget .proc-grid {
+  position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(6, 182, 212, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(6, 182, 212, 0.09) 1px, transparent 1px);
+  background-size: 28px 28px;
+  -webkit-mask-image: radial-gradient(70% 60% at 50% 45%, #000 20%, transparent 80%);
+  mask-image: radial-gradient(70% 60% at 50% 45%, #000 20%, transparent 80%);
 }
 .qoves-widget .proc-landmarks { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 4; }
+.qoves-widget .proc-landmarks .lm-oval { stroke-dasharray: 4 5; animation: wfDash 14s linear infinite; }
+@keyframes wfDash { to { stroke-dashoffset: -180; } }
+.qoves-widget .proc-landmarks .lm-pt { transform-box: fill-box; transform-origin: center; animation: sf-svg-ping 2.4s var(--ease-out) infinite; }
+.qoves-widget .proc-landmarks .lm-pt:nth-of-type(2) { animation-delay: 0.4s; }
+.qoves-widget .proc-landmarks .lm-pt:nth-of-type(3) { animation-delay: 0.8s; }
+.qoves-widget .proc-landmarks .lm-pt:nth-of-type(4) { animation-delay: 1.2s; }
+.qoves-widget .proc-landmarks .lm-pt:nth-of-type(5) { animation-delay: 1.6s; }
+.qoves-widget .proc-scanline {
+  position: absolute; left: 0; right: 0; height: 2px; top: 50%; z-index: 5;
+  background: linear-gradient(90deg, transparent, var(--scan) 20%, #e6fbff 50%, var(--scan) 80%, transparent);
+  box-shadow: 0 0 22px 4px rgba(6, 182, 212, 0.55);
+  animation: procScan 2.4s var(--ease) infinite alternate;
+}
+.qoves-widget .proc-scanline::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 2px; height: 70px;
+  background: linear-gradient(0deg, rgba(6, 182, 212, 0.22), transparent);
+}
+@keyframes procScan { 0% { top: 6%; } 100% { top: 90%; } }
+.qoves-widget .proc-corner { position: absolute; width: 22px; height: 22px; border: 0 solid rgba(6, 182, 212, 0.85); z-index: 6; }
+.qoves-widget .proc-corner.tl { top: 16px; left: 16px; border-top-width: 2px; border-left-width: 2px; border-top-left-radius: 7px; }
+.qoves-widget .proc-corner.tr { top: 16px; right: 16px; border-top-width: 2px; border-right-width: 2px; border-top-right-radius: 7px; }
+.qoves-widget .proc-corner.bl { bottom: 16px; left: 16px; border-bottom-width: 2px; border-left-width: 2px; border-bottom-left-radius: 7px; }
+.qoves-widget .proc-corner.br { bottom: 16px; right: 16px; border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 7px; }
+.qoves-widget .proc-tag {
+  position: absolute; z-index: 6; font-family: var(--font-mono); font-size: 8.5px;
+  letter-spacing: 0.14em; color: #fff; background: rgba(19, 27, 34, 0.55);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  border: 1px solid rgba(6, 182, 212, 0.45); padding: 4px 9px 4px 8px; border-radius: 99px; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px;
+  animation: sf-rise 0.6s var(--ease-out) both, wfFloat 5s var(--ease) 0.6s infinite;
+}
+.qoves-widget .proc-tag::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--scan); box-shadow: 0 0 8px var(--scan); }
+@keyframes wfFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.qoves-widget .proc-a-bar { position: absolute; left: 0; right: 0; bottom: 0; padding: 50px 22px 20px; z-index: 7; }
+.qoves-widget .proc-a-bar .mono { color: rgba(255, 255, 255, 0.9); font-size: 9px; }
+.qoves-widget .proc-pct { font-variant-numeric: tabular-nums; color: #fff !important; }
+.qoves-widget .proc-track { position: relative; height: 4px; background: rgba(255, 255, 255, 0.16); border-radius: 99px; overflow: hidden; }
+.qoves-widget .proc-track > div {
+  position: relative; height: 100%; border-radius: 99px; overflow: hidden;
+  background: linear-gradient(90deg, var(--blue-light), var(--scan));
+  box-shadow: 0 0 12px rgba(6, 182, 212, 0.7);
+  transition: width 0.9s var(--ease-out);
+}
+.qoves-widget .proc-track > div::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.65) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: sf-shimmer 1.6s linear infinite;
+}
+.qoves-widget .proc-status { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 16px; }
+.qoves-widget .proc-phrase {
+  font-size: 17px; font-weight: 500; letter-spacing: -0.02em; text-align: center; color: var(--ink);
+  margin: 16px 0 0; min-height: 24px;
+}
+
+/* chips de estado del pipeline (StatusItem) */
+.qoves-widget .st-item {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 11px 6px 7px; border-radius: 99px;
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--ink-3); background: #fff; border: 1px solid var(--w-line);
+  transition: color 0.35s var(--ease), background 0.35s var(--ease), border-color 0.35s var(--ease);
+}
+.qoves-widget .st-dot { width: 16px; height: 16px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--w-line-strong); color: #fff; flex-shrink: 0; position: relative; }
+.qoves-widget .st-item.done { color: var(--blue-ink); border-color: var(--blue-line); background: var(--blue-tint); }
+.qoves-widget .st-item.done .st-dot { background: var(--blue-deep); border-color: var(--blue-deep); }
+.qoves-widget .st-item.done .st-dot svg { animation: sf-pop 0.35s var(--ease-out) both; }
+.qoves-widget .st-item.active { color: var(--ink); border-color: rgba(6, 182, 212, 0.45); background: #fff; box-shadow: 0 8px 20px -14px rgba(6, 182, 212, 0.8); }
+.qoves-widget .st-item.active .st-dot { border-color: var(--scan); }
+.qoves-widget .st-item.active .st-dot::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--scan); animation: sf-glow 1s var(--ease) infinite; }
+.qoves-widget .st-item.active .st-dot::before {
+  content: ""; position: absolute; inset: -4px; border-radius: 50%;
+  border: 1.5px solid transparent; border-top-color: var(--scan);
+  animation: wfSpin 0.9s linear infinite;
+}
+@keyframes wfSpin { to { transform: rotate(360deg); } }
+
+/* ============================================================
+   Resultado
+   ============================================================ */
+.qoves-widget .wf-result { height: 340px; }
+.qoves-widget .wf-result-frame {
+  position: relative; width: 100%; height: 100%; border-radius: var(--r-card); overflow: hidden;
+  background: var(--w-stage);
+  box-shadow: 0 34px 70px -38px rgba(19, 27, 34, 0.75), 0 0 0 1px rgba(27, 38, 48, 0.06);
+}
+.qoves-widget .wf-result-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+.qoves-widget .wf-result-actions .btn,
+.qoves-widget .dk-result-actions .btn { width: 100%; padding: 16px 20px; }
+.qoves-widget .wf-result-actions .btn-ghost,
+.qoves-widget .dk-result-actions .btn-ghost { background: #fff; }
+.qoves-widget .wf-note { font-size: 13px; color: var(--ink-3); line-height: 1.55; margin: 0 0 24px; }
+.qoves-widget .wf-skel { position: absolute; inset: 0; display: grid; place-items: center; }
+
+/* slider antes/después (variante "qoves") */
+.qoves-widget .ba-pill {
+  position: absolute; top: 14px; z-index: 10; pointer-events: none;
+  font-family: var(--font-mono); font-size: 9.5px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase;
+  color: #fff; padding: 6px 11px; border-radius: 99px;
+  background: rgba(19, 27, 34, 0.5); border: 1px solid rgba(255, 255, 255, 0.25);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  transition: opacity 0.3s var(--ease);
+}
+.qoves-widget .ba-pill.before { left: 14px; }
+.qoves-widget .ba-pill.after { right: 14px; background: rgba(79, 107, 127, 0.62); border-color: rgba(185, 207, 221, 0.55); }
+.qoves-widget .ba-seam {
+  position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), #fff 30%, #fff 70%, rgba(255, 255, 255, 0.2));
+  box-shadow: 0 0 14px 1px rgba(6, 182, 212, 0.55);
+}
+.qoves-widget .ba-handle {
+  position: absolute; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%;
+  display: grid; place-items: center; color: var(--navy-2);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.2), 0 10px 26px -8px rgba(19, 27, 34, 0.6), 0 0 26px rgba(6, 182, 212, 0.45);
+  transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease);
+}
+.qoves-widget .ba-handle::after {
+  content: ""; position: absolute; inset: -7px; border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  animation: wfRing 2.4s var(--ease-out) infinite;
+}
+.qoves-widget .ba-wrap:hover .ba-handle { transform: scale(1.08); }
+.qoves-widget .ba-wrap.dragging .ba-handle { transform: scale(0.94); box-shadow: 0 0 0 8px rgba(6, 182, 212, 0.25), 0 0 32px rgba(6, 182, 212, 0.65); }
+.qoves-widget .ba-wrap.dragging .ba-handle::after { animation: none; opacity: 0; }
+.qoves-widget .ba-wrap:focus-visible { outline: none; box-shadow: inset 0 0 0 3px var(--blue-light); }
+.qoves-widget .ba-hint {
+  position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 10; pointer-events: none;
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; white-space: nowrap;
+  color: #fff; padding: 6px 12px; border-radius: 99px; background: rgba(19, 27, 34, 0.45);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  transition: opacity 0.4s var(--ease);
+}
+
+/* ============================================================
+   Éxito
+   ============================================================ */
+.qoves-widget .wf-success { align-items: center; justify-content: center; gap: 16px; text-align: center; padding-top: 48px; flex: 1; }
+.qoves-widget .wf-success-mark {
+  position: relative; width: 76px; height: 76px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%, var(--blue-accent), var(--blue-deep) 60%, var(--navy-1));
+  display: grid; place-items: center; color: #fff; margin-bottom: 6px;
+  box-shadow: 0 20px 40px -18px rgba(79, 107, 127, 0.8);
+  animation: wfCheckPop 0.6s var(--ease-out) both;
+}
+.qoves-widget .wf-success-mark::before,
+.qoves-widget .wf-success-mark::after {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  border: 1px solid var(--blue-accent);
+  animation: wfRing 2.6s var(--ease-out) infinite;
+}
+.qoves-widget .wf-success-mark::after { animation-delay: 1.3s; }
+.qoves-widget .wf-success-mark path { stroke-dasharray: 24; stroke-dashoffset: 24; animation: wfDraw 0.5s var(--ease-out) 0.3s forwards; }
+.qoves-widget .wf-success-email {
+  display: inline-flex; align-items: center; gap: 8px; margin-top: 4px;
+  font-size: 13.5px; font-weight: 500; color: var(--blue-ink);
+  padding: 8px 14px; border-radius: 99px; background: var(--blue-tint); border: 1px solid var(--blue-line);
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+}
+
+/* ============================================================
+   Overlay de envío
+   ============================================================ */
+.qoves-widget .wf-overlay {
+  position: absolute; inset: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center;
+  background: rgba(242, 246, 249, 0.72);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+.qoves-widget .wf-overlay-card {
+  width: 100%; max-width: 340px; padding: 30px 26px 26px; border-radius: 24px;
+  background: #fff; border: 1px solid var(--blue-line);
+  box-shadow: var(--w-shadow-lift);
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+}
+.qoves-widget .wf-spinner { position: relative; width: 58px; height: 58px; }
+.qoves-widget .wf-spinner::before {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0deg, var(--blue-light) 120deg, var(--blue-deep) 280deg, var(--scan) 360deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+  animation: wfSpin 1s linear infinite;
+}
+.qoves-widget .wf-spinner span { position: absolute; inset: 0; display: grid; place-items: center; color: var(--blue-deep); }
+.qoves-widget .wf-overlay-title { font-size: 19px; font-weight: 600; letter-spacing: -0.025em; color: var(--ink); margin: 4px 0 0; }
 
 /* ============================================================
    Desktop (≥ 768px): Datos + Foto en un solo paso
    ============================================================ */
 @media (min-width: 768px) {
-  .qoves-widget .wf-header { padding: 18px 30px; border-bottom: 1px solid var(--line); }
-  .qoves-widget .wf-brand { font-size: 18px; }
-  .qoves-widget .logo-mark { width: 32px; height: 32px; }
+  .qoves-widget .wf-header { padding: 16px 30px; border-bottom: 1px solid var(--w-line); }
+  .qoves-widget .wf-brand img { height: 19px; }
 
-  /* show desktop stepper inside header, hide the mobile row */
   .qoves-widget .stepper-desktop { display: flex; flex: 0 1 460px; padding: 0; }
   .qoves-widget .stepper-desktop .stepper-node { flex: 1; }
   .qoves-widget .stepper-mobile { display: none; }
 
-  /* intake grid */
-  .qoves-widget .dk-intake { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0; }
-  .qoves-widget .dk-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; padding: 30px 40px 8px; }
-  .qoves-widget .dk-col { display: flex; flex-direction: column; min-height: 0; }
-  .qoves-widget .dk-col .photo-frame { flex: 1; height: auto; min-height: 320px; }
-  .qoves-widget .dk-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 40px; border-top: 1px solid var(--line); }
+  .qoves-widget .wf-h2 { font-size: 34px; }
 
-  /* processing centered, wider */
-  .qoves-widget .dk-proc { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 24px; }
-  .qoves-widget .dk-proc .wf-body { max-width: 520px; padding: 0; width: 100%; }
+  /* intake */
+  .qoves-widget .dk-intake { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0; }
+  .qoves-widget .dk-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; padding: 32px 40px 10px; }
+  .qoves-widget .dk-col { display: flex; flex-direction: column; min-height: 0; }
+  .qoves-widget .dk-col .photo-frame { flex: 1; height: auto; min-height: 330px; }
+  .qoves-widget .dk-foot {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 18px 40px; border-top: 1px solid var(--w-line); margin-top: 18px;
+    background: linear-gradient(180deg, #fff, var(--blue-tint));
+  }
+  .qoves-widget .dk-foot .mono { display: inline-flex; align-items: center; gap: 8px; }
+  .qoves-widget .dk-foot .mono svg { color: var(--blue-accent); }
+
+  /* procesando centrado */
+  .qoves-widget .dk-proc { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 28px 24px; }
+  .qoves-widget .dk-proc .wf-body { max-width: 540px; padding: 0; width: 100%; }
   .qoves-widget .dk-proc .proc-a-stage { height: 380px; }
 
-  /* result 2-col */
-  .qoves-widget .dk-result { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 44px; padding: 30px 40px; align-items: center; }
+  /* resultado 2 columnas */
+  .qoves-widget .dk-result { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 48px; padding: 32px 40px; align-items: center; }
   .qoves-widget .dk-result-media { height: 520px; max-height: 100%; }
   .qoves-widget .dk-result-info { display: flex; flex-direction: column; }
-  .qoves-widget .dk-result-info .wf-h2 { font-size: 38px; }
-  .qoves-widget .dk-result-actions { display: flex; flex-direction: column; gap: 10px; max-width: 360px; }
-  .qoves-widget .dk-result-actions .btn-ghost { background: #fff; }
+  .qoves-widget .dk-result-info .wf-h2 { font-size: 40px; }
+  .qoves-widget .dk-result-actions { display: flex; flex-direction: column; gap: 10px; max-width: 380px; }
 
-  .qoves-widget .wf-success { padding-top: 0; }
-  .qoves-widget .wf-success .wf-h2 { font-size: 38px; }
+  .qoves-widget .wf-success { padding-top: 24px; padding-bottom: 48px; }
+  .qoves-widget .wf-success .wf-h2 { font-size: 40px; }
+}
+
+/* ============================================================
+   Movimiento reducido
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .qoves-widget *,
+  .qoves-widget *::before,
+  .qoves-widget *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.001ms !important;
+  }
+  .qoves-widget .proc-scanline { top: 50%; }
+  .qoves-widget .photo-frame::after { display: none; }
 }

@@ -4,14 +4,9 @@ import { useEffect, useState, useCallback } from 'react';
 import { toast } from 'sonner';
 import { Loader2, Trash2, Mail } from 'lucide-react';
 import { authClient } from '@/lib/auth/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 
 const ROLES = ['owner', 'admin', 'member'];
+const ROLE_LABEL: Record<string, string> = { owner: 'Propietario', admin: 'Administrador', member: 'Miembro' };
 
 export function MembersManager() {
     const [org, setOrg] = useState<any>(null);
@@ -65,82 +60,93 @@ export function MembersManager() {
         load();
     }
 
-    if (loading) return <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
-    if (!org) return <p className="text-muted-foreground">Selecciona una clínica primero.</p>;
+    if (loading) {
+        return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {[0, 1, 2].map((i) => <div key={i} className="sf-skeleton" style={{ height: 58 }} />)}
+            </div>
+        );
+    }
+    if (!org) return <p style={{ fontSize: 14, color: 'var(--ink-3)' }}>Selecciona una clínica primero.</p>;
 
     const members = org.members ?? [];
     const invitations = (org.invitations ?? []).filter((i: any) => i.status === 'pending');
+    const initials = (s: string) => s.split(/[\s@.]+/).filter(Boolean).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
 
     return (
-        <div className="space-y-6">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
             {impersonating ? (
-                <Card><CardHeader><CardTitle>Invitar miembro</CardTitle>
-                    <CardDescription>No disponible durante una impersonación (solo lectura).</CardDescription></CardHeader></Card>
+                <p style={{ fontSize: 13.5, color: 'var(--ink-3)', margin: 0 }}>Invitar no está disponible durante una impersonación (solo lectura).</p>
             ) : (
-            <Card>
-                <CardHeader><CardTitle>Invitar miembro</CardTitle>
-                    <CardDescription>Agrega usuarios a {org.name}</CardDescription></CardHeader>
-                <CardContent>
-                    <form onSubmit={invite} className="flex gap-2 flex-wrap items-end">
-                        <div className="flex-1 min-w-[200px] space-y-1">
-                            <Input type="email" placeholder="email@clinica.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                        </div>
-                        <Select value={role} onValueChange={setRole}>
-                            <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-                            <SelectContent>{ROLES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
-                        </Select>
-                        <Button type="submit" disabled={inviting}>{inviting ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Mail className="h-4 w-4 mr-1" />Invitar</>}</Button>
-                    </form>
-                </CardContent>
-            </Card>
+                <form onSubmit={invite} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <input
+                        className="field"
+                        type="email"
+                        placeholder="email@clinica.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        style={{ flex: '1 1 200px', height: 44, fontSize: 14 }}
+                        aria-label={`Email para invitar a ${org.name}`}
+                    />
+                    <select className="field" value={role} onChange={(e) => setRole(e.target.value)} style={{ width: 150, height: 44, fontSize: 14 }} aria-label="Rol">
+                        {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
+                    </select>
+                    <button type="submit" className="btn btn-primary btn-sm" disabled={inviting} style={{ height: 44 }}>
+                        {inviting ? <Loader2 className="animate-spin" size={16} /> : <><Mail size={15} /> Invitar</>}
+                    </button>
+                </form>
             )}
 
-            <Card>
-                <CardHeader><CardTitle>Miembros</CardTitle></CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader><TableRow><TableHead>Usuario</TableHead><TableHead>Rol</TableHead><TableHead></TableHead></TableRow></TableHeader>
-                        <TableBody>
-                            {members.map((m: any) => (
-                                <TableRow key={m.id}>
-                                    <TableCell>{m.user?.email ?? m.userId}</TableCell>
-                                    <TableCell>
-                                        {impersonating ? (
-                                            <Badge variant="secondary">{m.role}</Badge>
-                                        ) : (
-                                            <Select value={m.role} onValueChange={(v) => changeRole(m.id, v)}>
-                                                <SelectTrigger className="w-[120px] h-8"><SelectValue /></SelectTrigger>
-                                                <SelectContent>{ROLES.map((r) => <SelectItem key={r} value={r}>{r}</SelectItem>)}</SelectContent>
-                                            </Select>
-                                        )}
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        {!impersonating && <Button variant="ghost" size="sm" onClick={() => removeMember(m.id)}><Trash2 className="h-4 w-4" /></Button>}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+            <div className="sf-list">
+                {members.map((m: any, i: number) => {
+                    const mail = m.user?.email ?? m.userId;
+                    return (
+                        <div key={m.id} className="sf-row" style={{ animationDelay: `${i * 40}ms`, padding: '10px 12px' }}>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                                <span className="avatar" style={{ width: 34, height: 34, fontSize: 12, flexShrink: 0 }}>{initials(m.user?.name || mail || '?')}</span>
+                                <span style={{ minWidth: 0 }}>
+                                    <span style={{ display: 'block', fontWeight: 600, fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{m.user?.name || mail}</span>
+                                    {m.user?.name && <span style={{ display: 'block', fontSize: 12.5, color: 'var(--ink-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{mail}</span>}
+                                </span>
+                            </span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                                {impersonating ? (
+                                    <span className="sf-badge">{ROLE_LABEL[m.role] ?? m.role}</span>
+                                ) : (
+                                    <>
+                                        <select className="field" value={m.role} onChange={(e) => changeRole(m.id, e.target.value)} style={{ width: 138, height: 36, fontSize: 13, padding: '0 10px' }} aria-label="Cambiar rol">
+                                            {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
+                                        </select>
+                                        <button className="icon-btn" onClick={() => removeMember(m.id)} aria-label="Eliminar miembro" title="Eliminar miembro">
+                                            <Trash2 size={15} />
+                                        </button>
+                                    </>
+                                )}
+                            </span>
+                        </div>
+                    );
+                })}
+            </div>
 
             {invitations.length > 0 && (
-                <Card>
-                    <CardHeader><CardTitle>Invitaciones pendientes</CardTitle></CardHeader>
-                    <CardContent>
-                        <Table>
-                            <TableBody>
-                                {invitations.map((i: any) => (
-                                    <TableRow key={i.id}>
-                                        <TableCell>{i.email}</TableCell>
-                                        <TableCell><Badge variant="secondary">{i.role}</Badge></TableCell>
-                                        <TableCell className="text-right"><Button variant="ghost" size="sm" onClick={() => cancelInvite(i.id)}>Cancelar</Button></TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
+                <div>
+                    <span className="mono" style={{ fontSize: 9, display: 'block', marginBottom: 10 }}>INVITACIONES PENDIENTES · {invitations.length}</span>
+                    <div className="sf-list">
+                        {invitations.map((i: any) => (
+                            <div key={i.id} className="sf-row" style={{ padding: '10px 12px', borderStyle: 'dashed' }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                                    <span className="avatar" style={{ width: 34, height: 34, flexShrink: 0 }}><Mail size={14} /></span>
+                                    <span style={{ fontSize: 14, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{i.email}</span>
+                                </span>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+                                    <span className="sf-badge">{ROLE_LABEL[i.role] ?? i.role}</span>
+                                    {!impersonating && <button className="btn btn-ghost btn-sm" style={{ padding: '7px 12px', fontSize: 13 }} onClick={() => cancelInvite(i.id)}>Cancelar</button>}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
             )}
         </div>
     );

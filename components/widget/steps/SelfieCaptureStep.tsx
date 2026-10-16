@@ -24,8 +24,8 @@ export function SelfieCaptureStep({ mobileConnected, qrUrl, onCapture, onCancel 
         >
             {mobileConnected ? (
                 <div className="flex flex-col items-center justify-center space-y-8 animate-in fade-in zoom-in duration-500 text-center max-w-lg">
-                    <div className="p-8 bg-teal-50 dark:bg-teal-900/20 rounded-full animate-pulse">
-                        <Smartphone className="w-16 h-16 text-teal-600 dark:text-teal-400" strokeWidth={1.5} />
+                    <div className="p-8 bg-blue-soft rounded-full animate-pulse">
+                        <Smartphone className="w-16 h-16 text-blue-deep" strokeWidth={1.5} />
                     </div>
                     <div className="space-y-4">
                         <h3 className="text-3xl font-serif text-black dark:text-white">Esperando fotografía</h3>

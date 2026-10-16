@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Share2, Loader2, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BeforeAfterSlider } from "../BeforeAfterSlider";
+import { BRAND_NAME } from "@/lib/brand";
 
 interface LockedResultStepProps {
     image: File | null;
@@ -33,7 +34,7 @@ export function LockedResultStep({ image, demoBeforeImage, generatedImage, onRes
                         <Share2 className="w-4 h-4 mr-2 rotate-180" />
                         Volver a empezar
                     </Button>
-                    <h2 className="text-xl md:text-3xl font-serif text-black dark:text-white text-center flex-1">Tu simulación Smile Forward</h2>
+                    <h2 className="text-xl md:text-3xl font-serif text-black dark:text-white text-center flex-1">Tu simulación {BRAND_NAME}</h2>
                     <div className="w-20" />
                 </div>
 
@@ -51,8 +52,9 @@ export function LockedResultStep({ image, demoBeforeImage, generatedImage, onRes
                                     />
                                     {/* Protective Watermark Layer */}
                                     <div className="absolute inset-0 flex items-center justify-center p-4 z-10 opacity-60 pointer-events-none">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
-                                            src="https://dentalcorbella.com/wp-content/uploads/2023/07/logo-white-trans2.png"
+                                            src="/brand/smilefast-white.png"
                                             alt="Watermark"
                                             className="w-full opacity-40 drop-shadow-md rotate-[-20deg] select-none"
                                             draggable={false}
@@ -78,7 +80,7 @@ export function LockedResultStep({ image, demoBeforeImage, generatedImage, onRes
                         </div>
                         <Button
                             onClick={onUnlock}
-                            className="w-full h-12 md:h-14 rounded-full bg-black text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200 text-sm md:text-base font-sans font-medium tracking-wide shadow-xl gap-2 group"
+                            className="w-full h-12 md:h-14 rounded-full bg-blue-deep text-white hover:bg-blue-ink text-sm md:text-base font-sans font-medium tracking-wide shadow-xl gap-2 group"
                             size="lg"
                         >
                             <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" strokeWidth={1.5} /> ¿Te lo enviamos?

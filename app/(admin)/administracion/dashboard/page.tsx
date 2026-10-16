@@ -126,7 +126,7 @@ export default async function DashboardPage() {
 
     return (
         <div className="admin-page">
-            <PageHead title="Resumen" subtitle="Tu actividad de los últimos 30 días" action={!impersonating ? <ExportGenerationsCsv /> : undefined}>
+            <PageHead eyebrow="PANEL DE LA CLÍNICA" title="Resumen" accent="de actividad" subtitle="Lo que pasó en tu clínica en los últimos 30 días" action={!impersonating ? <ExportGenerationsCsv /> : undefined}>
                 <span className="mono seg-now">ÚLTIMOS 30 DÍAS</span>
             </PageHead>
 
@@ -158,7 +158,7 @@ export default async function DashboardPage() {
                                                 {l.name || "Sin nombre"}
                                             </div>
                                             <div className="mono" style={{ fontSize: 9, marginTop: 2 }}>
-                                                {smiles} SIMULACIONES{videos > 0 ? " · VÍDEO" : ""}
+                                                {smiles} {smiles === 1 ? "SIMULACIÓN" : "SIMULACIONES"}{videos > 0 ? " · VÍDEO" : ""}
                                             </div>
                                         </div>
                                         <StatusPill status={l.status} />

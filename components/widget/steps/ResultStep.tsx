@@ -1,8 +1,10 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { WIcon } from "../WIcon";
 import { BeforeAfterSlider } from "../BeforeAfterSlider";
+import { fileObjectUrl } from "../objectUrl";
 
 interface ResultStepProps {
     image: File | null;
@@ -16,6 +18,8 @@ interface ResultStepProps {
     onSendPhotoEmail: () => void;
 }
 
+const EASE = [0.22, 1, 0.36, 1] as const;
+
 export function ResultStep({
     image,
     demoBeforeImage,
@@ -27,21 +31,28 @@ export function ResultStep({
     onClinicalVideoRequest,
     onSendPhotoEmail,
 }: ResultStepProps) {
-    const beforeSrc = image ? URL.createObjectURL(image) : demoBeforeImage || "";
+    const fileUrl = fileObjectUrl(image);
+
+    const beforeSrc = fileUrl || demoBeforeImage || "";
     const afterSrc = alignedImage || generatedImage || "";
     const ready = (image || demoBeforeImage) && generatedImage;
     const busy = isSubmittingVideo || isSubmittingPhoto;
 
     const slider = (
-        <div className="relative w-full h-full rounded-[18px] overflow-hidden border border-[var(--line)] bg-[var(--photo)]">
+        <motion.div
+            className="wf-result-frame"
+            initial={{ opacity: 0, scale: 0.96, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: EASE }}
+        >
             {ready ? (
                 <BeforeAfterSlider beforeImage={beforeSrc} afterImage={afterSrc} fill variant="qoves" className="w-full h-full" />
             ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-zinc-300" />
+                <div className="wf-skel">
+                    <Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--blue-light)" }} />
                 </div>
             )}
-        </div>
+        </motion.div>
     );
 
     const actions = (
@@ -62,14 +73,16 @@ export function ResultStep({
         return (
             <div className="dk-result">
                 <div className="dk-result-media">{slider}</div>
-                <div className="dk-result-info">
-                    <span className="mono mono-pill" style={{ fontSize: 9, alignSelf: "flex-start" }}>RESULTADO · SIMULACIÓN</span>
-                    <h2 className="wf-h2" style={{ marginTop: 16 }}>
+                <div className="dk-result-info wf-stagger">
+                    <span className="mono mono-pill" style={{ fontSize: 9, alignSelf: "flex-start" }}>
+                        <span className="pill-dot" />RESULTADO · SIMULACIÓN
+                    </span>
+                    <h2 className="wf-h2" style={{ marginTop: 18 }}>
                         Tu simulación <span className="dim">está lista</span>
                     </h2>
-                    <p className="wf-sub" style={{ fontSize: 16, margin: "12px 0 4px" }}>Desliza sobre la imagen para comparar el antes y el después.</p>
-                    <p style={{ fontSize: 13, color: "var(--ink-3)", lineHeight: 1.5, margin: "0 0 26px" }}>
-                        Para verte en movimiento (vídeo), lo realizamos en consulta y confirmamos la viabilidad de tu caso con el criterio del equipo de los Dres. Corbella.
+                    <p className="wf-sub" style={{ fontSize: 16, margin: "12px 0 6px" }}>Desliza sobre la imagen para comparar el antes y el después.</p>
+                    <p className="wf-note">
+                        Para verte en movimiento (vídeo), lo realizamos en consulta y confirmamos la viabilidad de tu caso con el criterio del equipo clínico.
                     </p>
                     <div className="dk-result-actions">{actions}</div>
                     <p className="mono" style={{ fontSize: 9, marginTop: 22 }}>SIMULACIÓN ORIENTATIVA · SEGÚN TU CASO CLÍNICO</p>
@@ -81,9 +94,11 @@ export function ResultStep({
     // ── Mobile ──
     return (
         <div className="wf-body">
-            <div className="wf-intro">
+            <div className="wf-intro wf-stagger">
                 <div style={{ marginBottom: 12 }}>
-                    <span className="mono mono-pill" style={{ fontSize: 9 }}>RESULTADO · SIMULACIÓN</span>
+                    <span className="mono mono-pill" style={{ fontSize: 9 }}>
+                        <span className="pill-dot" />RESULTADO · SIMULACIÓN
+                    </span>
                 </div>
                 <h2 className="wf-h2">
                     Tu simulación <span className="dim">está lista</span>
@@ -91,7 +106,7 @@ export function ResultStep({
                 <p className="wf-sub">Desliza para comparar el antes y el después.</p>
             </div>
             <div className="wf-result">{slider}</div>
-            <div className="wf-result-actions">{actions}</div>
+            <div className="wf-result-actions wf-stagger">{actions}</div>
             <p className="mono wf-foot">SIMULACIÓN ORIENTATIVA · SEGÚN TU CASO CLÍNICO</p>
         </div>
     );

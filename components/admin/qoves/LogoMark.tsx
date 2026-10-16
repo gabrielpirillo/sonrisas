@@ -1,24 +1,56 @@
-/* Q-style circular logo mark (Qoves visual language) */
-export function LogoMark({ size = 34, dark = true }: { size?: number; dark?: boolean }) {
-    const stroke = dark ? "#fff" : "#1c1e1d";
+/**
+ * Marca de Smile Fast: sonrisa sobre un cuadrado redondeado (misma que el favicon).
+ * - variant "navy": fondo navy, sonrisa azul claro (sobre fondos claros).
+ * - variant "light": fondo translúcido claro (sobre fondos oscuros / sidebar navy).
+ * - variant "outline": solo trazo, para usos pequeños sobre blanco.
+ * `dark` se mantiene por compatibilidad: true → navy, false → outline.
+ */
+export function LogoMark({
+    size = 34,
+    dark,
+    variant,
+}: {
+    size?: number;
+    dark?: boolean;
+    variant?: "navy" | "light" | "outline";
+}) {
+    const v = variant ?? (dark === false ? "outline" : "navy");
+    const bg = v === "navy" ? "var(--navy-2, #1b2630)" : v === "light" ? "rgba(255,255,255,0.1)" : "transparent";
+    const border = v === "outline" ? "1px solid var(--blue-line, #d3dee6)" : v === "light" ? "1px solid rgba(255,255,255,0.16)" : "none";
+    const smile = v === "outline" ? "var(--blue-deep, #4f6b7f)" : "var(--blue-light, #b9cfdd)";
+    const eyes = v === "outline" ? "var(--ink, #1c1e1d)" : "#fff";
     return (
         <span
-            className="qoves-logo-mark"
+            className="sf-logo-mark"
+            aria-hidden="true"
             style={{
                 width: size,
                 height: size,
-                borderRadius: "50%",
+                borderRadius: Math.round(size * 0.28),
                 display: "grid",
                 placeItems: "center",
                 flexShrink: 0,
-                background: dark ? "#1c1e1d" : "transparent",
-                border: dark ? "none" : "1px solid #1c1e1d",
+                background: bg,
+                border,
             }}
         >
-            <svg width={size * 0.5} height={size * 0.5} viewBox="0 0 24 24" fill="none">
-                <circle cx={12} cy={12} r={9} stroke={stroke} strokeWidth={2} />
-                <path d="M12 3 A9 9 0 0 1 12 21" stroke={stroke} strokeWidth={2} fill="none" opacity={0.45} />
+            <svg width={size * 0.62} height={size * 0.62} viewBox="0 0 64 64" fill="none">
+                <path d="M16 31c3.8 7.4 9 11 16 11s12.2-3.6 16-11" stroke={smile} strokeWidth={6} strokeLinecap="round" />
+                <circle cx={23} cy={22} r={3.6} fill={eyes} />
+                <circle cx={41} cy={22} r={3.6} fill={eyes} />
             </svg>
         </span>
+    );
+}
+
+/** Logotipo "Smile Fast" (imagen de la landing). `tone` según el fondo. */
+export function Wordmark({ tone = "dark", height = 20 }: { tone?: "dark" | "light"; height?: number }) {
+    return (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+            src={tone === "light" ? "/brand/smilefast-white.png" : "/brand/smilefast-black.png"}
+            alt="Smile Fast"
+            style={{ height, width: "auto", display: "block" }}
+        />
     );
 }

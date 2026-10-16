@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
-import { Button } from '@/components/ui/button'
+import { AlertTriangle, RotateCcw } from 'lucide-react'
 
 export default function Error({
     error,
@@ -11,25 +11,30 @@ export default function Error({
     reset: () => void
 }) {
     useEffect(() => {
-        // Log the error to an observability service
         console.error(error)
     }, [error])
 
     return (
-        <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 p-8 text-center bg-background rounded-xl border shadow-sm">
-            <div className="p-4 rounded-full bg-red-100 dark:bg-red-900/20">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-red-600 dark:text-red-400"><circle cx="12" cy="12" r="10" /><line x1="12" x2="12" y1="8" y2="12" /><line x1="12" x2="12.01" y1="16" y2="16" /></svg>
-            </div>
-            <div className="space-y-2">
-                <h2 className="text-xl font-bold tracking-tight">Something went wrong!</h2>
-                <p className="text-muted-foreground max-w-md">
-                    {error.message || "An unexpected error occurred while processing your request."}
+        <div style={{ minHeight: '60vh', display: 'grid', placeItems: 'center', padding: 24 }}>
+            <div className="sf-rise" style={{ maxWidth: 440, width: '100%', textAlign: 'center', background: '#fff', border: '1px solid var(--blue-line)', borderRadius: 24, padding: '36px 28px', boxShadow: '0 30px 60px -36px rgba(27,38,48,0.45)' }}>
+                <span style={{ width: 52, height: 52, borderRadius: 16, display: 'inline-grid', placeItems: 'center', background: 'var(--danger-soft)', color: 'var(--danger)' }}>
+                    <AlertTriangle size={22} />
+                </span>
+                <h2 style={{ fontSize: 24, fontWeight: 600, letterSpacing: '-0.03em', margin: '18px 0 8px', color: 'var(--ink)' }}>Algo salió mal</h2>
+                <p style={{ fontSize: 15, lineHeight: 1.55, color: 'var(--ink-2)', margin: 0 }}>
+                    Ocurrió un error inesperado. Vuelve a intentarlo; si persiste, recarga la página.
                 </p>
-                {error.digest && <p className="text-xs font-mono text-muted-foreground">Error ID: {error.digest}</p>}
-            </div>
-            <div className="flex gap-2 mt-4">
-                <Button onClick={() => reset()}>Try again</Button>
-                <Button variant="outline" onClick={() => window.location.reload()}>Reload Page</Button>
+                {error.digest && (
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.1em', color: 'var(--ink-3)', margin: '14px 0 0' }}>ID: {error.digest}</p>
+                )}
+                <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 24, flexWrap: 'wrap' }}>
+                    <button onClick={() => reset()} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 20px', borderRadius: 999, border: 0, background: 'var(--blue-deep)', color: '#fff', fontWeight: 600, fontSize: 14.5, cursor: 'pointer' }}>
+                        <RotateCcw size={15} /> Reintentar
+                    </button>
+                    <button onClick={() => window.location.reload()} style={{ padding: '12px 20px', borderRadius: 999, border: '1px solid var(--blue-line)', background: '#fff', color: 'var(--blue-deep)', fontWeight: 600, fontSize: 14.5, cursor: 'pointer' }}>
+                        Recargar
+                    </button>
+                </div>
             </div>
         </div>
     )

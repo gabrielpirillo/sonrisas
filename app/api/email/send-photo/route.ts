@@ -9,6 +9,7 @@ import { getLeadForEmail } from '@/lib/leadAccess';
 import { escapeXml } from '@/lib/security';
 import nodemailer from 'nodemailer';
 import { storage } from '@/lib/storage';
+import { brandedEmail, clinicName, emailNote, mailFrom } from '@/lib/emailTemplate';
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -75,15 +76,16 @@ export async function POST(req: NextRequest) {
         });
 
         // Send email
+        const clinic = await clinicName(access.lead.clinic_id);
         await transporter.sendMail({
-            from: process.env.SMTP_FROM || 'Smile Forward <smileforward@dentalcorbella.com>',
+            from: mailFrom(),
             to: email,
-            subject: 'Tu Simulación Smile Forward está lista ✨',
-            text: 'Please see attached simulation.',
-            html: getPhotoEmailTemplate(name),
+            subject: clinic ? `Tu simulación de sonrisa · ${clinic}` : 'Tu simulación de sonrisa está lista',
+            text: 'Adjuntamos tu simulación de sonrisa.',
+            html: photoEmail(name, clinic),
             attachments: [
                 {
-                    filename: 'smile-forward-simulation.jpg',
+                    filename: 'simulacion-sonrisa.jpg',
                     content: imageBase64,
                     encoding: 'base64',
                 }
@@ -104,35 +106,15 @@ export async function POST(req: NextRequest) {
     }
 }
 
-function getPhotoEmailTemplate(name: string | null): string {
-    return `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
-</head>
-<body style="font-family: 'Outfit', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #fff;">
-    <div style="text-align: center; padding: 40px 0; border-bottom: 2px solid #f0f0f0;">
-        <div style="font-size: 32px; font-weight: 700; font-family: 'Playfair Display', serif;">Smile Forward</div>
-    </div>
-    <div style="padding: 50px 0;">
-        <h1 style="font-family: 'Playfair Display', serif; font-size: 28px;">¡Hola${name ? ` ${escapeXml(name)}` : ''}! 👋</h1>
-        <p style="color: #555;">Tu simulación de sonrisa está lista. Adjuntamos tu imagen en alta calidad para que puedas verla con todo detalle.</p>
-        <p style="color: #555;">Esta es una <strong style="color: #000;">simulación orientativa</strong> de cómo podría verse tu sonrisa después del tratamiento.</p>
-        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 25px 0;">
-            <p style="margin: 0; color: #000;"><strong>¿Quieres ver cómo te verías en movimiento?</strong></p>
-            <p style="margin: 10px 0 0; color: #666;">Una imagen da una idea, pero donde realmente se entiende el cambio es al verte hablar, reír y expresarte en situaciones reales.</p>
-        </div>
-        <div style="text-align: center;">
-            <a href="https://dentalcorbella.com/contacto/" style="display: inline-block; padding: 18px 36px; background: #000; color: #fff; text-decoration: none; border-radius: 50px; font-weight: 500; font-size: 16px;">
-                Reserva tu cita y vete en video
-            </a>
-        </div>
-    </div>
-    <div style="text-align: center; padding: 40px 0; border-top: 2px solid #f0f0f0; color: #999; font-size: 14px;">
-        <p>Dental Corbella - Smile Forward</p>
-    </div>
-</body>
-</html>`;
+function photoEmail(name: string | null, clinic: string | null): string {
+    const who = clinic ? escapeXml(clinic) : 'la clínica';
+    return brandedEmail({
+        preheader: 'Tu simulación de sonrisa está lista. Te la adjuntamos en alta calidad.',
+        eyebrow: 'Simulación lista',
+        title: `¡Hola${name ? ` ${escapeXml(name)}` : ''}! Esta podría ser tu nueva sonrisa`,
+        body: `<p style="margin:0 0 14px;">Adjuntamos tu simulación en alta calidad para que puedas verla con todo detalle.</p>
+            <p style="margin:0 0 14px;">Es una <strong style="color:#1c1e1d;">simulación orientativa</strong>: el resultado real depende de la valoración clínica.</p>
+            ${emailNote(`<strong>¿Quieres verte en movimiento?</strong><br>Una imagen da una idea, pero el cambio se entiende de verdad al verte hablar y sonreír. Responde a este correo y ${who} te ayudará a reservar tu cita.`)}`,
+        signature: clinic ? escapeXml(clinic) : null,
+    });
 }
