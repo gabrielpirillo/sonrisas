@@ -3,6 +3,7 @@ import { RES } from "../resources";
 import { useInview, LogoMark, MonoPill, BeforeAfter, AnalysisExplorer } from "./shared";
 import { AppJourney } from "./AppJourney";
 import { TrustStrip } from "./TrustStrip";
+import { Science } from "../../../components/science/Science";
 
 /* ============================================================
    Landing — Smile Fast · B2B para CLÍNICAS DENTALES
@@ -1007,6 +1008,7 @@ function Landing({ onStart }) {
       <UseCases />
       <Metrics />
       <ClinicFunnel />
+      <Science className="sci-landing" />
       <Testimonios onStart={onStart} />
       <FAQ />
       <CTAFooter onStart={onStart} />

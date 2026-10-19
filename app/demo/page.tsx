@@ -10,7 +10,7 @@ import { whatsappLink } from "@/lib/brand";
 
 const CONTACT_HREF = whatsappLink("Hola, quiero saber más sobre Smile Fast para mi clínica.");
 const SIGNUP_HREF = "/acceso?modo=registro";
-import { Science } from "./Science";
+import { Science } from "@/components/science/Science";
 import "./demo.css";
 
 /* Demo para clínicas: llega desde "Quiero probarlo" de la landing.

@@ -6,5 +6,8 @@ import react from "@vitejs/plugin-react";
 export default defineConfig({
   plugins: [react()],
   base: "/landing/",
+  // La sección "Por qué funciona" vive en ../components/science (compartida con
+  // la app): forzar la copia de React de la landing.
+  resolve: { dedupe: ["react", "react-dom"] },
   build: { outDir: "../public/landing", emptyOutDir: true },
 });
