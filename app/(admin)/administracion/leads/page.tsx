@@ -284,6 +284,11 @@ export default function LeadsPage() {
                                                             {lead.name || "Sin nombre"}
                                                             {fresh && <span className="lead-new" title="Nuevo · últimas 24 h" aria-label="Nuevo" />}
                                                         </div>
+                                                        {lead.video_requested_at && (
+                                                            <span className="lead-video-req" title={`Pidió su vídeo en consulta el ${new Date(lead.video_requested_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}`}>
+                                                                <Clapperboard size={12} strokeWidth={1.8} aria-hidden="true" /> Pidió vídeo en consulta
+                                                            </span>
+                                                        )}
                                                         <div className="mono" style={{ fontSize: 9, marginTop: 3 }}>
                                                             {new Date(lead.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
                                                             {lead.survey_data?.ageRange ? ` · ${lead.survey_data.ageRange}` : ""}

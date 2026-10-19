@@ -95,7 +95,7 @@ export default async function DashboardPage() {
     const [totalLeadsRow, smileRow, videoRow, convertedRow, pendingRow] = await Promise.all([
         db.queryOne('SELECT COUNT(*) as count FROM leads WHERE clinic_id = $1', [clinicId]),
         db.queryOne("SELECT COUNT(*) as count FROM generations g JOIN leads l ON l.id = g.lead_id WHERE l.clinic_id = $1 AND g.type = 'image'", [clinicId]),
-        db.queryOne("SELECT COUNT(*) as count FROM generations g JOIN leads l ON l.id = g.lead_id WHERE l.clinic_id = $1 AND g.type = 'video'", [clinicId]),
+        db.queryOne("SELECT COUNT(*) as count FROM leads WHERE clinic_id = $1 AND video_requested_at IS NOT NULL", [clinicId]),
         db.queryOne("SELECT COUNT(*) as count FROM leads WHERE clinic_id = $1 AND status = 'converted'", [clinicId]),
         db.queryOne("SELECT COUNT(*) as count FROM leads WHERE clinic_id = $1 AND status = 'pending'", [clinicId]),
     ]);
@@ -113,11 +113,11 @@ export default async function DashboardPage() {
     const [gensResult, leadsResult] = await Promise.all([
         db.query(`SELECT g.created_at, g.type FROM generations g JOIN leads l ON l.id = g.lead_id
                   WHERE l.clinic_id = $2 AND g.created_at >= $1 ORDER BY g.created_at ASC`, [sixtyDaysAgo, clinicId]),
-        db.query(`SELECT created_at, status FROM leads WHERE clinic_id = $2 AND created_at >= $1 ORDER BY created_at ASC`, [sixtyDaysAgo, clinicId]),
+        db.query(`SELECT created_at, status, video_requested_at FROM leads WHERE clinic_id = $2 AND created_at >= $1 ORDER BY created_at ASC`, [sixtyDaysAgo, clinicId]),
     ]);
 
     const gens = gensResult.rows as { created_at: string; type: string }[];
-    const leadRows = leadsResult.rows as { created_at: string; status: string }[];
+    const leadRows = leadsResult.rows as { created_at: string; status: string; video_requested_at: string | null }[];
     const offsetOf = (iso: string) => Math.floor((now - new Date(iso).getTime()) / DAY);
 
     const inLast30 = (off: number) => off >= 0 && off < 30;
@@ -125,7 +125,7 @@ export default async function DashboardPage() {
 
     const leadOffsets = leadRows.map((r) => offsetOf(r.created_at));
     const imgOffsets = gens.filter((g) => g.type === 'image').map((g) => offsetOf(g.created_at));
-    const vidOffsets = gens.filter((g) => g.type === 'video').map((g) => offsetOf(g.created_at));
+    const vidOffsets = leadRows.filter((r) => r.video_requested_at).map((r) => offsetOf(r.video_requested_at as string));
     const convOffsets = leadRows.filter((r) => r.status === 'converted').map((r) => offsetOf(r.created_at));
 
     const count = (arr: number[], pred: (o: number) => boolean) => arr.filter(pred).length;
@@ -246,7 +246,7 @@ export default async function DashboardPage() {
             <div className="kpi-grid">
                 <KpiCard label="LEADS TOTALES" icon={<Users size={17} strokeWidth={1.7} />} value={totalLeads} delta={leadsDelta.label} up={leadsDelta.up} spark={sparkline(leadOffsets)} index={0} />
                 <KpiCard label="SIMULACIONES" icon={<ScanFace size={17} strokeWidth={1.7} />} value={smileGenerations} delta={simDelta.label} up={simDelta.up} spark={sparkline(imgOffsets)} index={1} />
-                <KpiCard label="VÍDEOS" icon={<Clapperboard size={17} strokeWidth={1.7} />} value={videoRequests} delta={vidDelta.label} up={vidDelta.up} spark={sparkline(vidOffsets)} index={2} />
+                <KpiCard label="VÍDEOS SOLICITADOS" icon={<Clapperboard size={17} strokeWidth={1.7} />} value={videoRequests} delta={vidDelta.label} up={vidDelta.up} spark={sparkline(vidOffsets)} index={2} />
                 <KpiCard label="CONVERSIÓN A CITA" icon={<CalendarCheck size={17} strokeWidth={1.7} />} tone="navy" value={conversion} suffix="%" delta={convDelta.label} up={convDelta.up} spark={sparkline(convOffsets)} index={3} />
             </div>
 

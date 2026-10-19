@@ -1043,3 +1043,12 @@
 
 /* Tabla de leads: en anchos medios ocultar Objetivo y Plazo para que Estado siempre se vea */
 @media (max-width: 1180px) { .qoves-admin .lead-table .col-hide-md { display: none; } }
+
+/* Lead que pidió su vídeo en consulta: etiqueta navy, la acción más caliente */
+.qoves-admin .lead-video-req {
+  display: inline-flex; align-items: center; gap: 5px; margin-top: 6px;
+  padding: 3px 9px; border-radius: 999px;
+  background: var(--navy-2); color: #fff;
+  font-size: 11.5px; font-weight: 600; white-space: nowrap;
+}
+.qoves-admin .lead-video-req svg { color: var(--blue-light); }
