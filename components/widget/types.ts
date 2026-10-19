@@ -28,6 +28,8 @@ export interface FormValues {
     phoneNumber: string;
     ageAccepted: boolean;
     termsAccepted: boolean;
+    /** Respuestas a los campos adicionales de la clínica (por id de campo). */
+    custom: Record<string, string | boolean>;
 }
 
 export interface WidgetContainerProps {

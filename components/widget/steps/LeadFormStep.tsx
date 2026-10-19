@@ -5,6 +5,7 @@ import { PhotoPanel } from "./PhotoPanel";
 import { WIcon } from "../WIcon";
 import type { FormValues } from "../types";
 import { useWidgetConfig } from "../WidgetConfigContext";
+import { customFieldsComplete } from "@/lib/widgetConfig";
 import { AccentTitle } from "../AccentTitle";
 
 interface LeadFormStepProps {
@@ -36,13 +37,14 @@ export function LeadFormStep({
     onContinue,
     onSubmit,
 }: LeadFormStepProps) {
-    const { config: { texts, features } } = useWidgetConfig();
+    const { config: { texts, features, customFields } } = useWidgetConfig();
     const formOk =
         !!formValues.name &&
         !!formValues.email &&
         (!features.askPhone || !!formValues.phoneNumber) &&
         formValues.ageAccepted &&
-        formValues.termsAccepted;
+        formValues.termsAccepted &&
+        customFieldsComplete(customFields, formValues.custom);
 
     const fields = (
         <LeadFields

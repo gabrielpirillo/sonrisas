@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { resolveClinic } from '@/lib/billing/credits';
 import { ipFromRequest, rateLimit } from '@/lib/security';
+import { normalizeWidgetConfig, validateCustomAnswers } from '@/lib/widgetConfig';
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
                 if (!rateLimit(`lead:${ip}`, 10, 60 * 60_000)) {
                     return json({ error: 'Demasiadas solicitudes. Inténtalo más tarde.' }, 429);
                 }
-                const { id, name, email, phone, clinic_key } = data;
+                const { id, name, email, phone, clinic_key, custom_answers } = data;
                 if (!UUID_RE.test(id || '') || !name || !EMAIL_RE.test(email || '')) {
                     return json({ error: 'Datos del lead inválidos' }, 400);
                 }
@@ -63,10 +64,14 @@ export async function POST(req: NextRequest) {
                 if (clinic.status === 'suspended') {
                     return json({ error: 'Clínica suspendida', code: 'CLINIC_SUSPENDED' }, 403);
                 }
+                // Campos adicionales: solo los que la clínica tiene configurados.
+                const fields = normalizeWidgetConfig((clinic as { widget_config?: unknown }).widget_config).customFields;
+                const custom = validateCustomAnswers(fields, custom_answers);
+                if (!custom.ok) return json({ error: custom.error }, 400);
                 await db.query(
-                    `INSERT INTO leads (id, name, email, phone, status, clinic_id)
-                     VALUES ($1, $2, $3, $4, 'pending', $5)`,
-                    [id, String(name).slice(0, 200), String(email).slice(0, 200), String(phone || '').slice(0, 40), clinic.id]
+                    `INSERT INTO leads (id, name, email, phone, status, clinic_id, custom_data)
+                     VALUES ($1, $2, $3, $4, 'pending', $5, $6)`,
+                    [id, String(name).slice(0, 200), String(email).slice(0, 200), String(phone || '').slice(0, 40), clinic.id, JSON.stringify(custom.answers)]
                 );
                 return json({ success: true });
             }

@@ -635,6 +635,10 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
     const goalLabel = Q_GOAL[sd.improvementGoal] || sd.improvementGoal || "—";
     const timeLabel = Q_TIME[sd.timeframe] || sd.timeframe || "—";
     const sourceLabel = sd.source || sd.clinicPreference || "Web";
+    // Respuestas a los campos adicionales del widget (leads.custom_data)
+    const customAnswers: { label: string; value: string }[] = Object.values(
+        (lead.custom_data && typeof lead.custom_data === "object" ? lead.custom_data : {}) as Record<string, { label: string; value: string }>
+    ).filter((a) => a && a.label && a.value);
     const requestDate = new Date(lead.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
 
     // ── Motion presets (respetan prefers-reduced-motion) ──────────────────
@@ -898,6 +902,20 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                                             <KVRow label="Objetivo" value={goalLabel} />
                                             <KVRow label="Plazo" value={timeLabel} />
                                             <KVRow label="Clínica" value={lead.survey_data.clinicPreference} />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {customAnswers.length > 0 && (
+                                    <div className="space-y-2.5">
+                                        <h3 className="mono px-1" style={{ fontSize: 9 }}>Respuestas del formulario</h3>
+                                        <div className="card overflow-hidden">
+                                            {customAnswers.map((a, i) => (
+                                                <div key={i} style={{ padding: "12px 16px", borderTop: i === 0 ? "none" : "1px solid var(--line)" }}>
+                                                    <div style={{ fontSize: 12, color: "var(--ink-3)", marginBottom: 3 }}>{a.label}</div>
+                                                    <div style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{a.value}</div>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
                                 )}
@@ -1244,7 +1262,20 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                                     ))}
                                 </div>
                             </motion.div>
-                            <motion.div variants={rise} custom={2}>
+                            {customAnswers.length > 0 && (
+                                <motion.div variants={rise} custom={2}>
+                                    <div className="mono" style={{ fontSize: 9, marginBottom: 10 }}>RESPUESTAS DEL FORMULARIO</div>
+                                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                                        {customAnswers.map((a, i) => (
+                                            <div key={i} style={{ background: "#fff", border: "1px solid var(--blue-line)", borderRadius: 14, padding: "10px 13px" }}>
+                                                <div style={{ fontSize: 12, color: "var(--ink-3)", marginBottom: 3 }}>{a.label}</div>
+                                                <div style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{a.value}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </motion.div>
+                            )}
+                            <motion.div variants={rise} custom={3}>
                                 <div className="mono" style={{ fontSize: 9, marginBottom: 10 }}>CAMBIAR ESTADO</div>
                                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                                     {STATUS_CHOICES.map((k) => (

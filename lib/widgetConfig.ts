@@ -10,6 +10,34 @@
 
 export type WidgetRadius = "soft" | "rounded" | "square";
 
+/** Tipos de campo adicional que la clínica puede pedir en el formulario. */
+export type CustomFieldType = "text" | "textarea" | "select" | "radio" | "checkbox" | "number" | "date";
+
+export interface CustomField {
+    /** Identificador estable (a-z, 0-9, _ y -). Se usa como clave al guardar la respuesta. */
+    id: string;
+    label: string;
+    type: CustomFieldType;
+    required: boolean;
+    placeholder?: string;
+    /** Texto de ayuda bajo el campo. */
+    help?: string;
+    /** Opciones para select y radio. */
+    options?: string[];
+}
+
+export const CUSTOM_FIELD_TYPES: { type: CustomFieldType; label: string }[] = [
+    { type: "text", label: "Texto corto" },
+    { type: "textarea", label: "Texto largo" },
+    { type: "select", label: "Desplegable" },
+    { type: "radio", label: "Opción única" },
+    { type: "checkbox", label: "Casilla (sí/no)" },
+    { type: "number", label: "Número" },
+    { type: "date", label: "Fecha" },
+];
+
+export const MAX_CUSTOM_FIELDS = 8;
+
 export interface WidgetConfig {
     brand: {
         /** Color principal (#rrggbb). Del resto de tonos se deriva la paleta. */
@@ -46,6 +74,8 @@ export interface WidgetConfig {
         photoEmail: boolean;
         selfieQr: boolean;
     };
+    /** Preguntas adicionales que se muestran en el formulario de datos (máx. 8). */
+    customFields: CustomField[];
 }
 
 export const DEFAULT_WIDGET_CONFIG: WidgetConfig = {
@@ -78,6 +108,7 @@ export const DEFAULT_WIDGET_CONFIG: WidgetConfig = {
         photoEmail: true,
         selfieQr: true,
     },
+    customFields: [],
 };
 
 /** Paletas sugeridas en el panel. */
@@ -125,6 +156,82 @@ function safeLogo(v: unknown): string | null {
     }
 }
 
+const FIELD_ID_RE = /^[a-z0-9_-]{1,40}$/;
+
+function slugId(label: string): string {
+    return label.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 32) || "campo";
+}
+
+/** Valida la lista de campos adicionales (ids únicos, opciones para select/radio, máx. 8). */
+export function normalizeCustomFields(raw: unknown): CustomField[] {
+    if (!Array.isArray(raw)) return [];
+    const types = CUSTOM_FIELD_TYPES.map((t) => t.type);
+    const seen = new Set<string>();
+    const out: CustomField[] = [];
+    for (const item of raw) {
+        if (out.length >= MAX_CUSTOM_FIELDS) break;
+        if (!item || typeof item !== "object") continue;
+        const f = item as Record<string, unknown>;
+        const label = typeof f.label === "string" ? f.label.replace(/[\u0000-\u001f]/g, "").trim().slice(0, 80) : "";
+        if (!label) continue;
+        const type = types.includes(f.type as CustomFieldType) ? (f.type as CustomFieldType) : "text";
+        let id = typeof f.id === "string" && FIELD_ID_RE.test(f.id) ? f.id : slugId(label);
+        let n = 2;
+        const base = id;
+        while (seen.has(id)) id = `${base}_${n++}`.slice(0, 40);
+        seen.add(id);
+        const options = Array.isArray(f.options)
+            ? f.options.filter((o): o is string => typeof o === "string").map((o) => o.trim().slice(0, 60)).filter(Boolean).slice(0, 12)
+            : [];
+        if ((type === "select" || type === "radio") && options.length < 2) continue;
+        out.push({
+            id,
+            label,
+            type,
+            required: f.required === true,
+            placeholder: typeof f.placeholder === "string" ? f.placeholder.trim().slice(0, 80) || undefined : undefined,
+            help: typeof f.help === "string" ? f.help.trim().slice(0, 140) || undefined : undefined,
+            options: type === "select" || type === "radio" ? Array.from(new Set(options)) : undefined,
+        });
+    }
+    return out;
+}
+
+/** Respuesta guardada en leads.custom_data: etiqueta + valor (la etiqueta se guarda por si luego cambia el campo). */
+export type CustomAnswers = Record<string, { label: string; value: string }>;
+
+/**
+ * Valida las respuestas del paciente contra los campos configurados.
+ * Devuelve las respuestas limpias o el primer error legible.
+ */
+export function validateCustomAnswers(fields: CustomField[], raw: unknown): { ok: true; answers: CustomAnswers } | { ok: false; error: string } {
+    const input = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+    const answers: CustomAnswers = {};
+    for (const f of fields) {
+        let v = input[f.id];
+        let value = "";
+        if (f.type === "checkbox") value = v === true || v === "true" ? "Sí" : "";
+        else if (typeof v === "number") value = String(v);
+        else if (typeof v === "string") value = v.replace(/[\u0000-\u0008\u000b-\u001f]/g, "").trim().slice(0, f.type === "textarea" ? 1000 : 200);
+        if ((f.type === "select" || f.type === "radio") && value && !f.options?.includes(value)) value = "";
+        if (f.type === "number" && value && !/^-?\d+(?:[.,]\d+)?$/.test(value)) return { ok: false, error: `"${f.label}" debe ser un número.` };
+        if (f.type === "date" && value && !/^\d{4}-\d{2}-\d{2}$/.test(value)) return { ok: false, error: `"${f.label}" debe ser una fecha.` };
+        if (f.required && !value) return { ok: false, error: `Completa "${f.label}".` };
+        if (value) answers[f.id] = { label: f.label, value };
+    }
+    return { ok: true, answers };
+}
+
+/** ¿Están respondidos todos los campos obligatorios? (validación rápida en el widget) */
+export function customFieldsComplete(fields: CustomField[], values: Record<string, string | boolean>): boolean {
+    return fields.every((f) => {
+        if (!f.required) return true;
+        const v = values[f.id];
+        return f.type === "checkbox" ? v === true : typeof v === "string" && v.trim().length > 0;
+    });
+}
+
 /** Mezcla datos guardados (o enviados por el panel) con los valores por defecto, validando todo. */
 export function normalizeWidgetConfig(raw: unknown): WidgetConfig {
     const r = (raw && typeof raw === "object" ? raw : {}) as Record<string, any>;
@@ -161,6 +268,7 @@ export function normalizeWidgetConfig(raw: unknown): WidgetConfig {
             photoEmail: bool(f.photoEmail, d.features.photoEmail),
             selfieQr: bool(f.selfieQr, d.features.selfieQr),
         },
+        customFields: normalizeCustomFields(r.customFields),
     };
 }
 

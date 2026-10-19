@@ -131,19 +131,32 @@ export default function LeadsPage() {
             toast.error("No hay leads para exportar");
             return;
         }
-        const headers = ["Fecha", "Nombre", "Email", "Teléfono", "Estado", "Rango Edad", "Objetivo", "Plazo", "Clínica"];
-        const rows = leads.map((lead) => [
-            new Date(lead.created_at).toLocaleString(),
-            `"${lead.name?.replace(/"/g, '""') || ''}"`,
-            `"${lead.email?.replace(/"/g, '""') || ''}"`,
-            `"${lead.phone?.replace(/"/g, '""') || ''}"`,
-            lead.status,
-            lead.survey_data?.ageRange || '',
-            lead.survey_data?.improvementGoal || '',
-            lead.survey_data?.timeframe || '',
-            lead.survey_data?.clinicPreference || ''
-        ]);
-        const csvContent = [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
+        const q = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+        // Columnas extra: una por cada pregunta adicional del widget que aparezca en los leads.
+        const customLabels: string[] = [];
+        for (const lead of leads) {
+            for (const a of Object.values((lead.custom_data || {}) as Record<string, { label: string }>)) {
+                if (a?.label && !customLabels.includes(a.label)) customLabels.push(a.label);
+            }
+        }
+        const headers = ["Fecha", "Nombre", "Email", "Teléfono", "Estado", "Pidió vídeo", "Rango Edad", "Objetivo", "Plazo", "Clínica", ...customLabels].map(q);
+        const rows = leads.map((lead) => {
+            const answers = Object.values((lead.custom_data || {}) as Record<string, { label: string; value: string }>);
+            return [
+                q(new Date(lead.created_at).toLocaleString('es-ES')),
+                q(lead.name),
+                q(lead.email),
+                q(lead.phone),
+                q(lead.status),
+                q(lead.video_requested_at ? 'Sí' : ''),
+                q(lead.survey_data?.ageRange),
+                q(lead.survey_data?.improvementGoal),
+                q(lead.survey_data?.timeframe),
+                q(lead.survey_data?.clinicPreference),
+                ...customLabels.map((l) => q(answers.find((a) => a?.label === l)?.value)),
+            ];
+        });
+        const csvContent = '\uFEFF' + [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');

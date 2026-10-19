@@ -684,3 +684,27 @@
   .qoves-widget .proc-scanline { top: 50%; }
   .qoves-widget .photo-frame::after { display: none; }
 }
+
+/* ── Campos adicionales de la clínica ─────────────────── */
+.qoves-widget .wf-custom { display: flex; flex-direction: column; gap: 14px; }
+.qoves-widget .wf-cf { display: flex; flex-direction: column; gap: 7px; border: 0; margin: 0; padding: 0; min-width: 0; }
+.qoves-widget .wf-cf > label, .qoves-widget .wf-cf legend { font-size: 13.5px; font-weight: 600; color: var(--ink); padding: 0; }
+.qoves-widget .wf-cf legend { margin-bottom: 7px; }
+.qoves-widget .wf-cf-label { display: inline-flex; align-items: baseline; gap: 5px; }
+.qoves-widget .wf-cf-req { color: var(--blue-deep); margin-left: 2px; }
+.qoves-widget .wf-cf-opt { font-weight: 400; font-size: 12px; color: var(--ink-3); }
+.qoves-widget .wf-cf-help { font-size: 12.5px; color: var(--ink-3); line-height: 1.4; }
+.qoves-widget .wf-cf .wf-field { padding: 0 18px; }
+.qoves-widget .wf-cf-area { height: auto; min-height: 92px; padding: 14px 18px; line-height: 1.5; resize: vertical; border-radius: 18px; }
+.qoves-widget .wf-cf-select { position: relative; width: 100%; }
+.qoves-widget .wf-cf-select select { width: 100%; appearance: none; padding-right: 40px; }
+.qoves-widget .wf-cf-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.qoves-widget .wf-cf-chip {
+  padding: 10px 16px; border-radius: var(--r-pill, 999px); border: 1px solid var(--line-strong, #d6d9d6);
+  background: var(--bg-soft, #f5f6f6); font: inherit; font-size: 14px; color: var(--ink-2); cursor: pointer;
+  transition: background 0.2s var(--ease), border-color 0.2s var(--ease), color 0.2s var(--ease), transform 0.15s var(--ease);
+}
+.qoves-widget .wf-cf-chip:hover { border-color: var(--blue-accent); color: var(--blue-deep); }
+.qoves-widget .wf-cf-chip:active { transform: scale(0.97); }
+.qoves-widget .wf-cf-chip.on { background: var(--blue-deep); border-color: var(--blue-deep); color: #fff; font-weight: 600; }
+.qoves-widget .wf-cf-check { align-items: flex-start; }

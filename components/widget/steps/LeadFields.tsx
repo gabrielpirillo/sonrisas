@@ -4,6 +4,7 @@ import { Check, WIcon } from "../WIcon";
 import { countries } from "../countries";
 import type { FormValues } from "../types";
 import { useWidgetConfig } from "../WidgetConfigContext";
+import { CustomFields } from "./CustomFields";
 
 interface LeadFieldsProps {
     formValues: FormValues;
@@ -15,7 +16,7 @@ interface LeadFieldsProps {
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 export function LeadFields({ formValues, setFormValues, selectedCountry, setSelectedCountry }: LeadFieldsProps) {
-    const { config: { contact, features } } = useWidgetConfig();
+    const { config: { contact, features, customFields } } = useWidgetConfig();
     const set = <K extends keyof FormValues>(k: K, v: FormValues[K]) =>
         setFormValues((prev) => ({ ...prev, [k]: v }));
 
@@ -92,6 +93,11 @@ export function LeadFields({ formValues, setFormValues, selectedCountry, setSele
                 </label>
             </div>
             )}
+            <CustomFields
+                fields={customFields}
+                values={formValues.custom}
+                onChange={(id, v) => setFormValues((prev) => ({ ...prev, custom: { ...prev.custom, [id]: v } }))}
+            />
             <div className="wf-consents">
                 <label
                     className="wf-consent"

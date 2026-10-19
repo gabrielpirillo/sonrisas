@@ -13,7 +13,7 @@ import { countries } from "./countries";
 import type { Step, ProcessStatus, FormValues, WidgetContainerProps } from "./types";
 import { getFaceLandmarker } from "@/lib/mediapipe/faceLandmarker";
 import { useWidgetConfig } from "./WidgetConfigContext";
-import { widgetWhatsappHref } from "@/lib/widgetConfig";
+import { customFieldsComplete, widgetWhatsappHref } from "@/lib/widgetConfig";
 
 /** Proporciones que admite el modelo de imagen; elegimos la más cercana a la foto. */
 const IMAGE_RATIOS = ["1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9"] as const;
@@ -147,6 +147,7 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
         email: '',
         phoneNumber: '',
         ageAccepted: false,
+        custom: {},
         termsAccepted: false
     });
 
@@ -296,8 +297,9 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
                             id: newLeadId,
                             name: formValues.name,
                             email: formValues.email,
-                            phone: fullPhone.trim(),
-                            clinic_key: clinicKey
+                            phone: widgetConfig.features.askPhone ? fullPhone.trim() : '',
+                            clinic_key: clinicKey,
+                            custom_answers: formValues.custom
                         }
                     })
                 });
@@ -583,9 +585,10 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
     const isFormComplete = !!(
         formValues.name &&
         formValues.email &&
-        formValues.phoneNumber &&
+        (!widgetConfig.features.askPhone || formValues.phoneNumber) &&
         formValues.ageAccepted &&
-        formValues.termsAccepted
+        formValues.termsAccepted &&
+        customFieldsComplete(widgetConfig.customFields, formValues.custom)
     );
 
     // ─── Return ──────────────────────────────────────────────
