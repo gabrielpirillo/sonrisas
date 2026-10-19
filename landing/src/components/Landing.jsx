@@ -9,6 +9,11 @@ import { TrustStrip } from "./TrustStrip";
    Qoves visual language. Audience = la clínica (no el paciente).
    ============================================================ */
 
+/* Registro directo y contacto por WhatsApp (sin "agendar demo") */
+const SIGNUP_HREF = "/acceso?modo=registro";
+const CONTACT_HREF = "https://wa.me/542664654405?text=" + encodeURIComponent("Hola, quiero saber más sobre Smile Fast para mi clínica.");
+const extLink = { target: "_blank", rel: "noopener noreferrer" };
+
 const navLink = { color: "var(--ink-2)", textDecoration: "none", fontSize: 15, fontWeight: 450, letterSpacing: "-0.01em", whiteSpace: "nowrap" };
 
 /* ---------------- Nav ---------------- */
@@ -37,11 +42,12 @@ function Nav({ onStart }) {
         <a href="#producto" style={navLink}>Producto</a>
         <a href="#como" style={navLink}>Cómo funciona</a>
         <a href="#usos" style={navLink}>Casos de uso</a>
+        <a href={CONTACT_HREF} {...extLink} style={navLink}>Contacto</a>
 
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
         <a href="/acceso" className="nav-login" style={navLink}>Acceder</a>
-        <button className="btn btn-white btn-sm" onClick={onStart}>Quiero probarlo</button>
+        <a href={SIGNUP_HREF} className="btn btn-white btn-sm">Crear cuenta</a>
       </div>
     </nav>);
 
@@ -103,7 +109,7 @@ function Hero({ onStart }) {
           </p>
           <div style={{ display: "flex", gap: 12, marginTop: 34, flexWrap: "wrap" }}>
             <button className="btn btn-white" style={{ padding: "16px 30px", fontSize: 16 }} onClick={onStart}>Quiero probarlo</button>
-            <a href="#como" className="btn hero2-ghost">Cómo funciona</a>
+            <a href={SIGNUP_HREF} className="btn hero2-ghost">Crear cuenta</a>
           </div>
           <div className="hero2-stats">
             {[
@@ -797,7 +803,8 @@ function Testimonios({ onStart }) {
         </div>
 
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px 20px", marginTop: 40 }}>
-          <button className="btn btn-blue" onClick={onStart} style={{ padding: "14px 28px", fontSize: 14 }}>Agendar reunión</button>
+          <a href={SIGNUP_HREF} className="btn btn-blue" style={{ padding: "14px 28px", fontSize: 14 }}>Crear cuenta</a>
+          <a href={CONTACT_HREF} {...extLink} className="btn btn-ghost" style={{ padding: "14px 28px", fontSize: 14 }}>Contactarnos</a>
         </div>
       </div>
     </section>);
@@ -823,7 +830,7 @@ function SiteFooter({ onStart }) {
         <div className="ft-brand">
           <img src={RES.r11_logo_sf_white_png} alt="Smile Fast" className="ft-logo" />
           <p className="ft-tagline">La plataforma de simulación de sonrisa con IA para clínicas dentales. Convierte las visitas de tu web en citas agendadas.</p>
-          <button className="btn btn-white ft-cta" onClick={onStart}>Quiero probarlo <span aria-hidden="true">→</span></button>
+          <a href={SIGNUP_HREF} className="btn btn-white ft-cta">Crear cuenta <span aria-hidden="true">→</span></a>
           <ul className="ft-badges">
             {FT_BADGES.map(([t, ic], i) =>
             <li key={i}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{ic}</svg>{t}</li>
@@ -840,7 +847,8 @@ function SiteFooter({ onStart }) {
           <div className="ft-col">
             <span className="mono ft-h">Empresa</span>
             <a href="#testimonios" className="ft-link">Brandboost<span aria-hidden="true">→</span></a>
-            <button type="button" className="ft-link ft-link-btn" onClick={onStart}>Agendar reunión<span aria-hidden="true">→</span></button>
+            <a href={CONTACT_HREF} {...extLink} className="ft-link">Contactar por WhatsApp<span aria-hidden="true">→</span></a>
+            <a href="/acceso" className="ft-link">Acceso clínicas<span aria-hidden="true">→</span></a>
           </div>
         </nav>
       </div>
@@ -894,8 +902,10 @@ function CTAFooter({ onStart }) {
             Actívalo en tu web y convierte cada visita en una cita agendada.
           </p>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", alignItems: "center", flexWrap: "wrap" }}>
-            <button className="btn btn-white cta-glow" style={{ padding: "18px 42px", fontSize: 17 }} onClick={onStart}>Quiero probarlo</button>
+            <a href={SIGNUP_HREF} className="btn btn-white cta-glow" style={{ padding: "18px 42px", fontSize: 17 }}>Crear cuenta</a>
+            <button className="btn ctaf-ghost" style={{ padding: "18px 32px", fontSize: 17 }} onClick={onStart}>Quiero probarlo</button>
           </div>
+          <p className="ctaf-contact">¿Dudas? <a href={CONTACT_HREF} {...extLink}>Escríbenos por WhatsApp</a></p>
         </div>
       </section>
       <SiteFooter onStart={onStart} />

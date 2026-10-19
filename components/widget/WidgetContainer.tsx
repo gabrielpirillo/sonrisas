@@ -72,7 +72,7 @@ export default function WidgetContainer(props: WidgetContainerProps) {
         processStatus, formValues, setFormValues,
         selectedFile, setSelectedFile, selectedCountry, setSelectedCountry,
         userEmail, isSubmittingPhoto, isSubmittingVideo, loadingMessage,
-        handleUpload, handleClinicalVideoRequest, handleSendPhotoEmail,
+        handleUpload, handleClinicalVideoRequest, handleSendPhotoEmail, videoWhatsappHref,
     } = state;
 
     // Send height to parent window for iframe auto-resize
@@ -237,7 +237,7 @@ export default function WidgetContainer(props: WidgetContainerProps) {
 
             {step === "EMAIL_SENT" && <SuccessStep variant="email_sent" userEmail={userEmail} onReset={restart} />}
             {step === "PHOTO_SUCCESS" && <SuccessStep variant="photo" userEmail={userEmail} onReset={restart} />}
-            {step === "CLINICAL_REQUEST_SUCCESS" && <SuccessStep variant="clinical" userEmail={userEmail} onReset={restart} />}
+            {step === "CLINICAL_REQUEST_SUCCESS" && <SuccessStep variant="clinical" userEmail={userEmail} onReset={restart} whatsappHref={videoWhatsappHref} />}
             </motion.div>
             </AnimatePresence>
         </div>

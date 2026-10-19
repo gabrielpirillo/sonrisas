@@ -105,3 +105,9 @@
   .ctaf-card { opacity: 1; transition: none; }
   .cta-final.in .ctaf-card { animation: none !important; }
 }
+
+/* CTA final: secundario sobre navy y línea de contacto */
+.ctaf-ghost { background: transparent; color: #fff; border: 1px solid rgba(255, 255, 255, 0.4); }
+.ctaf-ghost:hover { background: rgba(255, 255, 255, 0.1); border-color: #fff; }
+.ctaf-contact { margin: 22px 0 0; color: rgba(255, 255, 255, 0.72); font-size: 15px; }
+.ctaf-contact a { color: #fff; text-decoration: underline; text-underline-offset: 3px; }

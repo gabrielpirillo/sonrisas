@@ -90,6 +90,7 @@
 /* ── Widget dentro de la web de una clínica ───────────── */
 .sfd-try { background: linear-gradient(180deg, var(--blue-tint), #fff 70%); padding: 80px 0 96px; border-top: 1px solid var(--blue-line); }
 .sfd-try-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr); gap: 40px; align-items: end; margin-bottom: 36px; }
+.sfd-try-head-solo { grid-template-columns: 1fr; }
 .sfd-try-head h2 { font-size: clamp(30px, 3.6vw, 46px); line-height: 1.04; letter-spacing: -0.04em; font-weight: 600; margin: 0; }
 .sfd-try-head p { margin: 0; font-size: 16px; line-height: 1.6; color: var(--ink-2); }
 .sfd-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0 0 28px; padding: 0; list-style: none; counter-reset: step; }

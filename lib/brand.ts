@@ -4,6 +4,14 @@
  */
 export const BRAND_NAME = "Smile Fast";
 
+/** WhatsApp de contacto (solo dígitos, con código de país). */
+export const CONTACT_WHATSAPP = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "542664654405";
+
+/** Enlace wa.me que abre una conversación con un mensaje ya escrito. */
+export function whatsappLink(text: string): string {
+    return `https://wa.me/${CONTACT_WHATSAPP}?text=${encodeURIComponent(text)}`;
+}
+
 export const C = {
     ink: "#1c1e1d",
     ink2: "#565b59",

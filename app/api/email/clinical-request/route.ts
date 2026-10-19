@@ -2,9 +2,8 @@
  * API Route: Clinical Video Request
  * Converted from Supabase Edge Function: clinical-video-request
  * 
- * Sends TWO emails:
- * 1. Confirmation email to the user
- * 2. Admin notification email to the clinic
+ * Registra que el paciente pidió su vídeo en consulta (el paciente sigue la
+ * conversación por WhatsApp) y avisa por correo a la clínica si hay SMTP.
  */
 import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
@@ -68,24 +67,8 @@ export async function POST(req: NextRequest) {
                 const adminEmail = await clinicNotificationEmail(access.lead.clinic_id);
 
                 const clinic = await clinicName(access.lead.clinic_id);
-                const clinicLabel = clinic ? escapeXml(clinic) : 'la clínica';
 
-                // 1. Confirmación al paciente
-                await transporter.sendMail({
-                    from: mailFrom(),
-                    to: email,
-                    subject: clinic ? `Hemos recibido tu solicitud · ${clinic}` : 'Hemos recibido tu solicitud',
-                    html: brandedEmail({
-                        preheader: 'Te contactaremos para coordinar tu visita.',
-                        eyebrow: 'Solicitud recibida',
-                        title: `Gracias${name ? `, ${name}` : ''}. Te contactaremos pronto`,
-                        body: `<p style="margin:0 0 14px;">Hemos recibido tu solicitud para ver tu video en consulta. En breve ${clinicLabel} se pondrá en contacto contigo para confirmar el día y la hora de tu visita.</p>
-                            <p style="margin:0;">Si quieres añadir algo, responde a este correo.</p>`,
-                        signature: clinic ? escapeXml(clinic) : null,
-                    }),
-                });
-
-                // 2. Aviso a la clínica (si tiene a quién avisar)
+                // Aviso a la clínica (si tiene a quién avisar). El paciente sigue por WhatsApp.
                 if (!adminEmail) console.warn('[clinical-request] Sin email de aviso para la clínica', access.lead.clinic_id);
                 if (adminEmail) await transporter.sendMail({
                     from: mailFrom(),

@@ -12,6 +12,7 @@ import { createSelfieSession } from "@/app/actions/selfie";
 import { countries } from "./countries";
 import type { Step, ProcessStatus, FormValues, WidgetContainerProps } from "./types";
 import { getFaceLandmarker } from "@/lib/mediapipe/faceLandmarker";
+import { whatsappLink } from "@/lib/brand";
 
 /** Proporciones que admite el modelo de imagen; elegimos la más cercana a la foto. */
 const IMAGE_RATIOS = ["1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9"] as const;
@@ -481,38 +482,23 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
         toast.info("Solicitud enviada.", { description: "Te contactaremos pronto." });
     };
 
-    const handleClinicalVideoRequest = async () => {
-        setIsSubmittingVideo(true);
-        setLoadingMessage("Completando tu solicitud...");
+    const videoWhatsappHref = whatsappLink(
+        `Hola, soy ${userName || "un paciente"}. Hice mi simulación de sonrisa con Smile Fast y quiero ver mi vídeo en consulta.`
+    );
 
-        const timeoutId = setTimeout(() => {
-            setLoadingMessage("Ya casi...");
-        }, 3000);
+    const handleClinicalVideoRequest = () => {
+        // Abrir WhatsApp dentro del mismo clic (si no, el navegador lo bloquea).
+        window.open(videoWhatsappHref, "_blank", "noopener,noreferrer");
+        setIsClinicalRequestSent(true);
+        setStep("CLINICAL_REQUEST_SUCCESS");
 
-        try {
-            const response = await fetch('/api/email/clinical-request', {
+        // Registrar la solicitud en el panel de la clínica (en segundo plano).
+        if (leadId) {
+            fetch('/api/email/clinical-request', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    leadEmail: userEmail,
-                    leadName: userName,
-                    leadPhone: userPhone,
-                    leadId: leadId
-                })
-            });
-
-            if (response.ok) {
-                setIsClinicalRequestSent(true);
-                setStep("CLINICAL_REQUEST_SUCCESS");
-            } else {
-                throw new Error("Fallo al enviar solicitud");
-            }
-        } catch (err) {
-            console.error("Clinical request error:", err);
-            toast.error("Error al enviar la solicitud. Por favor intenta de nuevo.");
-        } finally {
-            clearTimeout(timeoutId);
-            setIsSubmittingVideo(false);
+                body: JSON.stringify({ leadId }),
+            }).catch((err) => console.warn("No se pudo registrar la solicitud de vídeo:", err));
         }
     };
 
@@ -636,7 +622,7 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
         handleSelfieCapture,
         handleLeadSubmit,
         handleVideoRequest,
-        handleClinicalVideoRequest,
+        handleClinicalVideoRequest, videoWhatsappHref,
         handleSendPhotoEmail,
         handleSurveySubmit,
         resetToUpload,

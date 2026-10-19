@@ -8,19 +8,21 @@ interface SuccessStepProps {
     variant: SuccessVariant;
     userEmail: string;
     onReset: () => void;
+    /** Enlace de WhatsApp (variante "clinical"), por si el navegador bloqueó la pestaña. */
+    whatsappHref?: string;
 }
 
-export function SuccessStep({ variant, userEmail, onReset }: SuccessStepProps) {
+export function SuccessStep({ variant, userEmail, onReset, whatsappHref }: SuccessStepProps) {
     const isVideo = variant === "clinical";
 
     const title = isVideo ? (
-        <>Solicitud <span className="dim">recibida</span></>
+        <>Seguimos por <span className="dim">WhatsApp</span></>
     ) : (
         <>Foto <span className="dim">enviada</span></>
     );
 
     const sub = isVideo
-        ? "Te contactaremos por WhatsApp para agendar tu vídeo personalizado en consulta."
+        ? "Envíanos el mensaje que abrimos en WhatsApp y coordinamos tu vídeo personalizado en consulta."
         : "Revisa tu correo: te enviamos tu simulación. Mira también la carpeta de spam.";
 
     return (
@@ -32,11 +34,17 @@ export function SuccessStep({ variant, userEmail, onReset }: SuccessStepProps) {
             </div>
             <div className="wf-stagger" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12 }}>
                 <span className="mono mono-pill" style={{ fontSize: 9 }}>
-                    <span className="pill-dot" />{isVideo ? "SOLICITUD · CONFIRMADA" : "CORREO · ENVIADO"}
+                    <span className="pill-dot" />{isVideo ? "VÍDEO · POR WHATSAPP" : "CORREO · ENVIADO"}
                 </span>
                 <h2 className="wf-h2" style={{ textAlign: "center" }}>{title}</h2>
                 <p className="wf-sub" style={{ textAlign: "center", maxWidth: 340, margin: 0 }}>{sub}</p>
-                {userEmail ? (
+                {isVideo && whatsappHref ? (
+                    <a className="btn btn-primary" href={whatsappHref} target="_blank" rel="noopener noreferrer" style={{ marginTop: 6, textDecoration: "none" }}>
+                        <WIcon name="wa" size={17} />
+                        Abrir WhatsApp
+                    </a>
+                ) : null}
+                {!isVideo && userEmail ? (
                     <span className="wf-success-email">
                         <WIcon name="mail" size={15} />
                         {userEmail}

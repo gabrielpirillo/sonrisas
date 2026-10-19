@@ -6,6 +6,10 @@ import { useSearchParams } from "next/navigation";
 import { ArrowDown, ArrowLeft, ChevronsLeftRight } from "lucide-react";
 import WidgetContainer from "@/components/widget/WidgetContainer";
 import { Wordmark } from "@/components/admin/qoves/LogoMark";
+import { whatsappLink } from "@/lib/brand";
+
+const CONTACT_HREF = whatsappLink("Hola, quiero saber más sobre Smile Fast para mi clínica.");
+const SIGNUP_HREF = "/acceso?modo=registro";
 import "./demo.css";
 
 /* Demo para clínicas: llega desde "Quiero probarlo" de la landing.
@@ -129,7 +133,8 @@ function DemoContent() {
                             <ArrowLeft size={15} /> Volver a la web
                         </a>
                         <Link href="/acceso" className="hide-sm">Acceder</Link>
-                        <a href="/#agendar" className="sfd-btn sfd-btn-dark sfd-btn-sm">Agendar demo</a>
+                        <a href={CONTACT_HREF} target="_blank" rel="noopener noreferrer" className="hide-sm">Contactarnos</a>
+                        <Link href={SIGNUP_HREF} className="sfd-btn sfd-btn-dark sfd-btn-sm">Crear cuenta</Link>
                     </nav>
                 </div>
             </header>
@@ -149,7 +154,7 @@ function DemoContent() {
                                 <a href="#probar" className="sfd-btn sfd-btn-dark">
                                     Probar con mi foto <ArrowDown size={16} />
                                 </a>
-                                <a href="/#agendar" className="sfd-btn sfd-btn-line">Hablar con el equipo</a>
+                                <Link href={SIGNUP_HREF} className="sfd-btn sfd-btn-line">Crear cuenta</Link>
                             </div>
                             <div className="sfd-facts sfd-in sfd-in-3">
                                 <div><strong>Solo una selfie</strong>Sin descargar nada, desde el móvil o el ordenador.</div>
@@ -165,9 +170,8 @@ function DemoContent() {
 
                 <section className="sfd-try" id="probar">
                     <div className="sfd-wrap">
-                        <div className="sfd-try-head">
+                        <div className="sfd-try-head sfd-try-head-solo">
                             <h2>Pruébalo tal como aparece en la web de tu clínica.</h2>
-                            <p>Este es el widget real. Los datos que dejes en esta demo llegan a la clínica de prueba, no a ninguna clínica real.</p>
                         </div>
                         <ol className="sfd-steps">
                             <li><span><strong>Deja tus datos</strong>Nombre y correo, para enviarte el resultado.</span></li>
@@ -203,11 +207,11 @@ function DemoContent() {
                     <div className="sfd-wrap">
                         <div>
                             <h2>¿Lo quieres en la web de <em>tu clínica?</em></h2>
-                            <p>Te enseñamos el panel y lo dejamos funcionando en 1 día.</p>
+                            <p>Crea tu cuenta y activa el widget en tu web en 1 día.</p>
                         </div>
                         <div className="sfd-actions">
-                            <a href="/#agendar" className="sfd-btn sfd-btn-white">Agendar demo</a>
-                            <a href="/" className="sfd-btn sfd-btn-line">Volver a la web</a>
+                            <Link href={SIGNUP_HREF} className="sfd-btn sfd-btn-white">Crear cuenta</Link>
+                            <a href={CONTACT_HREF} target="_blank" rel="noopener noreferrer" className="sfd-btn sfd-btn-line">Escribirnos por WhatsApp</a>
                         </div>
                     </div>
                 </section>

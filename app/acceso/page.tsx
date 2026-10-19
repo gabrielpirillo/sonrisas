@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import Link from 'next/link';
@@ -59,6 +59,10 @@ export default function AccesoPage() {
     }
 
     const [tab, setTab] = useState<'login' | 'signup'>('login');
+    // /acceso?modo=registro abre directamente "Crear cuenta" (enlaces de la landing y la demo).
+    useEffect(() => {
+        if (new URLSearchParams(window.location.search).get('modo') === 'registro') setTab('signup');
+    }, []);
     const isLogin = tab === 'login';
 
     return (
