@@ -11,6 +11,12 @@ import { alignGeneratedToReference } from "@/utils/alignFaces";
 import { createSelfieSession } from "@/app/actions/selfie";
 import { countries } from "./countries";
 import type { Step, ProcessStatus, FormValues, WidgetContainerProps } from "./types";
+import { getFaceLandmarker } from "@/lib/mediapipe/faceLandmarker";
+
+/** Error con un mensaje pensado para mostrarse tal cual al paciente. */
+class WidgetError extends Error {
+    readonly userFacing = true;
+}
 
 // Helper to convert base64 to File
 const base64ToFile = (base64: string, filename: string): File => {
@@ -139,6 +145,15 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
         }
     }, [step]);
 
+    // Precarga el detector de rostro (≈4 MB) en segundo plano para que
+    // "Ver mi simulación" no se quede congelado descargándolo.
+    useEffect(() => {
+        const preload = () => { getFaceLandmarker("IMAGE", { numFaces: 2 }).catch(() => {}); };
+        const w = window as Window & { requestIdleCallback?: (cb: () => void) => number };
+        if (w.requestIdleCallback) w.requestIdleCallback(preload);
+        else setTimeout(preload, 1500);
+    }, []);
+
     // Detect user's country
     useEffect(() => {
         const detectCountry = async () => {
@@ -225,10 +240,15 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
 
     const handleUpload = async (file: File) => {
         try {
+            // Feedback inmediato mientras se valida la foto
+            setImage(file);
+            setStep("PROCESSING");
+            setProcessStatus('validating');
+
             // 1. Strict Validation (MediaPipe)
             const validation = await validateStaticImage(file);
             if (!validation.isValid) {
-                throw new Error(validation.reason || "Imagen no válida");
+                throw new WidgetError(validation.reason || "La foto no es válida. Prueba con otra.");
             }
 
             // Save lead if not saved yet
@@ -252,8 +272,10 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
                         }
                     })
                 });
-                const leadResult = await leadRes.json();
-                if (!leadResult.success) throw new Error(leadResult.error || 'Error creating lead');
+                const leadResult = await leadRes.json().catch(() => ({}));
+                if (!leadResult.success) {
+                    throw new WidgetError(leadResult.error || "No pudimos guardar tus datos. Inténtalo de nuevo.");
+                }
 
                 setLeadId(newLeadId);
                 currentLeadId = newLeadId;
@@ -261,11 +283,6 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
                 setUserName(formValues.name);
                 setUserPhone(fullPhone.trim());
             }
-
-            // Move to processing
-            setImage(file);
-            setStep("PROCESSING");
-            setProcessStatus('validating');
 
             const base64 = await compressImage(file);
             setProcessStatus('scanning');
@@ -416,8 +433,11 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
         } catch (err: any) {
             console.error("WidgetContainer Error:", err);
 
-            if (!err.message.includes("analizando imagen") && !err.message.includes("generación de sonrisa")) {
-                toast.error("Ocurrió un error inesperado.");
+            const message: string = err?.message || "";
+            if (err?.userFacing) {
+                toast.error(message);
+            } else if (!message.includes("analizando imagen") && !message.includes("generación de sonrisa")) {
+                toast.error("No pudimos procesar tu foto. Inténtalo de nuevo en unos segundos.");
             }
 
             setStep((prev) => {

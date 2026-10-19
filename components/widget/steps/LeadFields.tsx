@@ -12,7 +12,8 @@ interface LeadFieldsProps {
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const TERMS_URL = "https://dentalcorbella.com/terminos-y-condiciones-smile-forward/";
+const TERMS_URL = "/terminos";
+const PRIVACY_URL = "/privacidad";
 
 export function LeadFields({ formValues, setFormValues, selectedCountry, setSelectedCountry }: LeadFieldsProps) {
     const set = <K extends keyof FormValues>(k: K, v: FormValues[K]) =>
@@ -116,7 +117,7 @@ export function LeadFields({ formValues, setFormValues, selectedCountry, setSele
                         Acepto los{" "}
                         <a href={TERMS_URL} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}><u>términos</u></a>{" "}
                         y la{" "}
-                        <a href={TERMS_URL} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}><u>privacidad</u></a>.
+                        <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}><u>privacidad</u></a>.
                     </span>
                 </label>
             </div>

@@ -224,15 +224,7 @@ export default async function SimulacionPage({
         </div>
 
         <div className="sf-sim-cta">
-          <a
-            href="https://dentalcorbella.com/contacto"
-            className="cta-button"
-          >
-            Reservar mi cita
-            <svg className="cta-arrow" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M5 12h14M13 6l6 6-6 6" />
-            </svg>
-          </a>
+          <p className="sf-sim-sub" style={{ margin: 0 }}>La clínica se pondrá en contacto contigo para hablar de tu caso.</p>
           <span className="sf-mono sf-note">Simulación orientativa · según tu caso clínico</span>
         </div>
       </main>
