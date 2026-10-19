@@ -5,6 +5,8 @@ import { Loader2 } from "lucide-react";
 import { WIcon } from "../WIcon";
 import { BeforeAfterSlider } from "../BeforeAfterSlider";
 import { fileObjectUrl } from "../objectUrl";
+import { useWidgetConfig } from "../WidgetConfigContext";
+import { AccentTitle } from "../AccentTitle";
 
 interface ResultStepProps {
     image: File | null;
@@ -31,6 +33,7 @@ export function ResultStep({
     onClinicalVideoRequest,
     onSendPhotoEmail,
 }: ResultStepProps) {
+    const { config: { texts, features } } = useWidgetConfig();
     const fileUrl = fileObjectUrl(image);
 
     const beforeSrc = fileUrl || demoBeforeImage || "";
@@ -57,14 +60,18 @@ export function ResultStep({
 
     const actions = (
         <>
+            {features.videoCta && (
             <button type="button" className="btn btn-primary" disabled={busy} onClick={onClinicalVideoRequest}>
                 {isSubmittingVideo ? <Loader2 className="w-5 h-5 animate-spin" /> : <WIcon name="wa" size={17} />}
                 {isSubmittingVideo ? "Abriendo WhatsApp…" : "Pedir mi vídeo por WhatsApp"}
             </button>
-            <button type="button" className="btn btn-ghost" disabled={busy} onClick={onSendPhotoEmail}>
+            )}
+            {features.photoEmail && (
+            <button type="button" className={`btn ${features.videoCta ? "btn-ghost" : "btn-primary"}`} disabled={busy} onClick={onSendPhotoEmail}>
                 {isSubmittingPhoto ? <Loader2 className="w-4 h-4 animate-spin" /> : <WIcon name="mail" size={16} />}
                 {isSubmittingPhoto ? "Enviando…" : "Recibir mi foto por correo"}
             </button>
+            )}
         </>
     );
 
@@ -78,12 +85,14 @@ export function ResultStep({
                         <span className="pill-dot" />RESULTADO · SIMULACIÓN
                     </span>
                     <h2 className="wf-h2" style={{ marginTop: 18 }}>
-                        Tu simulación <span className="dim">está lista</span>
+                        <AccentTitle text={texts.resultTitle} />
                     </h2>
-                    <p className="wf-sub" style={{ fontSize: 16, margin: "12px 0 6px" }}>Desliza sobre la imagen para comparar el antes y el después.</p>
+                    <p className="wf-sub" style={{ fontSize: 16, margin: "12px 0 6px" }}>{texts.resultSubtitle}</p>
+                    {features.videoCta && (
                     <p className="wf-note">
                         ¿Quieres verte en movimiento? Escríbenos por WhatsApp: preparamos tu vídeo en consulta y confirmamos la viabilidad de tu caso con el equipo clínico.
                     </p>
+                    )}
                     <div className="dk-result-actions">{actions}</div>
                     <p className="mono" style={{ fontSize: 9, marginTop: 22 }}>SIMULACIÓN ORIENTATIVA · SEGÚN TU CASO CLÍNICO</p>
                 </div>
@@ -101,7 +110,7 @@ export function ResultStep({
                     </span>
                 </div>
                 <h2 className="wf-h2">
-                    Tu simulación <span className="dim">está lista</span>
+                    <AccentTitle text={texts.resultTitle} />
                 </h2>
                 <p className="wf-sub">Desliza para comparar el antes y el después.</p>
             </div>

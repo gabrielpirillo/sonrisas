@@ -12,7 +12,8 @@ import { createSelfieSession } from "@/app/actions/selfie";
 import { countries } from "./countries";
 import type { Step, ProcessStatus, FormValues, WidgetContainerProps } from "./types";
 import { getFaceLandmarker } from "@/lib/mediapipe/faceLandmarker";
-import { whatsappLink } from "@/lib/brand";
+import { useWidgetConfig } from "./WidgetConfigContext";
+import { widgetWhatsappHref } from "@/lib/widgetConfig";
 
 /** Proporciones que admite el modelo de imagen; elegimos la más cercana a la foto. */
 const IMAGE_RATIOS = ["1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9"] as const;
@@ -93,6 +94,7 @@ const PROCESSING_PHRASES = [
 ];
 
 export function useWidgetState(props: WidgetContainerProps = {}) {
+    const { config: widgetConfig, preview: isPreview } = useWidgetConfig();
     const { initialStep, initialBeforeImage, initialAfterImage } = props;
 
     // ─── Core State ──────────────────────────────────────────
@@ -262,6 +264,10 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
     };
 
     const handleUpload = async (file: File) => {
+        if (isPreview) {
+            toast.info("Vista previa", { description: "Aquí tu paciente vería su simulación. En la vista previa no se guardan datos." });
+            return;
+        }
         try {
             // Feedback inmediato mientras se valida la foto
             setImage(file);
@@ -482,9 +488,7 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
         toast.info("Solicitud enviada.", { description: "Te contactaremos pronto." });
     };
 
-    const videoWhatsappHref = whatsappLink(
-        `Hola, soy ${userName || "un paciente"}. Hice mi simulación de sonrisa con Smile Fast y quiero ver mi vídeo en consulta.`
-    );
+    const videoWhatsappHref = widgetWhatsappHref(widgetConfig, userName === "Usuario" ? "" : userName);
 
     const handleClinicalVideoRequest = () => {
         // Abrir WhatsApp dentro del mismo clic (si no, el navegador lo bloquea).

@@ -179,6 +179,8 @@
 .qoves-widget .wf-header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .qoves-widget .wf-brand { display: inline-flex; align-items: center; }
 .qoves-widget .wf-brand img { height: 17px; width: auto; display: block; }
+.qoves-widget .wf-brand img.wf-brand-logo { height: 32px; max-width: 180px; object-fit: contain; }
+.qoves-widget .wf-brand-name { font-size: 17px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
 .qoves-widget .wf-back {
   width: 34px; height: 34px; border-radius: 50%;
   border: 1px solid var(--w-line); background: #fff; cursor: pointer;
@@ -630,6 +632,7 @@
 @media (min-width: 768px) {
   .qoves-widget .wf-header { padding: 16px 30px; border-bottom: 1px solid var(--w-line); }
   .qoves-widget .wf-brand img { height: 19px; }
+  .qoves-widget .wf-brand img.wf-brand-logo { height: 36px; }
 
   .qoves-widget .stepper-desktop { display: flex; flex: 0 1 460px; padding: 0; }
   .qoves-widget .stepper-desktop .stepper-node { flex: 1; }

@@ -4,6 +4,8 @@ import { LeadFields } from "./LeadFields";
 import { PhotoPanel } from "./PhotoPanel";
 import { WIcon } from "../WIcon";
 import type { FormValues } from "../types";
+import { useWidgetConfig } from "../WidgetConfigContext";
+import { AccentTitle } from "../AccentTitle";
 
 interface LeadFormStepProps {
     isDesktop: boolean;
@@ -34,10 +36,11 @@ export function LeadFormStep({
     onContinue,
     onSubmit,
 }: LeadFormStepProps) {
+    const { config: { texts, features } } = useWidgetConfig();
     const formOk =
         !!formValues.name &&
         !!formValues.email &&
-        !!formValues.phoneNumber &&
+        (!features.askPhone || !!formValues.phoneNumber) &&
         formValues.ageAccepted &&
         formValues.termsAccepted;
 
@@ -60,9 +63,9 @@ export function LeadFormStep({
                         <div className="wf-intro wf-stagger">
                             <span className="mono wf-eyebrow">PASO 01 <b>· TUS DATOS</b></span>
                             <h2 className="wf-h2">
-                                Comienza tu <span className="dim">transformación</span>
+                                <AccentTitle text={texts.headline} accent={texts.headlineAccent} />
                             </h2>
-                            <p className="wf-sub">Te enviaremos tu simulación a estos datos.</p>
+                            <p className="wf-sub">{texts.subtitle}</p>
                         </div>
                         {fields}
                     </div>
@@ -70,9 +73,9 @@ export function LeadFormStep({
                         <div className="wf-intro wf-stagger">
                             <span className="mono wf-eyebrow">PASO 02 <b>· TU FOTO</b></span>
                             <h2 className="wf-h2">
-                                Tu <span className="dim">sonrisa</span>
+                                <AccentTitle text={texts.photoTitle} />
                             </h2>
-                            <p className="wf-sub">Foto frontal, buena luz, sonriendo de frente.</p>
+                            <p className="wf-sub">{texts.photoSubtitle}</p>
                         </div>
                         <PhotoPanel
                             variant="desktop"
@@ -93,7 +96,7 @@ export function LeadFormStep({
                         style={{ padding: "16px 30px" }}
                         onClick={onSubmit}
                     >
-                        Ver mi simulación
+                        {texts.submitButton}
                         <WIcon name="arrow" size={17} className="btn-arrow" />
                     </button>
                 </div>
@@ -107,9 +110,9 @@ export function LeadFormStep({
             <div className="wf-intro wf-stagger">
                 <span className="mono wf-eyebrow">PASO 01 <b>· TUS DATOS</b></span>
                 <h2 className="wf-h2">
-                    Comienza tu <span className="dim">transformación</span>
+                    <AccentTitle text={texts.headline} accent={texts.headlineAccent} />
                 </h2>
-                <p className="wf-sub">Te enviaremos tu simulación a estos datos.</p>
+                <p className="wf-sub">{texts.subtitle}</p>
             </div>
             {fields}
             <div className="sf-rise" style={{ animationDelay: "0.36s" }}>

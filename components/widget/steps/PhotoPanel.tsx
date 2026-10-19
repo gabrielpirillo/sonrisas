@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { WIcon } from "../WIcon";
 import { SelfieCaptureFlow } from "@/components/selfie/SelfieCaptureFlow";
 import { fileObjectUrl } from "../objectUrl";
+import { useWidgetConfig } from "../WidgetConfigContext";
 
 interface PhotoPanelProps {
     variant: "mobile" | "desktop";
@@ -16,6 +17,7 @@ interface PhotoPanelProps {
 }
 
 export function PhotoPanel({ variant, selectedFile, setSelectedFile, onUse, onReady }: PhotoPanelProps) {
+    const { config: { features } } = useWidgetConfig();
     const [mode, setMode] = useState<"choose" | "cam">("choose");
     const fileInputRef = useRef<HTMLInputElement>(null);
     const previewUrl = fileObjectUrl(selectedFile);
@@ -94,12 +96,14 @@ export function PhotoPanel({ variant, selectedFile, setSelectedFile, onUse, onRe
                 <div className="pf-chooser">
                     <span className="pf-ic"><WIcon name="cam" size={24} /></span>
                     <div className="pf-choose-txt">Añade tu foto</div>
-                    <div className="pf-choose-sub">Tómate una selfie o sube una imagen</div>
+                    <div className="pf-choose-sub">{features.selfieQr ? "Tómate una selfie o sube una imagen" : "Sube una foto de frente, sonriendo"}</div>
                     <div className="pf-btns">
+                        {features.selfieQr && (
                         <button type="button" className="pf-btn pf-btn-primary" onClick={() => setMode("cam")}>
                             <WIcon name="cam" size={17} /> Tomar selfie
                         </button>
-                        <button type="button" className="pf-btn" onClick={() => fileInputRef.current?.click()}>
+                        )}
+                        <button type="button" className={`pf-btn${features.selfieQr ? "" : " pf-btn-primary"}`} onClick={() => fileInputRef.current?.click()}>
                             <WIcon name="upload" size={16} /> Subir foto
                         </button>
                     </div>

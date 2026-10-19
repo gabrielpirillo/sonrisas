@@ -9,6 +9,8 @@ import { useIsDesktop } from "./useIsDesktop";
 import { LoadingOverlay } from "./LoadingOverlay";
 import { WIcon, LogoMark } from "./WIcon";
 import type { WidgetContainerProps, Step } from "./types";
+import { WidgetConfigProvider, useWidgetConfig } from "./WidgetConfigContext";
+import { widgetCssVars } from "@/lib/widgetConfig";
 import "./widget-qoves.css";
 
 // Step Components
@@ -59,6 +61,15 @@ const STEP_MOTION = {
 };
 
 export default function WidgetContainer(props: WidgetContainerProps) {
+    return (
+        <WidgetConfigProvider>
+            <WidgetInner {...props} />
+        </WidgetConfigProvider>
+    );
+}
+
+function WidgetInner(props: WidgetContainerProps) {
+    const { config, clinicName } = useWidgetConfig();
     const state = useWidgetState(props);
     const isDesktop = useIsDesktop();
     const containerRef = useRef<HTMLDivElement>(null);
@@ -141,6 +152,7 @@ export default function WidgetContainer(props: WidgetContainerProps) {
             ref={containerRef}
             data-embed={isEmbedded ? "true" : undefined}
             className={`qoves-widget relative w-full flex flex-col ${isEmbedded ? "overflow-visible" : "min-h-[100dvh] rounded-[2rem] overflow-hidden"}`}
+            style={widgetCssVars(config) as React.CSSProperties}
         >
             <LoadingOverlay visible={isSubmittingPhoto || isSubmittingVideo} message={loadingMessage} />
 
@@ -171,20 +183,27 @@ export default function WidgetContainer(props: WidgetContainerProps) {
                                 exit={{ opacity: 0, scale: 0.8 }}
                                 transition={{ duration: 0.2 }}
                             >
-                                <LogoMark size={isDesktop ? 32 : 30} />
+                                {config.brand.logoUrl ? null : <LogoMark size={isDesktop ? 32 : 30} />}
                             </motion.span>
                         )}
                     </AnimatePresence>
                     <span className="wf-brand">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/brand/smilefast-black.png" alt={BRAND_NAME} />
+                        {config.brand.logoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={config.brand.logoUrl} alt={config.brand.displayName || clinicName || "Logo de la clínica"} className="wf-brand-logo" />
+                        ) : config.brand.displayName ? (
+                            <span className="wf-brand-name">{config.brand.displayName}</span>
+                        ) : (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src="/brand/smilefast-black.png" alt={BRAND_NAME} />
+                        )}
                     </span>
                 </div>
 
                 {/* Desktop stepper sits inside the header */}
                 {!isSuccess && <Stepper labels={DESKTOP_LABELS} activeIdx={desktopIdx} className="stepper-desktop" />}
 
-                <span className="wf-online"><span className="wf-online-dot" />EN LÍNEA</span>
+                {config.brand.showOnline ? <span className="wf-online"><span className="wf-online-dot" />EN LÍNEA</span> : <span />}
             </header>
 
             {/* Mobile stepper row */}

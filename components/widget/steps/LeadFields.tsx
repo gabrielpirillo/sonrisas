@@ -3,6 +3,7 @@
 import { Check, WIcon } from "../WIcon";
 import { countries } from "../countries";
 import type { FormValues } from "../types";
+import { useWidgetConfig } from "../WidgetConfigContext";
 
 interface LeadFieldsProps {
     formValues: FormValues;
@@ -12,10 +13,9 @@ interface LeadFieldsProps {
 }
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const TERMS_URL = "/terminos";
-const PRIVACY_URL = "/privacidad";
 
 export function LeadFields({ formValues, setFormValues, selectedCountry, setSelectedCountry }: LeadFieldsProps) {
+    const { config: { contact, features } } = useWidgetConfig();
     const set = <K extends keyof FormValues>(k: K, v: FormValues[K]) =>
         setFormValues((prev) => ({ ...prev, [k]: v }));
 
@@ -59,6 +59,7 @@ export function LeadFields({ formValues, setFormValues, selectedCountry, setSele
                 />
                 {emailOk && <span className="wf-input-ok"><WIcon name="check" size={12} /></span>}
             </label>
+            {features.askPhone && (
             <div className="wf-phone">
                 <div className="wf-select">
                     <select
@@ -90,6 +91,7 @@ export function LeadFields({ formValues, setFormValues, selectedCountry, setSele
                     {phoneOk && <span className="wf-input-ok"><WIcon name="check" size={12} /></span>}
                 </label>
             </div>
+            )}
             <div className="wf-consents">
                 <label
                     className="wf-consent"
@@ -115,9 +117,9 @@ export function LeadFields({ formValues, setFormValues, selectedCountry, setSele
                     <Check on={formValues.termsAccepted} />
                     <span>
                         Acepto los{" "}
-                        <a href={TERMS_URL} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}><u>términos</u></a>{" "}
+                        <a href={contact.termsUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}><u>términos</u></a>{" "}
                         y la{" "}
-                        <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}><u>privacidad</u></a>.
+                        <a href={contact.privacyUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}><u>privacidad</u></a>.
                     </span>
                 </label>
             </div>
