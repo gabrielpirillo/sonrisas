@@ -1,16 +1,20 @@
 import { getCreditCosts, getSystemHealth } from '@/lib/platform/queries';
 import { CostsForm } from '@/components/platform/CostsForm';
 import { PageHead } from '@/components/admin/qoves/PageHead';
+import { PackagesEditor } from '@/components/platform/PackagesEditor';
+import { listAllPackagesAction } from '@/lib/billing/actions';
 
 export const dynamic = 'force-dynamic';
 
 const LABELS: Record<string, string> = { database: 'Base de datos', stripe: 'Stripe', flexprice: 'Flexprice', google: 'Google AI', smtp: 'SMTP (email)' };
 
 export default async function ConfigPage() {
-    const [costs, health] = await Promise.all([getCreditCosts(), getSystemHealth()]);
+    const [costs, health, pkgs] = await Promise.all([getCreditCosts(), getSystemHealth(), listAllPackagesAction()]);
+    const pkgError = 'error' in pkgs ? pkgs.error : undefined;
+    const packages = Array.isArray(pkgs) ? pkgs : [];
     return (
         <div className="admin-page">
-            <PageHead eyebrow="CONSOLA DE OPERADOR" title="Configuración" accent="de la plataforma" subtitle="Costos por uso y salud del sistema" />
+            <PageHead eyebrow="CONSOLA DE OPERADOR" title="Configuración" accent="de la plataforma" subtitle="Costos por uso, paquetes de créditos y salud del sistema" />
 
             <div className="config-grid">
                 {/* Costos */}
@@ -36,6 +40,13 @@ export default async function ConfigPage() {
                             </div>
                         ))}
                     </div>
+                </div>
+
+                {/* Paquetes de créditos */}
+                <div className="card" style={{ padding: 24, gridColumn: '1 / -1' }}>
+                    <span className="mono" style={{ fontSize: 9.5, color: 'var(--blue-deep)' }}>CATÁLOGO</span>
+                    <h3 style={{ fontSize: 18, fontWeight: 600, letterSpacing: '-0.02em', margin: '10px 0 6px' }}>Paquetes de créditos</h3>
+                    <PackagesEditor initial={packages} loadError={pkgError} />
                 </div>
             </div>
         </div>

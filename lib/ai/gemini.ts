@@ -19,7 +19,7 @@ export const AI_MODELS = {
     /** Generación/edición de la sonrisa. El primero es el principal; el resto, respaldo. */
     image: list(process.env.GEMINI_IMAGE_MODELS, ['gemini-nano-banana-2.1', 'gemini-3-pro-image']),
     /** Resolución de salida de imagen: 1K | 2K | 4K (la K en mayúscula). */
-    imageSize: process.env.GEMINI_IMAGE_SIZE || '2K',
+    imageSize: process.env.GEMINI_IMAGE_SIZE || '1K',
     /** Proveedor de video: 'omni' (Interactions API) o 'veo' (predictLongRunning). */
     videoProvider: (process.env.VIDEO_PROVIDER || 'omni') as 'omni' | 'veo',
     omniModel: process.env.OMNI_VIDEO_MODEL || 'gemini-omni-1.1-flash',

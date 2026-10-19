@@ -1,0 +1,59 @@
+/**
+ * Utilidades de formato para créditos y paquetes (cliente y servidor).
+ * Los importes se guardan en la unidad mínima que usa Stripe: centavos en
+ * casi todas las monedas, pero el peso chileno (CLP) no tiene decimales.
+ */
+
+export const CURRENCIES = ['usd', 'eur', 'ars', 'mxn', 'cop', 'pen', 'uyu', 'brl', 'gbp'] as const;
+
+const ZERO_DECIMAL = new Set(['clp']);
+
+/** Dígitos de la unidad mínima (2 → centavos, 0 → sin decimales). */
+export function minorDigits(currency: string): number {
+    return ZERO_DECIMAL.has(currency.toLowerCase()) ? 0 : 2;
+}
+
+/** Unidad mínima → importe en la moneda (p. ej. 9900 usd → 99). */
+export function fromMinor(amount: number, currency: string): number {
+    return amount / 10 ** minorDigits(currency);
+}
+
+/** Importe en la moneda → unidad mínima (p. ej. "99,90" usd → 9990). NaN si no es válido. */
+export function toMinor(value: string, currency: string): number {
+    const clean = value.trim().replace(/\s/g, '').replace(',', '.');
+    if (!/^\d+(\.\d+)?$/.test(clean)) return NaN;
+    return Math.round(Number(clean) * 10 ** minorDigits(currency));
+}
+
+const fmtCache = new Map<string, Intl.NumberFormat>();
+function moneyFormatter(currency: string, maxDigits?: number): Intl.NumberFormat {
+    const key = `${currency}:${maxDigits ?? 'd'}`;
+    let f = fmtCache.get(key);
+    if (!f) {
+        try {
+            f = new Intl.NumberFormat('es', {
+                style: 'currency',
+                currency: currency.toUpperCase(),
+                ...(maxDigits != null ? { minimumFractionDigits: 0, maximumFractionDigits: maxDigits } : {}),
+            });
+        } catch {
+            f = new Intl.NumberFormat('es', { maximumFractionDigits: 2 });
+        }
+        fmtCache.set(key, f);
+    }
+    return f;
+}
+
+/** Formatea un importe en unidad mínima, p. ej. 9900 usd → "99,00 US$". */
+export function formatMoney(amountMinor: number, currency: string): string {
+    return moneyFormatter(currency).format(fromMinor(amountMinor, currency));
+}
+
+/** Precio por crédito con hasta 3 decimales para que no se pierda la diferencia. */
+export function formatUnitPrice(amountMinor: number, credits: number, currency: string): string {
+    if (!credits) return '—';
+    const digits = minorDigits(currency) === 0 ? 1 : 3;
+    return moneyFormatter(currency, digits).format(fromMinor(amountMinor, currency) / credits);
+}
+
+export const fmtInt = (n: number) => n.toLocaleString('es');

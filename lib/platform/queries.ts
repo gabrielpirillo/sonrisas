@@ -8,7 +8,7 @@ import { db } from '@/lib/db';
 import { requirePlatformAdmin } from '@/lib/auth/platform';
 import { adjustCredits } from '@/lib/billing/credits';
 import { logAudit } from '@/lib/services/backendService';
-import { CREDIT_PACKAGES, stripeEnabled } from '@/lib/billing/stripe';
+import { stripeEnabled } from '@/lib/billing/stripe';
 import { flexpriceEnabled } from '@/lib/billing/flexprice';
 import { revalidatePath } from 'next/cache';
 
@@ -38,7 +38,7 @@ export async function getPlatformOverview(): Promise<PlatformOverview> {
         q("SELECT count(*)::text n FROM generations WHERE type='image'"),
         q("SELECT count(*)::text n FROM generations WHERE type='video'"),
         q('SELECT count(*)::text n FROM leads'),
-        q("SELECT COALESCE(sum((metadata->>'amount_total')::numeric),0)::text n FROM credit_ledger WHERE kind='topup' AND metadata ? 'amount_total'"),
+        q("SELECT COALESCE(sum(amount_cents),0)::text n FROM credit_purchases WHERE status = 'paid'"),
     ]);
     const plans = await db.query<{ plan: string; count: number }>(
         'SELECT plan, count(*)::int AS count FROM clinics GROUP BY plan ORDER BY count DESC',

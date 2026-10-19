@@ -1,74 +1,81 @@
 /**
- * API Route: Stripe webhook → credit a clinic's wallet after payment.
+ * Webhook de Stripe → acredita compras de créditos.
  *
- * Verifies the Stripe signature, then on `checkout.session.completed` tops up
- * the clinic's prepaid credit balance (idempotent via the session id) and
- * mirrors the top-up into Flexprice.
- *
- * Configure the endpoint in Stripe pointing to /api/billing/stripe-webhook and
- * set STRIPE_WEBHOOK_SECRET. The raw body is required for signature checks.
+ * - Verifica la firma con STRIPE_WEBHOOK_SECRET sobre el cuerpo crudo.
+ * - Ignora eventos ya procesados (tabla stripe_events) y responde 200 a los
+ *   que no maneja, para que Stripe no reintente.
+ * - No confía en metadata: re-lee la sesión en Stripe y valida importe y moneda
+ *   contra credit_purchases (ver lib/billing/purchases.ts).
+ * - Nunca devuelve detalles internos en la respuesta.
  */
 import { NextRequest, NextResponse } from 'next/server';
 import type Stripe from 'stripe';
+import { db } from '@/lib/db';
 import { getStripe } from '@/lib/billing/stripe';
-import { topUp } from '@/lib/billing/credits';
+import { fulfillCheckoutSession, handleChargeRefunded } from '@/lib/billing/purchases';
 
-// Stripe needs the raw, unparsed body to verify signatures.
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+
+const MAX_BODY = 512 * 1024;
 
 export async function POST(req: NextRequest) {
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-    if (!webhookSecret) {
-        return NextResponse.json({ error: 'Webhook no configurado' }, { status: 503 });
+    if (!webhookSecret || !process.env.STRIPE_SECRET_KEY) {
+        return NextResponse.json({ error: 'not_configured' }, { status: 503 });
     }
-
     const signature = req.headers.get('stripe-signature');
-    if (!signature) {
-        return NextResponse.json({ error: 'Falta firma' }, { status: 400 });
-    }
+    if (!signature) return NextResponse.json({ error: 'bad_request' }, { status: 400 });
 
     const rawBody = await req.text();
+    if (rawBody.length > MAX_BODY) return NextResponse.json({ error: 'too_large' }, { status: 413 });
 
     let event: Stripe.Event;
     try {
+        // Tolerancia por defecto de 5 min contra repeticiones.
         event = getStripe().webhooks.constructEvent(rawBody, signature, webhookSecret);
-    } catch (err: any) {
-        console.error('[stripe-webhook] Signature verification failed:', err.message);
-        return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
+    } catch {
+        console.warn('[stripe-webhook] Firma inválida');
+        return NextResponse.json({ error: 'invalid_signature' }, { status: 400 });
     }
 
+    // Deduplicación por id de evento.
+    const fresh = await db.queryOne<{ id: string }>(
+        'INSERT INTO stripe_events (id, type) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING RETURNING id',
+        [event.id, event.type]
+    );
+    if (!fresh) return NextResponse.json({ received: true, duplicate: true });
+
     try {
-        if (event.type === 'checkout.session.completed') {
-            const session = event.data.object as Stripe.Checkout.Session;
-
-            if (session.payment_status === 'paid') {
-                const clinicId = session.metadata?.clinic_id;
-                const credits = parseInt(session.metadata?.credits || '0', 10);
-
-                if (clinicId && credits > 0) {
-                    const result = await topUp({
-                        clinicId,
-                        credits,
-                        stripeSessionId: session.id,
-                        metadata: {
-                            package_id: session.metadata?.package_id,
-                            amount_total: session.amount_total,
-                            currency: session.currency,
-                        },
-                    });
-                    console.log(
-                        `[stripe-webhook] Top-up ${result.applied ? 'applied' : 'skipped (duplicate)'} ` +
-                        `clinic=${clinicId} +${credits} → balance=${result.balanceAfter}`
-                    );
-                } else {
-                    console.warn('[stripe-webhook] Missing clinic_id/credits in session metadata', session.metadata);
-                }
+        switch (event.type) {
+            case 'checkout.session.completed':
+            case 'checkout.session.async_payment_succeeded': {
+                const session = event.data.object as Stripe.Checkout.Session;
+                const r = await fulfillCheckoutSession(session.id);
+                console.log(`[stripe-webhook] ${event.type} ${session.id} → ${r.state}${r.state === 'paid' && r.credited ? ' (acreditado)' : ''}`);
+                break;
             }
+            case 'checkout.session.expired':
+            case 'checkout.session.async_payment_failed': {
+                const session = event.data.object as Stripe.Checkout.Session;
+                await db.query(
+                    `UPDATE credit_purchases SET status = $2, updated_at = now() WHERE stripe_session_id = $1 AND status = 'pending'`,
+                    [session.id, event.type === 'checkout.session.expired' ? 'expired' : 'failed']
+                );
+                break;
+            }
+            case 'charge.refunded': {
+                await handleChargeRefunded(event.data.object as Stripe.Charge);
+                break;
+            }
+            default:
+                break;
         }
-
         return NextResponse.json({ received: true });
-    } catch (error: any) {
-        console.error('[stripe-webhook] Handler error:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+    } catch (error) {
+        // Permitir que Stripe reintente: quitamos la marca de procesado.
+        await db.query('DELETE FROM stripe_events WHERE id = $1', [event.id]).catch(() => {});
+        console.error('[stripe-webhook] Error procesando', event.type, error);
+        return NextResponse.json({ error: 'processing_error' }, { status: 500 });
     }
 }
