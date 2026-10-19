@@ -5,7 +5,7 @@ import "./qoves-admin.css";
 import Link from "next/link";
 import {
     LayoutGrid, Users, SlidersHorizontal, LogOut, Menu,
-    Coins, Building2, ShieldCheck, CircleUser, ChevronRight,
+    Coins, Building2, ShieldCheck, CircleUser, ChevronRight, Palette,
 } from "lucide-react";
 import { authClient, useListOrganizations, useActiveOrganization } from "@/lib/auth/client";
 import { useRouter, usePathname } from "next/navigation";
@@ -42,6 +42,7 @@ const NAV_SECTIONS: NavSection[] = [
         title: "GESTIÓN",
         items: [
             { href: "/administracion/clinicas", label: "Clínicas", icon: Building2 },
+            { href: "/administracion/widget", label: "Widget", icon: Palette, adminOnly: true },
             { href: "/administracion/creditos", label: "Créditos", icon: Coins, adminOnly: true },
         ],
     },
@@ -197,12 +198,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
             {/* Acceso directo al widget (solo quien puede configurarlo) */}
             {role === "admin" && !impersonating && (
-                <Link href="/administracion/settings" onClick={() => setOpen(false)} className="side-widget">
+                <Link href="/administracion/widget" onClick={() => setOpen(false)} className="side-widget">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src="/brand/panel/widget-thumb.jpg" alt="" />
                     <div style={{ minWidth: 0 }}>
                         <strong>Widget de simulación</strong>
-                        <span>Código e instalación</span>
+                        <span>Personalizar e instalar</span>
                     </div>
                     <ChevronRight size={16} strokeWidth={1.8} />
                 </Link>

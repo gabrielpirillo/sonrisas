@@ -4,9 +4,11 @@ import { isImpersonating, getAuthContext } from "@/lib/auth/context";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import Link from "next/link";
-import { ArrowRight, Building2, Coins, Users } from "lucide-react";
+import { ArrowRight, Building2, Coins, Palette, Users } from "lucide-react";
 import { PageHead } from "@/components/admin/qoves/PageHead";
-import { EmbedCard } from "@/components/admin/qoves/EmbedCard";
+import { getWidgetConfigByClinicId } from "@/lib/widgetConfig.server";
+import { DEFAULT_WIDGET_CONFIG } from "@/lib/widgetConfig";
+import "@/components/admin/widget-studio/widget-studio.css";
 
 export default async function SettingsPage() {
     const session = await getSession();
@@ -30,14 +32,50 @@ export default async function SettingsPage() {
         console.error("[settings] usage query failed:", e);
     }
 
+    // Resumen del widget (la edición vive en Administración › Widget)
+    let widget: Awaited<ReturnType<typeof getWidgetConfigByClinicId>> = null;
+    if (clinic) {
+        try {
+            widget = await getWidgetConfigByClinicId(clinic.id);
+        } catch (e) {
+            console.error("[settings] widget config failed:", e);
+        }
+    }
+    const accent = widget?.config.brand.accent ?? "#4f6b7f";
+    const widgetName = widget?.config.brand.displayName || clinic?.name || "Tu clínica";
+    const customized = Boolean(widget) && JSON.stringify(widget!.config) !== JSON.stringify(DEFAULT_WIDGET_CONFIG);
+
     return (
         <div className="admin-page">
-            <PageHead eyebrow="CUENTA" title="Configuración" accent="del widget" subtitle="Instala el widget en tu web y gestiona a tu equipo." />
+            <PageHead eyebrow="CUENTA" title="Configuración" accent="de la clínica" subtitle="Tu clínica, tu equipo y el acceso al widget." />
 
             <div className="config-grid">
                 {/* ── Left column ── */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-                    <EmbedCard widgetKey={clinic?.public_widget_key ?? null} />
+                    <div className="card card-navy ws-link-card">
+                        <span aria-hidden style={{ position: "absolute", right: -80, top: -90, width: 260, height: 260, borderRadius: "50%", background: "radial-gradient(circle, rgba(185,207,221,0.22), transparent 65%)", pointerEvents: "none" }} />
+                        <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: 16 }}>
+                            <span className="mono" style={{ fontSize: 9 }}>WIDGET DE SIMULACIÓN</span>
+                            <div>
+                                <h3 style={{ fontSize: 21, fontWeight: 600, color: "#fff", letterSpacing: "-0.02em", margin: "0 0 6px" }}>Personaliza e instala tu widget</h3>
+                                <p style={{ fontSize: 13.5, lineHeight: 1.5, color: "rgba(255,255,255,0.6)", margin: 0 }}>
+                                    Logo, colores, textos, WhatsApp y el código para tu web, con vista previa en vivo. Los cambios se publican al guardar, sin tocar el código.
+                                </p>
+                            </div>
+                            <div className="ws-link-preview">
+                                <span className="ws-link-swatch" style={{ background: accent }} />
+                                <div style={{ minWidth: 0, flex: 1 }}>
+                                    <div style={{ fontSize: 14, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{widgetName}</div>
+                                    <div className="mono" style={{ fontSize: 8.5, marginTop: 4 }}>{customized ? "PERSONALIZADO" : "CONFIGURACIÓN ORIGINAL"} · {accent.toUpperCase()}</div>
+                                </div>
+                            </div>
+                            <Link href="/administracion/widget" className="btn btn-light btn-sm" style={{ alignSelf: "flex-start" }}>
+                                <Palette size={16} aria-hidden />
+                                Abrir el editor del widget
+                                <ArrowRight size={15} aria-hidden />
+                            </Link>
+                        </div>
+                    </div>
                 </div>
 
                 {/* ── Right column ── */}
