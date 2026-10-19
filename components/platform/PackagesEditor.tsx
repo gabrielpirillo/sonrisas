@@ -15,6 +15,7 @@ export type PackageRow = {
     credits: number;
     price_cents: number;
     currency: string;
+    prices?: Record<string, number>;
     badge: string | null;
     highlight: boolean;
     active: boolean;
@@ -29,6 +30,9 @@ type Draft = {
     credits: string;
     price: string;
     currency: string;
+    /** Precio para España (EUR) y Argentina (ARS); vacío = se cobra el precio base. */
+    priceEur: string;
+    priceArs: string;
     badge: string;
     highlight: boolean;
     active: boolean;
@@ -48,6 +52,8 @@ const toDraft = (r: PackageRow): Draft => ({
     credits: String(r.credits),
     price: priceText(r.price_cents, r.currency),
     currency: r.currency,
+    priceEur: r.prices?.eur ? priceText(r.prices.eur, 'eur') : '',
+    priceArs: r.prices?.ars ? priceText(r.prices.ars, 'ars') : '',
     badge: r.badge ?? '',
     highlight: r.highlight,
     active: r.active,
@@ -56,6 +62,7 @@ const toDraft = (r: PackageRow): Draft => ({
 
 const same = (a: Draft, b: Draft) =>
     a.id === b.id && a.name === b.name && a.credits === b.credits && a.price === b.price && a.currency === b.currency &&
+    a.priceEur === b.priceEur && a.priceArs === b.priceArs &&
     a.badge === b.badge && a.highlight === b.highlight && a.active === b.active && a.sort === b.sort;
 
 /** Validación local (la del servidor manda; esto es solo para avisar antes). */
@@ -68,6 +75,11 @@ function validate(d: Draft): string | null {
     if (!Number.isFinite(cents)) return 'Precio inválido.';
     if (cents < 50) return minorDigits(d.currency) === 0 ? 'Precio mínimo: 50.' : 'Precio mínimo: 0,50.';
     if (cents > 10_000_000) return 'Precio demasiado alto.';
+    for (const [label, v, cur] of [['EUR', d.priceEur, 'eur'], ['ARS', d.priceArs, 'ars']] as const) {
+        if (!v.trim()) continue;
+        const c = toMinor(v, cur);
+        if (!Number.isFinite(c) || c < 50) return `Precio en ${label} inválido.`;
+    }
     if (d.sort.trim() && !/^-?\d+$/.test(d.sort.trim())) return 'Orden: un número entero.';
     return null;
 }
@@ -91,7 +103,7 @@ export function PackagesEditor({ initial, loadError }: { initial: PackageRow[]; 
         const maxSort = rows.reduce((m, r) => Math.max(m, Number(r.sort) || 0), 0);
         const key = `n:${Date.now()}:${seq}`;
         setRows((rs) => [
-            { key, saved: false, id: '', name: '', credits: '100', price: '', currency: rs[0]?.currency || 'usd', badge: '', highlight: false, active: true, sort: String(maxSort + 1) },
+            { key, saved: false, id: '', name: '', credits: '100', price: '', currency: rs[0]?.currency || 'usd', priceEur: '', priceArs: '', badge: '', highlight: false, active: true, sort: String(maxSort + 1) },
             ...rs,
         ]);
     }
@@ -118,6 +130,10 @@ export function PackagesEditor({ initial, loadError }: { initial: PackageRow[]; 
                 credits: Number(d.credits),
                 price_cents: toMinor(d.price, d.currency),
                 currency: d.currency,
+                prices: {
+                    ...(d.priceEur.trim() ? { eur: toMinor(d.priceEur, 'eur') } : {}),
+                    ...(d.priceArs.trim() ? { ars: toMinor(d.priceArs, 'ars') } : {}),
+                },
                 badge: d.badge.trim() || null,
                 highlight: d.highlight,
                 active: d.active,
@@ -247,6 +263,14 @@ export function PackagesEditor({ initial, loadError }: { initial: PackageRow[]; 
                                             <select id={fid('cur')} className="field pe-in pe-select" value={d.currency} onChange={(e) => set(d.key, { currency: e.target.value })}>
                                                 {CURRENCIES.map((c) => <option key={c} value={c}>{c.toUpperCase()}</option>)}
                                             </select>
+                                        </label>
+                                        <label className="pe-f" htmlFor={fid('eur')}>
+                                            <span className="mono">España (EUR)</span>
+                                            <input id={fid('eur')} className="field pe-in" inputMode="decimal" value={d.priceEur} onChange={(e) => set(d.key, { priceEur: e.target.value })} placeholder="99,00" />
+                                        </label>
+                                        <label className="pe-f" htmlFor={fid('ars')}>
+                                            <span className="mono">Argentina (ARS)</span>
+                                            <input id={fid('ars')} className="field pe-in" inputMode="decimal" value={d.priceArs} onChange={(e) => set(d.key, { priceArs: e.target.value })} placeholder="Sin precio → USD" />
                                         </label>
                                         <label className="pe-f" htmlFor={fid('badge')}>
                                             <span className="mono">Etiqueta</span>

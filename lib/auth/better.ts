@@ -102,12 +102,23 @@ export const auth = betterAuth({
                         }
                         // Resto de organizaciones: clínica nueva con su propio widget key.
                         const slug = slugify(org.slug || org.name);
-                        await db.query(
+                        // Créditos de bienvenida para probar la herramienta (WELCOME_CREDITS, por defecto 5).
+                        const welcome = Math.max(0, Math.min(50, parseInt(process.env.WELCOME_CREDITS || '5', 10) || 0));
+                        const created = await db.queryOne<{ id: string; inserted: boolean }>(
                             `INSERT INTO clinics (name, slug, org_id, credit_balance, status)
-                             VALUES ($1, $2, $3, 0, 'active')
-                             ON CONFLICT (slug) DO UPDATE SET org_id = EXCLUDED.org_id`,
-                            [org.name, slug, org.id]
+                             VALUES ($1, $2, $3, $4, 'active')
+                             ON CONFLICT (slug) DO UPDATE SET org_id = EXCLUDED.org_id
+                             RETURNING id, (xmax = 0) AS inserted`,
+                            [org.name, slug, org.id, welcome]
                         );
+                        if (created?.inserted && welcome > 0) {
+                            await db.query(
+                                `INSERT INTO credit_ledger (clinic_id, action, kind, credits_delta, balance_after, idempotency_key, metadata)
+                                 VALUES ($1, 'welcome', 'adjust', $2, $2, $3, $4)
+                                 ON CONFLICT (idempotency_key) DO NOTHING`,
+                                [created.id, welcome, `welcome:${created.id}`, JSON.stringify({ reason: 'welcome_credits' })]
+                            );
+                        }
                     } catch (e) {
                         console.error('[better-auth] afterCreate clinic link failed:', e);
                     }

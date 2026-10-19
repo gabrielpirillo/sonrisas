@@ -1,0 +1,380 @@
+/* ============================================================
+   Créditos · sección de valor / retorno (vs-*).
+   Todo bajo .qoves-admin; tokens de app/globals.css.
+   ============================================================ */
+
+.qoves-admin .vs { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.qoves-admin .vs-eyebrow { font-size: 9.5px; color: var(--blue-deep); }
+
+/* ---------- 1 · Titular ---------- */
+.qoves-admin .vs-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 28px;
+  align-items: center;
+  padding: 34px 36px;
+  border-radius: 22px;
+  background:
+    radial-gradient(60% 120% at 0% 0%, var(--blue-soft), transparent 70%),
+    linear-gradient(180deg, var(--blue-tint), #fff);
+  border: 1px solid var(--blue-line);
+}
+.qoves-admin .vs-head-copy { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.qoves-admin .vs-title {
+  margin: 0;
+  font-size: clamp(26px, 3.2vw, 40px);
+  font-weight: 600;
+  line-height: 1.06;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+.qoves-admin .vs-title span { color: var(--blue-deep); }
+.qoves-admin .vs-sub { font-size: 15px; max-width: 54ch; }
+
+.qoves-admin .vs-price {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 22px 24px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid var(--blue-line);
+  box-shadow: var(--shadow-lift);
+  min-width: 0;
+}
+.qoves-admin .vs-price-label { font-size: 9px; color: var(--ink-3); }
+.qoves-admin .vs-price-num {
+  font-size: clamp(34px, 3.8vw, 50px);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  color: var(--blue-ink);
+  font-variant-numeric: tabular-nums;
+  margin-top: 6px;
+  white-space: nowrap;
+}
+.qoves-admin .vs-approx { font-size: 0.55em; font-weight: 500; color: var(--blue-accent); margin-right: 0.18em; vertical-align: 0.18em; }
+.qoves-admin .vs-price-unit { font-size: 15px; font-weight: 500; color: var(--ink-2); }
+.qoves-admin .vs-price-alt {
+  align-self: flex-start;
+  margin-top: 10px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--blue-ink);
+  background: var(--blue-soft);
+  border: 1px solid var(--blue-line);
+}
+.qoves-admin .vs-price-note { font-size: 12px; color: var(--ink-3); margin-top: 6px; }
+
+/* ---------- 2 · Calculadora ---------- */
+.qoves-admin .vs-calc {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  border-radius: 22px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid var(--blue-line);
+  box-shadow: var(--shadow-card);
+}
+.qoves-admin .vs-inputs { display: flex; flex-direction: column; gap: 22px; padding: 30px 30px 32px; min-width: 0; }
+.qoves-admin .vs-inputs-head { display: flex; flex-direction: column; gap: 6px; }
+.qoves-admin .vs-h3 { margin: 0; font-size: 22px; font-weight: 600; letter-spacing: -0.025em; line-height: 1.15; }
+.qoves-admin .vs-h3 span { color: var(--blue-accent); }
+.qoves-admin .vs-hint { margin: 0; font-size: 13px; line-height: 1.45; color: var(--ink-3); }
+
+.qoves-admin .vs-field { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.qoves-admin .vs-field-opt { padding-top: 18px; border-top: 1px dashed var(--line-strong); }
+.qoves-admin .vs-field-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; min-width: 0; }
+.qoves-admin .vs-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--ink);
+  min-width: 0;
+}
+.qoves-admin .vs-tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--blue-accent);
+}
+.qoves-admin .vs-num {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: var(--blue-tint);
+  border: 1px solid var(--blue-line);
+  transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease), background 0.2s var(--ease);
+}
+.qoves-admin .vs-num:focus-within { border-color: var(--blue-accent); background: #fff; box-shadow: 0 0 0 4px rgba(125, 151, 170, 0.18); }
+.qoves-admin .vs-num input {
+  width: 92px;
+  border: none;
+  background: transparent;
+  outline: none;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: right;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+.qoves-admin .vs-num input::-webkit-outer-spin-button,
+.qoves-admin .vs-num input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.qoves-admin .vs-num input::placeholder { color: var(--ink-3); font-weight: 500; }
+.qoves-admin .vs-num span { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.08em; color: var(--ink-3); }
+
+/* Slider */
+.qoves-admin .vs-range {
+  --fill: 50%;
+  width: 100%;
+  height: 22px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.qoves-admin .vs-range:focus { outline: none; }
+.qoves-admin .vs-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--blue-deep) 0 var(--fill), var(--blue-soft) var(--fill) 100%);
+}
+.qoves-admin .vs-range::-moz-range-track { height: 6px; border-radius: 999px; background: var(--blue-soft); }
+.qoves-admin .vs-range::-moz-range-progress { height: 6px; border-radius: 999px; background: var(--blue-deep); }
+.qoves-admin .vs-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  margin-top: -8px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--blue-deep);
+  box-shadow: 0 4px 12px -4px rgba(27, 38, 48, 0.45);
+  transition: transform 0.2s var(--ease-out), box-shadow 0.2s var(--ease);
+}
+.qoves-admin .vs-range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--blue-deep);
+  box-shadow: 0 4px 12px -4px rgba(27, 38, 48, 0.45);
+}
+.qoves-admin .vs-range:hover::-webkit-slider-thumb { transform: scale(1.1); }
+.qoves-admin .vs-range:active::-webkit-slider-thumb { transform: scale(1.18); }
+.qoves-admin .vs-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 5px rgba(125, 151, 170, 0.35); }
+.qoves-admin .vs-range:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 5px rgba(125, 151, 170, 0.35); }
+
+/* Resultados (banda navy) */
+.qoves-admin .vs-results {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding: 30px 30px 26px;
+  color: #fff;
+  background:
+    radial-gradient(80% 70% at 100% 0%, rgba(150, 190, 215, 0.26), transparent 60%),
+    linear-gradient(155deg, var(--blue-deep) 0%, var(--navy-1) 38%, var(--navy-2) 72%, var(--navy-3) 100%);
+  min-width: 0;
+}
+.qoves-admin .vs-results-orb {
+  position: absolute;
+  z-index: -1;
+  width: 380px;
+  height: 380px;
+  left: -140px;
+  bottom: -200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(185, 207, 221, 0.22), transparent 65%);
+}
+.qoves-admin .vs-results-eyebrow { font-size: 9.5px; color: rgba(255, 255, 255, 0.58); }
+
+.qoves-admin .vs-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0; }
+.qoves-admin .vs-kpi {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  min-width: 0;
+}
+.qoves-admin .vs-kpi dt { font-size: 12.5px; line-height: 1.3; color: rgba(255, 255, 255, 0.66); }
+.qoves-admin .vs-kpi dd {
+  margin: 0;
+  font-size: clamp(22px, 2.4vw, 28px);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+  --number-flow-mask-height: 0.12em;
+}
+
+.qoves-admin .vs-roi {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+.qoves-admin .vs-roi-figure { display: flex; flex-direction: column; gap: 2px; }
+.qoves-admin .vs-roi-label { font-size: 9px; color: rgba(255, 255, 255, 0.55); }
+.qoves-admin .vs-roi-num {
+  font-size: clamp(56px, 7vw, 88px);
+  font-weight: 600;
+  line-height: 0.92;
+  letter-spacing: -0.055em;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  text-shadow: 0 10px 40px rgba(185, 207, 221, 0.35);
+  --number-flow-mask-height: 0.12em;
+}
+.qoves-admin .vs-roi-copy { flex: 1 1 180px; margin: 0 0 6px; font-size: 14px; line-height: 1.45; color: rgba(255, 255, 255, 0.75); }
+.qoves-admin .vs-roi-copy strong { color: #fff; font-weight: 600; }
+
+.qoves-admin .vs-bars { display: flex; flex-direction: column; gap: 10px; }
+.qoves-admin .vs-bar-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  font-size: 12.5px;
+}
+.qoves-admin .vs-bar-name { color: rgba(255, 255, 255, 0.66); }
+.qoves-admin .vs-bar-track { height: 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.qoves-admin .vs-bar { display: block; height: 100%; border-radius: 999px; }
+.qoves-admin .vs-bar-inv { background: #f1c9c3; min-width: 4px; }
+.qoves-admin .vs-bar-rev { background: linear-gradient(90deg, var(--blue-accent), var(--blue-light) 70%, #fff); }
+.qoves-admin .vs-bar-val { font-weight: 600; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+
+.qoves-admin .vs-ads {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: "label label" "num copy";
+  align-items: center;
+  gap: 4px 14px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(185, 207, 221, 0.12);
+  border: 1px solid rgba(185, 207, 221, 0.28);
+}
+.qoves-admin .vs-ads-label { grid-area: label; font-size: 9px; color: var(--blue-light); }
+.qoves-admin .vs-ads-num { grid-area: num; font-size: 26px; font-weight: 600; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+.qoves-admin .vs-ads-copy { grid-area: copy; font-size: 13px; line-height: 1.4; color: rgba(255, 255, 255, 0.72); }
+
+.qoves-admin .vs-foot { margin: auto 0 0; font-size: 11.5px; line-height: 1.5; color: rgba(255, 255, 255, 0.5); }
+
+/* ---------- 3 · Beneficios ---------- */
+.qoves-admin .vs-benefits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.qoves-admin .vs-benefit {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 22px 22px 18px;
+  border-radius: var(--r-card);
+  background: #fff;
+  border: 1px solid var(--blue-line);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.3s var(--ease), transform 0.3s var(--ease-out), border-color 0.3s var(--ease);
+  min-width: 0;
+}
+.qoves-admin .vs-benefit:hover { box-shadow: var(--shadow-lift); transform: translateY(-2px); border-color: var(--blue-accent); }
+.qoves-admin .vs-benefit-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.qoves-admin .vs-benefit-ic {
+  width: 40px; height: 40px; flex-shrink: 0;
+  border-radius: 13px;
+  display: grid; place-items: center;
+  color: var(--blue-deep);
+  background: var(--blue-soft);
+  border: 1px solid var(--blue-line);
+}
+.qoves-admin .vs-benefit-stat { display: flex; flex-direction: column; align-items: flex-end; text-align: right; min-width: 0; }
+.qoves-admin .vs-benefit-stat strong { font-size: 28px; font-weight: 600; letter-spacing: -0.04em; line-height: 1; color: var(--blue-ink); white-space: nowrap; }
+.qoves-admin .vs-benefit-stat span { font-size: 11.5px; color: var(--ink-3); margin-top: 3px; }
+.qoves-admin .vs-benefit-title { margin: 6px 0 0; font-size: 17px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.25; }
+.qoves-admin .vs-benefit-body { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
+.qoves-admin .vs-benefit-src { margin-top: auto; padding-top: 8px; font-size: 8.5px; letter-spacing: 0.12em; line-height: 1.6; color: var(--ink-3); }
+
+/* ---------- 4 · CTA ---------- */
+.qoves-admin .vs-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  padding: 20px 22px 20px 24px;
+  border-radius: 18px;
+  background: var(--blue-tint);
+  border: 1px solid var(--blue-line);
+}
+.qoves-admin .vs-cta-copy { display: flex; align-items: center; gap: 14px; flex: 1 1 280px; min-width: 0; }
+.qoves-admin .vs-cta-copy p { margin: 0; font-size: 15px; line-height: 1.45; color: var(--ink-2); }
+.qoves-admin .vs-cta-copy strong { color: var(--ink); font-weight: 600; }
+.qoves-admin .vs-cta-ic {
+  width: 40px; height: 40px; flex-shrink: 0;
+  border-radius: 13px;
+  display: grid; place-items: center;
+  color: #fff;
+  background: var(--blue-deep);
+}
+.qoves-admin .vs-cta-btn { padding: 15px 26px; }
+.qoves-admin .vs-cta-btn svg { transition: transform 0.25s var(--ease-out); }
+.qoves-admin .vs-cta-btn:hover svg { transform: translateX(3px); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+  .qoves-admin .vs-calc { grid-template-columns: 1fr; }
+  .qoves-admin .vs-benefits { grid-template-columns: 1fr; }
+  .qoves-admin .vs-benefit-top { justify-content: flex-start; }
+  .qoves-admin .vs-benefit-stat { align-items: flex-start; text-align: left; }
+}
+@media (max-width: 1100px) {
+  .qoves-admin .vs-head { grid-template-columns: 1fr; }
+  .qoves-admin .vs-price { align-self: stretch; }
+}
+@media (max-width: 760px) {
+  .qoves-admin .vs-head { padding: 24px 18px; gap: 20px; }
+  .qoves-admin .vs-inputs { padding: 22px 16px 24px; }
+  .qoves-admin .vs-results { padding: 24px 16px 20px; }
+  .qoves-admin .vs-field-top { flex-direction: column; align-items: stretch; }
+  .qoves-admin .vs-num { align-self: flex-start; }
+  .qoves-admin .vs-bar-row { grid-template-columns: 64px minmax(0, 1fr); }
+  .qoves-admin .vs-bar-val { grid-column: 2; text-align: left; margin-top: -4px; }
+  .qoves-admin .vs-ads { grid-template-columns: 1fr; grid-template-areas: "label" "num" "copy"; }
+  .qoves-admin .vs-cta { padding: 18px 16px; }
+  .qoves-admin .vs-cta-btn { width: 100%; }
+}
+@media (max-width: 400px) {
+  .qoves-admin .vs-kpi-wide { grid-column: span 2; }
+}

@@ -16,6 +16,7 @@ const ACTION_LABEL: Record<string, string> = {
     topup: 'Recarga de saldo',
     adjust: 'Ajuste manual',
     refund: 'Reembolso de compra',
+    welcome: 'Créditos de bienvenida',
 };
 const STATUS: Record<PurchaseSummary['status'], { label: string; cls: string }> = {
     paid: { label: 'Pagado', cls: 'cr-st-paid' },

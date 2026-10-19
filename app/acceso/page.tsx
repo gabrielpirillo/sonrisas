@@ -7,8 +7,20 @@ import Link from 'next/link';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowRight, Building2, Loader2, Lock, Mail, User } from 'lucide-react';
 import { authClient } from '@/lib/auth/client';
+import { initBillingCountryAction } from '@/lib/billing/actions';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { AuthField } from '@/components/auth/AuthField';
+
+/** País probable del navegador: zona horaria primero, idioma después. */
+function detectCountry(): string {
+    try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+        if (/^(Europe\/Madrid|Atlantic\/Canary|Africa\/Ceuta)$/.test(tz)) return 'ES';
+        if (/^America\/(Argentina\/|Buenos_Aires)/.test(tz)) return 'AR';
+    } catch { /* sin zona horaria */ }
+    const region = (navigator.language || '').split('-')[1]?.toUpperCase();
+    return region && /^[A-Z]{2}$/.test(region) ? region : 'US';
+}
 
 function slugify(s: string): string {
     return (
@@ -48,7 +60,11 @@ export default function AccesoPage() {
             // Crear la clínica (organización) del nuevo usuario y activarla.
             const created = await authClient.organization.create({ name: clinicName, slug: slugify(clinicName) });
             const orgId = (created as any)?.data?.id;
-            if (orgId) await authClient.organization.setActive({ organizationId: orgId });
+            if (orgId) {
+                await authClient.organization.setActive({ organizationId: orgId });
+                // País de facturación inicial (define la moneda): se puede cambiar en Créditos.
+                await initBillingCountryAction(detectCountry()).catch(() => {});
+            }
             toast.success('Cuenta y clínica creadas');
             router.push('/administracion/dashboard');
         } catch (err: any) {

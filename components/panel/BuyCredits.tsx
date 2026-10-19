@@ -5,6 +5,7 @@ import { toast } from 'sonner';
 import { ArrowRight, Check, Clock, FlaskConical, Loader2, Lock, Mail, ShieldCheck, Sparkles } from 'lucide-react';
 import { createCheckoutSession, type PublicPackage } from '@/lib/billing/actions';
 import { formatMoney, formatUnitPrice, fmtInt } from './credits/format';
+import { BillingCountry } from './credits/BillingCountry';
 import './credits/credits.css';
 
 type Props = {
@@ -16,6 +17,7 @@ type Props = {
     canBuy: boolean;
     impersonating?: boolean;
     hasClinic: boolean;
+    billingCountry?: string | null;
 };
 
 const STRIPE_CHECKOUT = 'https://checkout.stripe.com/';
@@ -36,7 +38,7 @@ function savingsById(packages: PublicPackage[]): Record<string, number> {
     return out;
 }
 
-export function BuyCredits({ packages, imageCost, videoCost, stripeEnabled, stripeMode, canBuy, impersonating, hasClinic }: Props) {
+export function BuyCredits({ packages, imageCost, videoCost, stripeEnabled, stripeMode, canBuy, impersonating, hasClinic, billingCountry = null }: Props) {
     const defaultId = (packages.find((p) => p.highlight) ?? packages[0])?.id ?? null;
     const [picked, setPicked] = useState<string | null>(null);
     const selectedId = picked && packages.some((p) => p.id === picked) ? picked : defaultId;
@@ -114,6 +116,7 @@ export function BuyCredits({ packages, imageCost, videoCost, stripeEnabled, stri
 
     return (
         <MotionConfig reducedMotion="user">
+            {hasClinic && <BillingCountry country={billingCountry} disabled={!canBuy || Boolean(busy)} />}
             {stripeMode === 'test' && (
                 <div className="cr-testmode" role="note">
                     <FlaskConical size={14} aria-hidden />

@@ -4,6 +4,7 @@ import { BuyCredits } from '@/components/panel/BuyCredits';
 import { BalanceHero } from '@/components/panel/credits/BalanceHero';
 import { CheckoutReturn } from '@/components/panel/credits/CheckoutReturn';
 import { CreditsHistory } from '@/components/panel/credits/CreditsHistory';
+import { ValueSection } from '@/components/panel/credits/ValueSection';
 import { PageHead } from '@/components/admin/qoves/PageHead';
 
 export const dynamic = 'force-dynamic';
@@ -24,6 +25,12 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
     };
     const imageCost = cost('image');
     const videoCost = cost('video');
+
+    // Sección de valor: precio por crédito del paquete activo más conveniente (en su moneda).
+    const pricedPkgs = data.packages.filter((p) => p.credits > 0 && p.priceCents > 0);
+    const valueCurrency = pricedPkgs[0]?.currency ?? null;
+    const unitCents = pricedPkgs.filter((p) => p.currency === valueCurrency).map((p) => p.priceCents / p.credits);
+    const costPerCreditCents = unitCents.length ? Math.min(...unitCents) : 0;
 
     const purchases = data.purchases.map((p) => ({ ...p, createdAt: iso(p.createdAt) }));
     const ledger = data.recentLedger.map((l) => ({ ...l, created_at: iso(l.created_at) }));
@@ -58,6 +65,7 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
                     )}
                 </div>
                 <BuyCredits
+                    billingCountry={data.billingCountry}
                     packages={data.packages}
                     imageCost={imageCost}
                     videoCost={videoCost}
@@ -68,6 +76,15 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
                     hasClinic={Boolean(data.clinic)}
                 />
             </section>
+
+            {valueCurrency && costPerCreditCents > 0 && imageCost && (
+                <ValueSection
+                    costPerCreditCents={costPerCreditCents}
+                    currency={valueCurrency}
+                    imageCredits={imageCost}
+                    videoCredits={videoCost ?? 0}
+                />
+            )}
 
             <CreditsHistory purchases={purchases} ledger={ledger} />
 

@@ -36,6 +36,7 @@ export interface Clinic {
     flexprice_customer_id: string | null;
     flexprice_wallet_id: string | null;
     status: 'active' | 'suspended';
+    billing_country?: string | null;
 }
 
 const FLEX_EVENT_NAME: Record<BillableAction, string> = {

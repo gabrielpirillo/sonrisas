@@ -555,3 +555,14 @@
   .qoves-admin .cr-eq dd:hover,
   .qoves-admin .cr-buy:hover .cr-buy-arrow { transform: none; }
 }
+
+/* País de facturación */
+.qoves-admin .cr-country {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin: 0 0 18px; padding: 10px 14px; border-radius: 14px;
+  background: var(--blue-tint); border: 1px solid var(--blue-line); color: var(--blue-ink);
+  font-size: 13.5px;
+}
+.qoves-admin .cr-country label { font-weight: 600; }
+.qoves-admin .cr-country select { width: auto; min-width: 150px; height: 36px; padding: 0 12px; font-size: 13.5px; background: #fff; }
+.qoves-admin .cr-country-cur { color: var(--ink-3); display: inline-flex; align-items: center; gap: 6px; }

@@ -9,7 +9,7 @@ import { getAuthContext } from '@/lib/auth/context';
 import { getPlatformAdmin } from '@/lib/auth/platform';
 import { rateLimit } from '@/lib/security';
 import { appBaseUrl, getStripe, stripeEnabled, stripeMode } from '@/lib/billing/stripe';
-import { getActivePackage, listPackages, upsertPackage, type CreditPackageRow } from '@/lib/billing/packages';
+import { currencyForCountry, getActivePackage, listPackages, resolvePrice, upsertPackage, type CreditPackageRow } from '@/lib/billing/packages';
 import { fulfillCheckoutSession, type PurchaseRow } from '@/lib/billing/purchases';
 
 export interface PublicPackage {
@@ -42,11 +42,18 @@ export interface BillingOverview {
     stripeEnabled: boolean;
     stripeMode: 'live' | 'test' | null;
     canBuy: boolean;
+    /** País de facturación (ISO-2) y moneda resultante. */
+    billingCountry: string | null;
+    billingCurrency: 'eur' | 'ars' | 'usd';
 }
 
-const toPublic = (p: CreditPackageRow): PublicPackage => ({
-    id: p.id, name: p.name, credits: p.credits, priceCents: p.price_cents, currency: p.currency, badge: p.badge, highlight: p.highlight,
-});
+const toPublic = (p: CreditPackageRow, country: string | null): PublicPackage => {
+    const { priceCents, currency } = resolvePrice(p, country);
+    return { id: p.id, name: p.name, credits: p.credits, priceCents, currency, badge: p.badge, highlight: p.highlight };
+};
+
+/** Países con moneda propia; el resto paga en USD. */
+const SUPPORTED_COUNTRIES = /^[A-Z]{2}$/;
 
 const toSummary = (p: PurchaseRow): PurchaseSummary => ({
     id: p.id, createdAt: p.created_at, packageName: p.package_name, credits: p.credits, amountCents: p.amount_cents,
@@ -78,13 +85,35 @@ export async function getBillingOverview(): Promise<BillingOverview> {
     return {
         clinic: clinic ? { id: clinic.id, name: clinic.name, credit_balance: clinic.credit_balance } : null,
         costs: costs.rows,
-        packages: packages.map(toPublic),
+        packages: packages.map((p) => toPublic(p, clinic?.billing_country ?? null)),
         purchases,
         recentLedger,
         stripeEnabled: stripeEnabled(),
         stripeMode: stripeMode(),
         canBuy,
+        billingCountry: clinic?.billing_country ?? null,
+        billingCurrency: currencyForCountry(clinic?.billing_country ?? null),
     };
+}
+
+/** Cambia el país de facturación de la clínica activa (define la moneda de cobro). */
+export async function setBillingCountryAction(country: string): Promise<{ ok: true } | { ok: false; error: string }> {
+    const ctx = await getAuthContext();
+    if (!ctx?.clinic) return { ok: false, error: 'Selecciona una clínica primero.' };
+    if (ctx.impersonatedBy) return { ok: false, error: 'No disponible durante una impersonación.' };
+    if (ctx.role && !['owner', 'admin'].includes(ctx.role)) return { ok: false, error: 'Solo los administradores pueden cambiarlo.' };
+    const c = String(country || '').toUpperCase();
+    if (!SUPPORTED_COUNTRIES.test(c)) return { ok: false, error: 'País inválido.' };
+    await db.query('UPDATE clinics SET billing_country = $1 WHERE id = $2', [c, ctx.clinic.id]);
+    return { ok: true };
+}
+
+/** Fija el país solo si aún no tiene (lo usa el alta de cuenta con el país detectado). */
+export async function initBillingCountryAction(country: string): Promise<void> {
+    const ctx = await getAuthContext();
+    const c = String(country || '').toUpperCase();
+    if (!ctx?.clinic || !SUPPORTED_COUNTRIES.test(c)) return;
+    await db.query('UPDATE clinics SET billing_country = $1 WHERE id = $2 AND billing_country IS NULL', [c, ctx.clinic.id]);
 }
 
 /**
@@ -104,6 +133,8 @@ export async function createCheckoutSession(packageId: string): Promise<{ url?: 
 
     const pkg = await getActivePackage(packageId);
     if (!pkg) return { error: 'Ese paquete ya no está disponible.' };
+    // Importe en la moneda del país de facturación (calculado aquí, nunca en el navegador).
+    const { priceCents, currency } = resolvePrice(pkg, ctx.clinic.billing_country ?? null);
     const base = appBaseUrl();
     if (!/^https:\/\//.test(base) && process.env.NODE_ENV === 'production') {
         return { error: 'Configuración de URL incompleta.' };
@@ -113,7 +144,7 @@ export async function createCheckoutSession(packageId: string): Promise<{ url?: 
         const purchase = await db.queryOne<PurchaseRow>(
             `INSERT INTO credit_purchases (clinic_id, user_id, package_id, package_name, credits, amount_cents, currency)
              VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-            [ctx.clinic.id, ctx.userId ?? null, pkg.id, pkg.name, pkg.credits, pkg.price_cents, pkg.currency]
+            [ctx.clinic.id, ctx.userId ?? null, pkg.id, pkg.name, pkg.credits, priceCents, currency]
         );
         if (!purchase) return { error: 'No se pudo iniciar la compra.' };
 
@@ -138,8 +169,8 @@ export async function createCheckoutSession(packageId: string): Promise<{ url?: 
                 line_items: [{
                     quantity: 1,
                     price_data: {
-                        currency: pkg.currency,
-                        unit_amount: pkg.price_cents,
+                        currency,
+                        unit_amount: priceCents,
                         product_data: { name: `Smile Fast · Paquete ${pkg.name}`, description },
                     },
                 }],
