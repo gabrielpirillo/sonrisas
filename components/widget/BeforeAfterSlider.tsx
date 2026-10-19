@@ -166,16 +166,11 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
                 )
             )}
 
-            {/* Watermark Overlay */}
-            <div className="absolute inset-0 z-[5] pointer-events-none flex items-center justify-center overflow-hidden">
+            {/* Marca de agua discreta en la esquina inferior derecha */}
+            <span className="ba-mark" aria-hidden="true">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                    src="/brand/smilefast-white.png"
-                    alt=""
-                    className="w-[120%] max-w-none opacity-[0.15] -rotate-45 object-contain select-none"
-                    draggable={false}
-                />
-            </div>
+                <img src="/brand/smilefast-white.png" alt="" draggable={false} />
+            </span>
 
             {qoves ? (
                 <span className="ba-pill after" style={{ opacity: bothLoaded ? 1 : 0 }}>Después</span>

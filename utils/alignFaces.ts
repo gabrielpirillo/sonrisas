@@ -155,6 +155,9 @@ export async function alignGeneratedToReference(
         canvas.width = refImg.naturalWidth;
         canvas.height = refImg.naturalHeight;
         const ctx = canvas.getContext("2d")!;
+        // Fondo = foto original: si la imagen generada no cubre todo el
+        // encuadre (proporción distinta), no quedan franjas negras.
+        ctx.drawImage(refImg, 0, 0, canvas.width, canvas.height);
 
         const cos = Math.cos(transform.angle);
         const sin = Math.sin(transform.angle);

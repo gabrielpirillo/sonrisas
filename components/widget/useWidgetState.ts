@@ -13,6 +13,28 @@ import { countries } from "./countries";
 import type { Step, ProcessStatus, FormValues, WidgetContainerProps } from "./types";
 import { getFaceLandmarker } from "@/lib/mediapipe/faceLandmarker";
 
+/** Proporciones que admite el modelo de imagen; elegimos la más cercana a la foto. */
+const IMAGE_RATIOS = ["1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9"] as const;
+const closestRatio = (w: number, h: number): string => {
+    if (!w || !h) return "3:4";
+    const target = w / h;
+    let best: string = "3:4";
+    let diff = Infinity;
+    for (const r of IMAGE_RATIOS) {
+        const [a, b] = r.split(":").map(Number);
+        const d = Math.abs(Math.log(a / b) - Math.log(target));
+        if (d < diff) { diff = d; best = r; }
+    }
+    return best;
+};
+const imageSize = (src: string) =>
+    new Promise<{ w: number; h: number }>((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+        img.onerror = () => resolve({ w: 0, h: 0 });
+        img.src = src;
+    });
+
 /** Error con un mensaje pensado para mostrarse tal cual al paciente. */
 class WidgetError extends Error {
     readonly userFacing = true;
@@ -356,7 +378,8 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
                 genFormData.append('file', genFile);
             }
             genFormData.append('variationPrompt', fallbackPrompt);
-            genFormData.append('aspectRatio', "9:16");
+            const dims = await imageSize(base64);
+            genFormData.append('aspectRatio', closestRatio(dims.w, dims.h));
             genFormData.append('userId', anonUserId);
             if (analysisResult.analysis_id) genFormData.append('analysisId', analysisResult.analysis_id);
             genFormData.append('variationType', VariationType.ORIGINAL_BG);

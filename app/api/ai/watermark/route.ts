@@ -5,7 +5,9 @@
  * Adds a watermark to generated smile images using Sharp.
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { rejectIfNotInternal, escapeXml } from '@/lib/security';
+import { rejectIfNotInternal } from '@/lib/security';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import sharp from 'sharp';
 import { storage } from '@/lib/storage';
 
@@ -25,48 +27,48 @@ export async function POST(req: NextRequest) {
     if (denied) return denied;
 
     try {
-        const { image_path, watermark_text = 'Smile Fast' } = await req.json();
+        const { image_path } = await req.json();
 
         if (!image_path) {
             throw new Error('image_path is required');
         }
 
-        // 1. Download original image from storage
+        // 1. Imagen original desde storage
         const imageBuffer = await storage.downloadFileAsBuffer('generated', image_path);
-
-        // 2. Get image metadata
         const metadata = await sharp(imageBuffer).metadata();
         const width = metadata.width || 800;
         const height = metadata.height || 800;
 
-        // 3. Create watermark SVG
-        const fontSize = Math.max(Math.floor(width * 0.03), 14);
-        const svgWatermark = `
-        <svg width="${width}" height="${height}">
-            <style>
-                .watermark { 
-                    fill: rgba(255,255,255,0.35); 
-                    font-size: ${fontSize}px; 
-                    font-family: Arial, sans-serif;
-                    font-weight: bold;
-                }
-            </style>
-            <text x="${width - 10}" y="${height - 15}" text-anchor="end" class="watermark">
-                ${escapeXml(String(watermark_text).slice(0, 80))}
-            </text>
-        </svg>`;
+        // 2. Marca discreta: logo Smile Fast blanco dentro de una pastilla
+        //    translúcida en la esquina inferior derecha (sin depender de fuentes).
+        const logoH = Math.max(Math.round(width * 0.026), 14);
+        const logo = await sharp(await readFile(join(process.cwd(), 'public', 'brand', 'smilefast-white.png')))
+            .resize({ height: logoH })
+            .png()
+            .toBuffer();
+        const logoMeta = await sharp(logo).metadata();
+        const logoW = logoMeta.width || logoH * 5;
+        const padX = Math.round(logoH * 0.9);
+        const padY = Math.round(logoH * 0.55);
+        const pillW = logoW + padX * 2;
+        const pillH = logoH + padY * 2;
+        const margin = Math.round(Math.max(width, height) * 0.025);
+        const left = width - pillW - margin;
+        const top = height - pillH - margin;
+        const pill = Buffer.from(
+            `<svg width="${pillW}" height="${pillH}"><rect x="0.5" y="0.5" width="${pillW - 1}" height="${pillH - 1}" rx="${pillH / 2}" fill="rgba(19,27,34,0.38)" stroke="rgba(255,255,255,0.22)"/></svg>`
+        );
 
-        // 4. Apply watermark
         const watermarkedBuffer = await sharp(imageBuffer)
-            .composite([{
-                input: Buffer.from(svgWatermark),
-                gravity: 'southeast',
-            }])
+            .composite([
+                { input: pill, left, top },
+                { input: logo, left: left + padX, top: top + padY },
+            ])
             .jpeg({ quality: 90 })
             .toBuffer();
 
-        // 5. Upload watermarked version
-        const watermarkedPath = image_path.replace('.jpg', '_watermarked.jpg');
+        // 3. Guardar como <nombre>_watermarked.jpg (sin pisar el original, sea .jpg o .png)
+        const watermarkedPath = image_path.replace(/\.(jpe?g|png|webp)$/i, '') + '_watermarked.jpg';
         await storage.uploadFile('generated', watermarkedPath, watermarkedBuffer, 'image/jpeg');
 
         const publicUrl = storage.getPublicUrl('generated', watermarkedPath);

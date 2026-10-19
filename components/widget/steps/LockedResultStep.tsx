@@ -50,16 +50,6 @@ export function LockedResultStep({ image, demoBeforeImage, generatedImage, onRes
                                         afterImage={generatedImage}
                                         className="w-full h-full"
                                     />
-                                    {/* Protective Watermark Layer */}
-                                    <div className="absolute inset-0 flex items-center justify-center p-4 z-10 opacity-60 pointer-events-none">
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img
-                                            src="/brand/smilefast-white.png"
-                                            alt="Watermark"
-                                            className="w-full opacity-40 drop-shadow-md rotate-[-20deg] select-none"
-                                            draggable={false}
-                                        />
-                                    </div>
                                     <div className="absolute inset-0 z-20 bg-transparent pointer-events-none" />
                                 </div>
                             ) : (

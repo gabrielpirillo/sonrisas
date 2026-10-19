@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
                     - Replace ONLY the teeth area while keeping the rest of the face, skin texture, and features identical to the reference image.
                     - CRITICAL: The resulting smile MUST clearly show BOTH the upper teeth (dentadura superior) AND the lower teeth (dentadura inferior). Never generate a smile that only shows one dental arch.
                     - The input image must be the absolute reference for identity and composition.
-                    - vertical portrait, full face visible, do not crop head.
+                    - Same portrait framing as the input photo, full face visible, do not crop head.
                 `;
             } else {
                 // No analysis_id: just download the image
@@ -150,7 +150,7 @@ export async function POST(req: NextRequest) {
                     Style: Photorealistic, cinematic lighting, 8k resolution, dental aesthetic high quality.
                     Editing Input: Replace only the teeth with high quality veneers, keeping the face structure, skin texture, and background exactly the same.
                     - CRITICAL: The resulting smile MUST clearly show BOTH the upper teeth (dentadura superior) AND the lower teeth (dentadura inferior). Never generate a smile that only shows one dental arch.
-                    - vertical portrait, full face visible, do not crop head.
+                    - Same portrait framing as the input photo, full face visible, do not crop head.
                 `;
             }
         } else if (imageBase64) {
@@ -191,7 +191,7 @@ export async function POST(req: NextRequest) {
                     - Replace ONLY the teeth area while keeping the rest of the face, skin texture, and features identical to the reference image.
                     - CRITICAL: The resulting smile MUST clearly show BOTH the upper teeth (dentadura superior) AND the lower teeth (dentadura inferior). Never generate a smile that only shows one dental arch.
                     - The input image must be the absolute reference for identity and composition.
-                    - vertical portrait, full face visible, do not crop head.
+                    - Same portrait framing as the input photo, full face visible, do not crop head.
                 `;
             } else {
                 finalPrompt = `
@@ -201,7 +201,7 @@ export async function POST(req: NextRequest) {
                     Style: Photorealistic, cinematic lighting, 8k resolution, dental aesthetic high quality.
                     Editing Input: Replace only the teeth with high quality veneers, keeping the face structure, skin texture, and background exactly the same.
                     - CRITICAL: The resulting smile MUST clearly show BOTH the upper teeth (dentadura superior) AND the lower teeth (dentadura inferior). Never generate a smile that only shows one dental arch.
-                    - vertical portrait, full face visible, do not crop head.
+                    - Same portrait framing as the input photo, full face visible, do not crop head.
                 `;
             }
         } else {
@@ -213,11 +213,14 @@ export async function POST(req: NextRequest) {
         console.log("-----------------------------");
 
         // Generación con la cadena de modelos configurada (lib/ai/gemini.ts):
-        // principal gemini-nano-banana-2.1, respaldo gemini-3-pro-image, 9:16 a 2K.
+        // principal gemini-nano-banana-2.1, respaldo gemini-3-pro-image, a 2K.
+        // Misma proporción que la foto original para que encaje sin bordes.
+        const ALLOWED_RATIOS = ['1:1', '2:3', '3:2', '3:4', '4:3', '4:5', '5:4', '9:16', '16:9'];
+        const requestedRatio = String(prompt_options?.aspectRatio || '');
         const generated = await generateImage({
             prompt: finalPrompt,
             imageBase64,
-            aspectRatio: '9:16',
+            aspectRatio: ALLOWED_RATIOS.includes(requestedRatio) ? requestedRatio : '3:4',
         });
         console.log(`Success with model: ${generated.model}`);
 

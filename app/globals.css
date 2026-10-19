@@ -161,6 +161,18 @@
 .sf-stagger > *:nth-child(n+7) { animation-delay: 0.38s; }
 .sf-rise { animation: sf-rise 0.6s var(--ease-out) both; }
 
+/* Marca de agua del comparador antes/después: esquina inferior derecha */
+.ba-mark {
+  position: absolute; right: 12px; bottom: 12px; z-index: 9; pointer-events: none;
+  display: inline-flex; align-items: center;
+  padding: 6px 10px; border-radius: 999px;
+  background: rgba(19, 27, 34, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  opacity: 0.92;
+}
+.ba-mark img { height: 11px; width: auto; display: block; user-select: none; }
+
 /* Esqueleto de carga */
 .sf-skeleton {
   background: linear-gradient(90deg, var(--bg-soft) 0%, var(--blue-tint) 40%, var(--bg-soft) 80%);
