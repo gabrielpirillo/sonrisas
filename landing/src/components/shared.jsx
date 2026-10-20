@@ -717,9 +717,18 @@ function useInview(threshold = 0.3) {
   useEffect(() => {
     const el = ref.current;
     if (!el || !("IntersectionObserver" in window)) return;
+    // En móvil una sección puede medir más que la pantalla: con solo el umbral
+    // proporcional el encabezado quedaba en blanco mientras entraba. También se
+    // activa cuando la sección ya ocupa ~10% de la altura visible.
+    const steps = Array.from({ length: 21 }, (_, i) => i / 20).concat(threshold).sort((a, b) => a - b);
     const io = new IntersectionObserver((entries) => {
-      entries.forEach((e) => { if (e.isIntersecting) { setInview(true); io.disconnect(); } });
-    }, { threshold });
+      entries.forEach((e) => {
+        if (!e.isIntersecting) return;
+        if (e.intersectionRatio >= threshold || e.intersectionRect.height >= window.innerHeight * 0.1) {
+          setInview(true); io.disconnect();
+        }
+      });
+    }, { threshold: steps });
     io.observe(el);
     return () => io.disconnect();
   }, [threshold]);
