@@ -160,9 +160,10 @@
   pointer-events: none; animation: sf-pop 0.35s var(--ease-out) both;
 }
 .qoves-widget .wf-phone { display: flex; gap: 8px; }
-.qoves-widget .wf-select { position: relative; width: 96px; flex-shrink: 0; }
-.qoves-widget .wf-select select { appearance: none; -webkit-appearance: none; padding: 0 28px 0 18px; cursor: pointer; }
-.qoves-widget .wf-select-chev { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: var(--ink-3); pointer-events: none; }
+.qoves-widget .wf-select { position: relative; width: 108px; flex-shrink: 0; }
+.qoves-widget .wf-select select { appearance: none; -webkit-appearance: none; padding: 0 42px 0 18px; cursor: pointer; }
+/* Flecha de los desplegables: separada del borde redondeado */
+.qoves-widget .wf-select-chev { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: var(--ink-3); pointer-events: none; display: grid; place-items: center; }
 .qoves-widget .wf-phone .wf-input { flex: 1; min-width: 0; }
 
 /* ============================================================
@@ -697,7 +698,7 @@
 .qoves-widget .wf-cf .wf-field { padding: 0 18px; }
 .qoves-widget .wf-cf-area { height: auto; min-height: 92px; padding: 14px 18px; line-height: 1.5; resize: vertical; border-radius: 18px; }
 .qoves-widget .wf-cf-select { position: relative; width: 100%; }
-.qoves-widget .wf-cf-select select { width: 100%; appearance: none; padding-right: 40px; }
+.qoves-widget .wf-cf-select select { width: 100%; appearance: none; padding-right: 50px; }
 .qoves-widget .wf-cf-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .qoves-widget .wf-cf-chip {
   padding: 10px 16px; border-radius: var(--r-pill, 999px); border: 1px solid var(--line-strong, #d6d9d6);

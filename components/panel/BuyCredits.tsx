@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { ArrowRight, Check, Clock, FlaskConical, Loader2, Lock, Mail, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, BadgeCheck, Check, Clock, FlaskConical, Gift, Loader2, Lock, Mail, ShieldCheck, Sparkles } from 'lucide-react';
 import { createCheckoutSession, type PublicPackage } from '@/lib/billing/actions';
 import { formatMoney, formatUnitPrice, fmtInt } from './credits/format';
 import { BillingCountry } from './credits/BillingCountry';
@@ -116,6 +116,13 @@ export function BuyCredits({ packages, imageCost, videoCost, stripeEnabled, stri
 
     return (
         <MotionConfig reducedMotion="user">
+            <div className="cr-free" role="note">
+                <span className="cr-free-ic" aria-hidden><Gift size={18} /></span>
+                <div>
+                    <strong>Implementación gratuita · sin costos extra</strong>
+                    <span>Sin cuotas mensuales ni permanencia: solo pagas los créditos que usas, y no caducan.</span>
+                </div>
+            </div>
             {hasClinic && <BillingCountry country={billingCountry} disabled={!canBuy || Boolean(busy)} />}
             {stripeMode === 'test' && (
                 <div className="cr-testmode" role="note">
@@ -246,6 +253,7 @@ export function BuyCredits({ packages, imageCost, videoCost, stripeEnabled, stri
                 <li><ShieldCheck size={15} aria-hidden /> Pago seguro con Stripe</li>
                 <li><Lock size={14} aria-hidden /> Tus datos de tarjeta nunca pasan por nuestros servidores</li>
                 <li><Mail size={14} aria-hidden /> Recibo por email</li>
+                <li><BadgeCheck size={14} aria-hidden /> Sin costos extra ni suscripción</li>
             </ul>
         </MotionConfig>
     );

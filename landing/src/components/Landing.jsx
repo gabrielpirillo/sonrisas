@@ -649,8 +649,10 @@ function FAQ() {
      "En un día lo tienes funcionando. Configuramos tu marca (logo y colores), lo integramos en tu web y te damos acceso al panel. No requiere formación técnica: el equipo de recepción gestiona los leads desde una interfaz sencilla."],
     ["¿Cómo me ayuda de verdad a conseguir más pacientes?",
      "Convierte el tráfico anónimo de tu web en citas. En lugar de un visitante que duda y se va, la persona se ve con su nueva sonrisa, deja sus datos con intención real y agenda. Es captación proactiva desde tu propio sitio, sin depender solo de publicidad."],
+    ["¿Hay costos extra o una cuota de implementación?",
+     "No. La implementación es gratuita y no hay cuotas mensuales ni costos ocultos: solo pagas los créditos que usas. Al crear tu cuenta recibes créditos de regalo para probarlo."],
     ["¿Tengo que firmar permanencia o hacer una gran inversión inicial?",
-     "No. No hay permanencia: puedes cancelar cuando quieras. Puedes empezar sin inversión inicial y, si más adelante quieres más funciones (vídeo o más personalización de marca), solo hay un coste mínimo de implementación, sin ataduras a largo plazo."]];
+     "No. No hay permanencia ni inversión inicial: empiezas con los créditos de bienvenida y recargas solo cuando lo necesites. Los créditos no caducan."]];
 
   return (
     <section id="faq" style={{ padding: "100px 0", borderTop: "1px solid var(--line)" }}>
@@ -699,7 +701,8 @@ function Testimonios({ onStart }) {
   const seals = [
     { label: "Datos cifrados", icon: <><rect x="4" y="10" width="16" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></> },
     { label: "Privacidad del paciente", icon: <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" /> },
-    { label: "Sin permanencia", icon: <><path d="M3 12a9 9 0 0 1 15-6.7L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-15 6.7L3 16" /><path d="M3 21v-5h5" /></> }];
+    { label: "Sin permanencia", icon: <><path d="M3 12a9 9 0 0 1 15-6.7L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-15 6.7L3 16" /><path d="M3 21v-5h5" /></> },
+    { label: "Implementación gratuita", icon: <><rect x="3.5" y="8" width="17" height="12" rx="2" /><path d="M12 8v12M3.5 12h17" /><path d="M12 8c-1.5-3-5-3.5-5-1.2C7 8 9.5 8 12 8Zm0 0c1.5-3 5-3.5 5-1.2C17 8 14.5 8 12 8Z" /></> }];
   return (
     <section id="testimonios" ref={ref} className="bb-section accent-blue" style={{ position: "relative", padding: "112px 0", background: "var(--blue-tint)", borderTop: "1px solid var(--line)", overflow: "hidden" }}>
       <span className="bb-dots" aria-hidden="true"></span>
@@ -821,7 +824,8 @@ const FT_BADGES = [
   ["Cumple RGPD", <><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6l7-3Z" /><path d="M9 12l2 2 4-4" /></>],
   ["Datos cifrados", <><rect x="4.5" y="10.5" width="15" height="10" rx="2" /><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" /></>],
   ["Sin permanencia", <><path d="M3 12a9 9 0 0 1 15-6.7L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-15 6.7L3 16" /><path d="M3 21v-5h5" /></>],
-  ["Activo en 1 día", <><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /><path d="M9 14.5l2 2 4-4" /></>]];
+  ["Activo en 1 día", <><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /><path d="M9 14.5l2 2 4-4" /></>],
+  ["Implementación gratuita", <><rect x="3.5" y="8" width="17" height="12" rx="2" /><path d="M12 8v12M3.5 12h17" /><path d="M12 8c-1.5-3-5-3.5-5-1.2C7 8 9.5 8 12 8Zm0 0c1.5-3 5-3.5 5-1.2C17 8 14.5 8 12 8Z" /></>]];
 
 function SiteFooter({ onStart }) {
   const toTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
@@ -900,7 +904,8 @@ function CTAFooter({ onStart }) {
             Lleva <span className="ctaf-brand">Smile Fast</span><br />a tu clínica
           </h2>
           <p className="lead ctaf-lead">
-            Actívalo en tu web y convierte cada visita en una cita agendada.
+            Actívalo en tu web y convierte cada visita en una cita agendada.<br />
+            <b>Implementación gratuita y sin costos extra:</b> solo pagas los créditos que usas.
           </p>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", alignItems: "center", flexWrap: "wrap" }}>
             <a href={SIGNUP_HREF} className="btn btn-white cta-glow" style={{ padding: "18px 42px", fontSize: 17 }}>Crear cuenta</a>

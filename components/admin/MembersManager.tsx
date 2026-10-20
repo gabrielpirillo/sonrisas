@@ -89,7 +89,7 @@ export function MembersManager() {
                         style={{ flex: '1 1 200px', height: 44, fontSize: 14 }}
                         aria-label={`Email para invitar a ${org.name}`}
                     />
-                    <select className="field" value={role} onChange={(e) => setRole(e.target.value)} style={{ width: 150, height: 44, fontSize: 14 }} aria-label="Rol">
+                    <select className="field" value={role} onChange={(e) => setRole(e.target.value)} style={{ width: 170, height: 44, fontSize: 14 }} aria-label="Rol">
                         {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
                     </select>
                     <button type="submit" className="btn btn-primary btn-sm" disabled={inviting} style={{ height: 44 }}>
@@ -115,7 +115,7 @@ export function MembersManager() {
                                     <span className="sf-badge">{ROLE_LABEL[m.role] ?? m.role}</span>
                                 ) : (
                                     <>
-                                        <select className="field" value={m.role} onChange={(e) => changeRole(m.id, e.target.value)} style={{ width: 138, height: 36, fontSize: 13, padding: '0 10px' }} aria-label="Cambiar rol">
+                                        <select className="field" value={m.role} onChange={(e) => changeRole(m.id, e.target.value)} style={{ width: 158, height: 36, fontSize: 13, padding: '0 38px 0 12px', backgroundPosition: 'right 12px center' }} aria-label="Cambiar rol">
                                             {ROLES.map((r) => <option key={r} value={r}>{ROLE_LABEL[r]}</option>)}
                                         </select>
                                         <button className="icon-btn" onClick={() => removeMember(m.id)} aria-label="Eliminar miembro" title="Eliminar miembro">

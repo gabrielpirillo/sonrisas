@@ -210,7 +210,7 @@ function DemoContent() {
                     <div className="sfd-wrap">
                         <div>
                             <h2>¿Lo quieres en la web de <em>tu clínica?</em></h2>
-                            <p>Crea tu cuenta y activa el widget en tu web en 1 día.</p>
+                            <p>Crea tu cuenta y activa el widget en tu web en 1 día. Implementación gratuita y sin costos extra: solo pagas los créditos que usas.</p>
                         </div>
                         <div className="sfd-actions">
                             <Link href={SIGNUP_HREF} className="sfd-btn sfd-btn-white">Crear cuenta</Link>
