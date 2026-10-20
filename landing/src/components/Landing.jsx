@@ -613,8 +613,10 @@ function ClinicFunnel() {
       <div className="wrap" style={{ display: "flex", flexDirection: "column", gap: 22 }}>
         <FunnelRow title="Sin Smile Fast" steps={oldSteps} win={false} baseDelay={0.3}
           result={<span className="fx-res-big">Clic pagado,<br />sin cita</span>} />
+        {/* Separador "VS" entre ambas tarjetas (solo en móvil) */}
+        <div className="fx-vs" aria-hidden="true"><span className="mono">VS</span></div>
         <FunnelRow title="Con Smile Fast" steps={newSteps} win={true} baseDelay={1.1}
-          result={<span className="fx-res-big"><b>+38%</b> leads<br /><b>65%</b> agenda</span>} />
+          result={<span className="fx-res-big"><span className="fx-stat"><b>+38%</b> leads</span><span className="fx-stat"><b>65%</b> agenda</span></span>} />
       </div>
     </section>);
 
@@ -626,7 +628,9 @@ function FunnelRow({ title, steps, win, baseDelay, result }) {
   return (
     <div className={"fx-row" + (win ? " fx-win" : " fx-lose")}>
       <div className="fx-label">
-        <span className="fx-badge" aria-hidden="true">{win ? <LogoMark size={22} /> : <span className="fx-x"></span>}</span>
+        <span className="fx-badge" aria-hidden="true">{win ?
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> :
+          <span className="fx-x"></span>}</span>
         <div className="fx-title">{title}</div>
       </div>
       <div className="fx-track">
@@ -639,7 +643,7 @@ function FunnelRow({ title, steps, win, baseDelay, result }) {
         {steps.map(([label, icon], i) => {
           const last = i === steps.length - 1;
           return (
-            <div key={i} className={"fx-step" + (last ? " fx-end" : "")} style={{ transitionDelay: (baseDelay + i * 0.14) + "s" }}>
+            <div key={i} className={"fx-step" + (last ? " fx-end" : "")} style={{ "--i": i, transitionDelay: (baseDelay + i * 0.14) + "s" }}>
               <span className="fx-node">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">{FX_ICONS[icon]}</svg>
               </span>
@@ -1003,6 +1007,7 @@ function Transformations() {
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">{TF_ICONS[i]}</svg>
                 </span>
                 <span className="tf-txt">{b}</span>
+                <span className="tf-num mono" aria-hidden="true">0{i + 1}</span>
                 <span className="tf-arrow" aria-hidden="true">→</span>
               </li>
             )}
