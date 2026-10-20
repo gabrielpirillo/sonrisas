@@ -1,0 +1,557 @@
+/* ============================================================
+   Consola de operador (superadmin)
+   Extiende qoves-admin.css sin tocarlo. Todo va bajo
+   `.qoves-admin.qoves-super` (clase del layout de superadmin):
+   no afecta al panel de clínica y gana a qoves-admin.css /
+   credits.css por especificidad, sin depender del orden de carga.
+   ============================================================ */
+
+/* ---------- Estructura ---------- */
+.qoves-admin.qoves-super { height: 100vh; height: 100dvh; overflow: hidden; }
+.qoves-admin.qoves-super .sa-shell { display: flex; flex-direction: column; height: 100%; }
+.qoves-admin.qoves-super .sa-body { display: flex; flex: 1; min-height: 0; }
+.qoves-admin.qoves-super .main-scroll { overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
+
+/* Punto "en vivo" del sidebar */
+.qoves-admin.qoves-super .sa-live-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--scan);
+  box-shadow: 0 0 10px var(--scan);
+  animation: sf-glow 1.8s ease-in-out infinite;
+}
+
+/* ---------- Barra superior móvil ---------- */
+.qoves-admin.qoves-super .sa-mbar {
+  position: relative;
+  z-index: 20;
+  flex-direction: column;
+  flex-shrink: 0;
+  color: #fff;
+  padding-top: env(safe-area-inset-top, 0px);
+  background:
+    radial-gradient(90% 160% at 0% 0%, rgba(142, 164, 180, 0.2), transparent 60%),
+    linear-gradient(90deg, var(--navy-1), var(--navy-2));
+  transition: box-shadow 0.25s var(--ease);
+}
+.qoves-admin.qoves-super .sa-mbar[data-scrolled] { box-shadow: 0 12px 26px -16px rgba(19, 27, 34, 0.75); }
+.qoves-admin.qoves-super .sa-mbar .mono { color: rgba(255, 255, 255, 0.55); }
+.qoves-admin.qoves-super .sa-mbar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 50px;
+  padding: 2px 6px 0 16px;
+}
+.qoves-admin.qoves-super .sa-mbar-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  min-width: 0;
+  color: #fff;
+  text-decoration: none;
+}
+.qoves-admin.qoves-super .sa-mbar-tag {
+  font-size: 7.5px;
+  letter-spacing: 0.16em;
+  padding: 4px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 99px;
+}
+.qoves-admin.qoves-super .sa-mbar-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 12px;
+  font-size: 9.5px;
+  color: rgba(255, 255, 255, 0.72) !important;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+.qoves-admin.qoves-super .sa-mbar-back:hover,
+.qoves-admin.qoves-super .sa-mbar-back:active { background: rgba(255, 255, 255, 0.08); color: #fff !important; }
+
+.qoves-admin.qoves-super .sa-mnav {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-padding-inline: 16px;
+  scrollbar-width: none;
+  padding: 4px 16px 11px;
+}
+.qoves-admin.qoves-super .sa-mnav::-webkit-scrollbar { display: none; }
+/* Pista de que hay más píldoras: el borde con contenido se desvanece */
+.qoves-admin.qoves-super .sa-mnav[data-fade-end] {
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+}
+.qoves-admin.qoves-super .sa-mnav[data-fade-start] {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 40px);
+  mask-image: linear-gradient(90deg, transparent, #000 40px);
+}
+.qoves-admin.qoves-super .sa-mnav[data-fade-start][data-fade-end] {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 40px), transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 40px, #000 calc(100% - 40px), transparent);
+}
+.qoves-admin.qoves-super .sa-mnav a {
+  position: relative;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 15px 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 13.5px;
+  font-weight: 450;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.74);
+  text-decoration: none;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.22s var(--ease), color 0.22s var(--ease), border-color 0.22s var(--ease), box-shadow 0.22s var(--ease);
+}
+/* Área táctil de 44 px sin agrandar la píldora */
+.qoves-admin.qoves-super .sa-mnav a::after { content: ""; position: absolute; inset: -4px 0; }
+.qoves-admin.qoves-super .sa-mnav a svg { color: rgba(255, 255, 255, 0.5); flex-shrink: 0; transition: color 0.22s var(--ease); }
+.qoves-admin.qoves-super .sa-mnav a:hover,
+.qoves-admin.qoves-super .sa-mnav a:active { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.qoves-admin.qoves-super .sa-mnav a[aria-current="page"] {
+  background: #fff;
+  border-color: #fff;
+  color: var(--navy-2);
+  font-weight: 600;
+  box-shadow: 0 8px 18px -10px rgba(0, 0, 0, 0.6);
+}
+.qoves-admin.qoves-super .sa-mnav a[aria-current="page"] svg { color: var(--blue-deep); }
+.qoves-admin.qoves-super .sa-mnav a:focus-visible,
+.qoves-admin.qoves-super .sa-mbar-top a:focus-visible { outline: 2px solid var(--blue-light); outline-offset: 2px; }
+
+/* ---------- Bloques comunes ---------- */
+.qoves-admin.qoves-super .sa-pad { padding: 24px; }
+.qoves-admin.qoves-super .sa-eyebrow { font-size: 9.5px; color: var(--blue-deep); }
+.qoves-admin.qoves-super .sa-h3 { font-size: 19px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; margin: 4px 0 0; }
+.qoves-admin.qoves-super .sa-h3 .dim,
+.qoves-admin.qoves-super .sa-card-title .dim { color: var(--ink-3); }
+.qoves-admin.qoves-super .sa-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--line);
+}
+.qoves-admin.qoves-super .sa-card-head > div { min-width: 0; }
+.qoves-admin.qoves-super .sa-card-title { font-size: 19px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.2; margin: 0; }
+.qoves-admin.qoves-super .sa-count { font-size: 9.5px; color: var(--blue-deep); white-space: nowrap; }
+.qoves-admin.qoves-super .sa-wrap { overflow-wrap: break-word; word-break: normal; min-width: 0; }
+.qoves-admin.qoves-super .sa-num { font-variant-numeric: tabular-nums; }
+
+/* Tablas que pasan a lista apilada cuando la tarjeta es estrecha
+   (container query: funciona igual con o sin sidebar). */
+.qoves-admin.qoves-super .sa-cq { container-type: inline-size; }
+.qoves-admin.qoves-super .sa-mobile-only { display: none; }
+.qoves-admin.qoves-super .sa-table-scroll { overflow-x: auto; }
+@container (max-width: 680px) {
+  .qoves-admin.qoves-super .sa-desktop-only { display: none; }
+  .qoves-admin.qoves-super .sa-mobile-only { display: block; }
+}
+
+/* Filas enlazadas en la tabla de escritorio */
+.qoves-admin.qoves-super .sa-row-link { color: inherit; text-decoration: none; }
+.qoves-admin.qoves-super .sa-row-link:hover .sa-row-name { color: var(--blue-deep); }
+.qoves-admin.qoves-super .lead-table td .sa-row-name { font-size: 14px; font-weight: 500; letter-spacing: -0.01em; transition: color 0.18s var(--ease); }
+
+/* ---------- Lista apilada (móvil) ---------- */
+.qoves-admin.qoves-super .sa-mlist { list-style: none; margin: 0; padding: 4px 0; }
+.qoves-admin.qoves-super .sa-mitem { border-bottom: 1px solid var(--line); animation: sf-fade 0.45s var(--ease) both; }
+.qoves-admin.qoves-super .sa-mitem:last-child { border-bottom: none; }
+.qoves-admin.qoves-super .sa-mlink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+  padding: 14px 16px;
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.18s var(--ease);
+}
+.qoves-admin.qoves-super .sa-mlink:hover,
+.qoves-admin.qoves-super .sa-mlink:active { background: var(--blue-tint); }
+.qoves-admin.qoves-super .sa-mlink:focus-visible { outline-offset: -2px; }
+.qoves-admin.qoves-super .sa-mmain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.qoves-admin.qoves-super .sa-mtitle { font-size: 15px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.25; }
+.qoves-admin.qoves-super .sa-mtitle-trunc { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qoves-admin.qoves-super .sa-mmeta { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; font-size: 13px; color: var(--ink-2); line-height: 1.35; }
+.qoves-admin.qoves-super .sa-mmeta .mono { font-size: 9px; }
+.qoves-admin.qoves-super .sa-mgo { flex-shrink: 0; color: var(--ink-3); transition: transform 0.2s var(--ease-out), color 0.18s var(--ease); }
+.qoves-admin.qoves-super .sa-mlink:hover .sa-mgo,
+.qoves-admin.qoves-super .sa-mlink:active .sa-mgo { color: var(--blue-deep); transform: translateX(2px); }
+.qoves-admin.qoves-super .sa-dot-sep { width: 3px; height: 3px; border-radius: 50%; background: var(--line-strong); flex-shrink: 0; }
+.qoves-admin.qoves-super .sa-plan-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--blue-line);
+  background: var(--blue-tint);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--blue-ink);
+  white-space: nowrap;
+}
+
+/* ---------- KPIs ---------- */
+/* Cifras alineadas abajo aunque una etiqueta ocupe dos líneas */
+.qoves-admin.qoves-super .kpi-grid > .card > .mono:first-child + div { margin-top: auto; }
+@media (max-width: 760px) {
+  .qoves-admin.qoves-super .kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .qoves-admin.qoves-super .kpi-grid > .card { padding: 14px 14px 16px !important; min-height: 0 !important; gap: 10px !important; }
+  .qoves-admin.qoves-super .kpi-grid > .card > .mono { font-size: 8.5px !important; letter-spacing: 0.12em; line-height: 1.4; align-items: flex-start !important; }
+  .qoves-admin.qoves-super .kpi-grid > .card > .mono > span:first-child { margin-top: 3px; flex-shrink: 0; }
+  .qoves-admin.qoves-super .kpi-grid > .card > div { font-size: 26px !important; }
+  /* Resumen: los ingresos (la cifra más larga) y el último KPI a todo el ancho */
+  .qoves-admin.qoves-super .sa-kpi-hero > :first-child,
+  .qoves-admin.qoves-super .sa-kpi-hero > :last-child:nth-child(even) { grid-column: 1 / -1; }
+}
+
+/* ---------- Visión general ---------- */
+.qoves-admin.qoves-super .sa-plan-row + .sa-plan-row { margin-top: 16px; }
+.qoves-admin.qoves-super .sa-plan-track { height: 10px; background: var(--blue-tint); border: 1px solid var(--blue-line); border-radius: 99px; overflow: hidden; }
+.qoves-admin.qoves-super .sa-chart { height: 260px; width: 100%; }
+.qoves-admin.qoves-super .sa-chart-legend { display: flex; gap: 18px; margin-top: 12px; justify-content: center; flex-wrap: wrap; }
+.qoves-admin.qoves-super .sa-chart-legend span { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--ink-3); }
+.qoves-admin.qoves-super .sa-chart-legend i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; }
+
+/* ---------- Usuarios ---------- */
+.qoves-admin.qoves-super .sa-search { display: flex; gap: 10px; max-width: 560px; flex-wrap: wrap; align-items: center; }
+.qoves-admin.qoves-super .sa-search-field { position: relative; flex: 1 1 240px; min-width: 0; }
+.qoves-admin.qoves-super .sa-search-field svg { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--ink-3); pointer-events: none; }
+.qoves-admin.qoves-super .sa-search-field .field { height: 48px; padding-left: 46px; font-size: 14.5px; }
+.qoves-admin.qoves-super .sa-search-field input[type="search"] { -webkit-appearance: none; appearance: none; }
+.qoves-admin.qoves-super .sa-search-field input[type="search"]::-webkit-search-decoration { -webkit-appearance: none; }
+.qoves-admin.qoves-super .sa-search .btn { height: 48px; }
+.qoves-admin.qoves-super .sa-search-clear { display: inline-flex; align-items: center; min-height: 44px; padding: 0 8px; font-size: 13.5px; color: var(--ink-3); text-decoration: none; }
+.qoves-admin.qoves-super .sa-search-clear:hover { color: var(--blue-deep); }
+.qoves-admin.qoves-super .sa-badge-platform {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  color: #fff;
+  background: var(--navy-2);
+  padding: 3px 8px;
+  border-radius: 99px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.qoves-admin.qoves-super .sa-user { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.qoves-admin.qoves-super .sa-user-head { display: flex; align-items: flex-start; gap: 12px; }
+.qoves-admin.qoves-super .sa-user-head .avatar { margin-top: 1px; }
+.qoves-admin.qoves-super .sa-user-email { font-size: 14.5px; font-weight: 600; letter-spacing: -0.01em; line-height: 1.3; }
+.qoves-admin.qoves-super .sa-user-clinics { font-size: 12.5px; color: var(--ink-3); line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Acciones de usuario con texto (lista móvil) */
+.qoves-admin.qoves-super .sa-acts { display: flex; gap: 8px; }
+.qoves-admin.qoves-super .sa-act {
+  flex: 1 1 0;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--blue-line);
+  background: #fff;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.18s var(--ease), color 0.18s var(--ease), background 0.18s var(--ease), transform 0.15s var(--ease);
+}
+.qoves-admin.qoves-super .sa-act:hover { border-color: var(--blue-accent); color: var(--blue-deep); }
+.qoves-admin.qoves-super .sa-act:active { transform: scale(0.97); }
+.qoves-admin.qoves-super .sa-act:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.qoves-admin.qoves-super .sa-act-danger { color: #8f4f47; border-color: #ecd3cf; }
+.qoves-admin.qoves-super .sa-act-danger:hover { color: var(--danger); border-color: var(--danger); background: var(--danger-soft); }
+.qoves-admin.qoves-super .sa-act span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qoves-admin.qoves-super .sa-act-icon { flex: 0 0 44px; width: 44px; padding: 0; }
+
+/* ---------- Auditoría ---------- */
+.qoves-admin.qoves-super .sa-action-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 11px;
+  border: 1px solid var(--blue-line);
+  background: var(--blue-tint);
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--blue-ink);
+  white-space: nowrap;
+}
+.qoves-admin.qoves-super .sa-audit-inline { font-size: 12.5px; color: var(--ink-2); line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
+.qoves-admin.qoves-super .sa-audit-inline b { font-weight: 500; color: var(--ink-3); }
+.qoves-admin.qoves-super .sa-audit { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.qoves-admin.qoves-super .sa-audit-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.qoves-admin.qoves-super .sa-audit-head time { font-size: 9px; }
+.qoves-admin.qoves-super .sa-kv { margin: 0; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 5px 14px; font-size: 13px; }
+.qoves-admin.qoves-super .sa-kv dt { color: var(--ink-3); white-space: nowrap; }
+.qoves-admin.qoves-super .sa-kv dd { margin: 0; color: var(--ink); overflow-wrap: anywhere; }
+.qoves-admin.qoves-super .sa-kv .sa-kv-mono { font-family: var(--font-mono); font-size: 11.5px; }
+
+/* ---------- Configuración ---------- */
+.qoves-admin.qoves-super .sa-health-row { padding: 12px 14px; min-height: 52px; }
+.qoves-admin.qoves-super .sa-costs { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.qoves-admin.qoves-super .sa-cost {
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid var(--blue-line);
+  background: linear-gradient(180deg, #fff, var(--blue-tint));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.qoves-admin.qoves-super .sa-cost-row { display: flex; gap: 8px; align-items: center; }
+.qoves-admin.qoves-super .sa-cost-in { position: relative; flex: 1 1 auto; min-width: 0; max-width: 150px; }
+.qoves-admin.qoves-super .sa-cost-in .field { height: 44px; padding: 0 64px 0 18px; font-size: 16px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.qoves-admin.qoves-super .sa-cost-in span { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--ink-3); pointer-events: none; }
+.qoves-admin.qoves-super .sa-cost .btn { height: 44px; flex-shrink: 0; }
+.qoves-admin.qoves-super .sa-cost-hint { font-size: 12px; color: #8a6a2a; }
+.qoves-admin.qoves-super .sa-cost-hint:empty { display: none; }
+
+/* Editor de paquetes (extiende credits.css).
+   Campos por zonas con nombre: lo comercial primero, lo técnico después.
+   Según el ancho de la propia tarjeta (container query, con o sin
+   sidebar): 6 columnas, 4, o 2 en pantallas estrechas. */
+.qoves-admin.qoves-super .pe-row { overflow: clip; scroll-margin-top: 12px; container: pe-row / inline-size; }
+.qoves-admin.qoves-super .pe-top .btn { flex-shrink: 0; }
+.qoves-admin.qoves-super .pe-grid {
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 0.8fr) minmax(0, 0.9fr) minmax(0, 0.9fr);
+  grid-template-areas:
+    "name credits price cur eur ars"
+    "badge id sort . . .";
+  gap: 12px 10px;
+}
+.qoves-admin.qoves-super .pe-f-id { grid-area: id; }
+.qoves-admin.qoves-super .pe-f-wide { grid-area: name; }
+.qoves-admin.qoves-super .pe-f-credits { grid-area: credits; }
+.qoves-admin.qoves-super .pe-f-price { grid-area: price; }
+.qoves-admin.qoves-super .pe-f-cur { grid-area: cur; }
+.qoves-admin.qoves-super .pe-f-eur { grid-area: eur; }
+.qoves-admin.qoves-super .pe-f-ars { grid-area: ars; }
+.qoves-admin.qoves-super .pe-f-badge { grid-area: badge; }
+.qoves-admin.qoves-super .pe-f-sort { grid-area: sort; }
+/* Etiquetas en una línea: los campos de una fila quedan alineados */
+.qoves-admin.qoves-super .pe-f > .mono { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@container pe-row (max-width: 780px) {
+  .qoves-admin.qoves-super .pe-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-areas:
+      "name name credits badge"
+      "price cur eur ars"
+      "id sort . .";
+  }
+}
+@container pe-row (max-width: 500px) {
+  .qoves-admin.qoves-super .pe-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      "name name"
+      "credits badge"
+      "price cur"
+      "eur ars"
+      "id sort";
+  }
+}
+
+/* ---------- Ficha de clínica ---------- */
+.qoves-admin.qoves-super .sa-back { display: inline-flex; align-items: center; gap: 6px; min-height: 40px; text-decoration: none; align-self: flex-start; }
+.qoves-admin.qoves-super .sa-clinic-hero { padding: 28px; display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+.qoves-admin.qoves-super .sa-clinic-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-size: 20px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--blue-light);
+}
+.qoves-admin.qoves-super .sa-clinic-id { flex: 1; min-width: 200px; }
+.qoves-admin.qoves-super .sa-clinic-name { font-size: 34px; font-weight: 600; letter-spacing: -0.035em; line-height: 1.05; margin: 6px 0 0; overflow-wrap: anywhere; }
+.qoves-admin.qoves-super .sa-clinic-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.qoves-admin.qoves-super .sa-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; padding: 18px; }
+.qoves-admin.qoves-super .sa-block {
+  padding: 18px;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.qoves-admin.qoves-super .sa-block-danger { border-color: #ecd3cf; background: linear-gradient(180deg, #fff, var(--danger-soft)); }
+.qoves-admin.qoves-super .sa-block-calm { border-color: var(--blue-line); background: var(--blue-tint); }
+.qoves-admin.qoves-super .sa-block > .mono { font-size: 9px; line-height: 1.5; }
+.qoves-admin.qoves-super .sa-block p { font-size: 13px; color: var(--ink-2); margin: 0; line-height: 1.5; }
+.qoves-admin.qoves-super .sa-plan-seg { align-self: flex-start; max-width: 100%; }
+.qoves-admin.qoves-super .sa-plan-seg button:disabled { cursor: progress; }
+.qoves-admin.qoves-super .sa-saving { font-size: 12.5px; color: var(--ink-3); display: inline-flex; gap: 6px; align-items: center; }
+.qoves-admin.qoves-super .sa-grant { display: flex; gap: 8px; flex-wrap: wrap; }
+.qoves-admin.qoves-super .sa-grant .field { height: 44px; padding: 0 16px; }
+.qoves-admin.qoves-super .sa-grant-delta { flex: 0 0 104px; }
+.qoves-admin.qoves-super .sa-grant-reason { flex: 1 1 110px; min-width: 0; }
+.qoves-admin.qoves-super .sa-grant .btn { height: 44px; }
+.qoves-admin.qoves-super .sa-status-btn { align-self: flex-start; min-height: 44px; color: #fff; border: none; }
+.qoves-admin.qoves-super .sa-status-btn-danger { background: var(--danger); }
+.qoves-admin.qoves-super .sa-status-btn-danger:hover { background: #a3584f; }
+.qoves-admin.qoves-super .sa-status-btn-ok { background: var(--blue-deep); }
+.qoves-admin.qoves-super .sa-status-btn-ok:hover { background: var(--blue-ink); }
+.qoves-admin.qoves-super .sa-status-btn:disabled { opacity: 0.6; cursor: progress; }
+
+.qoves-admin.qoves-super .sa-facts { padding: 6px 22px 14px; margin: 0; }
+.qoves-admin.qoves-super .sa-fact { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.qoves-admin.qoves-super .sa-fact:last-child { border-bottom: none; }
+.qoves-admin.qoves-super .sa-fact dt { font-size: 9px; flex-shrink: 0; }
+.qoves-admin.qoves-super .sa-fact dd { margin: 0; font-size: 13.5px; text-align: right; overflow-wrap: anywhere; min-width: 0; }
+.qoves-admin.qoves-super .sa-fact .sa-code { font-family: var(--font-mono); font-size: 12.5px; letter-spacing: 0; user-select: all; -webkit-user-select: all; }
+
+.qoves-admin.qoves-super .sa-member { padding: 10px 12px; }
+.qoves-admin.qoves-super .sa-member-id { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.qoves-admin.qoves-super .sa-member-email { font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.qoves-admin.qoves-super .sa-led-ic { width: 26px; height: 26px; border-radius: 9px; display: grid; place-items: center; flex-shrink: 0; background: var(--blue-soft); color: var(--blue-deep); }
+.qoves-admin.qoves-super .sa-led-ic-neg { background: var(--bg-soft); color: var(--ink-2); }
+.qoves-admin.qoves-super .sa-led-kind { display: inline-flex; align-items: center; gap: 8px; font-weight: 500; }
+.qoves-admin.qoves-super .sa-led-delta { font-weight: 600; font-variant-numeric: tabular-nums; color: var(--blue-deep); white-space: nowrap; }
+.qoves-admin.qoves-super .sa-led-delta-neg { color: var(--ink-2); }
+.qoves-admin.qoves-super .sa-led { padding: 13px 16px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; }
+.qoves-admin.qoves-super .sa-led-date { font-size: 12.5px; color: var(--ink-3); padding-left: 34px; }
+.qoves-admin.qoves-super .sa-led-bal { font-size: 12.5px; color: var(--ink-3); text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.qoves-admin.qoves-super .sa-led-concept { grid-column: 1 / -1; font-size: 13px; color: var(--ink-2); padding-left: 34px; overflow-wrap: anywhere; }
+
+/* ---------- Táctil: objetivos de 44 px ---------- */
+@media (pointer: coarse) {
+  .qoves-admin.qoves-super .icon-btn { width: 44px; height: 44px; }
+  .qoves-admin.qoves-super .seg button { min-height: 40px; }
+  .qoves-admin.qoves-super .pe-sw { min-height: 44px; }
+  .qoves-admin.qoves-super .btn-sm { min-height: 44px; }
+  /* iOS/iPadOS amplía la página al enfocar campos de menos de 16 px */
+  .qoves-admin.qoves-super .field,
+  .qoves-admin.qoves-super .pe-in { font-size: 16px; }
+  .qoves-admin.qoves-super .pe-in { height: 44px; }
+}
+
+/* ---------- Móvil ---------- */
+@media (max-width: 760px) {
+  .qoves-admin.qoves-super .admin-page { gap: 18px; }
+  .qoves-admin.qoves-super .page-head { align-items: flex-start; }
+  .qoves-admin.qoves-super .page-head .btn { min-height: 44px; }
+  .qoves-admin.qoves-super .sa-pad { padding: 18px; }
+  .qoves-admin.qoves-super .sa-card-head { padding: 16px; }
+  .qoves-admin.qoves-super .sa-card-title,
+  .qoves-admin.qoves-super .sa-h3 { font-size: 17px; }
+  .qoves-admin.qoves-super .sa-chart { height: 220px; }
+
+  /* Campos a 16 px: iOS no hace zoom al enfocar */
+  .qoves-admin.qoves-super .field,
+  .qoves-admin.qoves-super .sa-search-field .field { font-size: 16px; }
+  .qoves-admin.qoves-super .btn-sm { min-height: 44px; }
+
+  .qoves-admin.qoves-super .sa-search { max-width: none; }
+  .qoves-admin.qoves-super .sa-search-field { flex: 1 1 180px; }
+  .qoves-admin.qoves-super .sa-search .btn { flex: 0 0 auto; padding: 0 20px; }
+
+  .qoves-admin.qoves-super .sa-clinic-hero { padding: 20px; gap: 14px; }
+  .qoves-admin.qoves-super .sa-clinic-avatar { width: 48px; height: 48px; border-radius: 14px; font-size: 16px; }
+  .qoves-admin.qoves-super .sa-clinic-id { min-width: 0; flex-basis: calc(100% - 62px); }
+  .qoves-admin.qoves-super .sa-clinic-name { font-size: 25px; }
+  .qoves-admin.qoves-super .sa-clinic-chips { flex-basis: 100%; }
+
+  .qoves-admin.qoves-super .sa-actions { padding: 12px; gap: 10px; }
+  .qoves-admin.qoves-super .sa-block { padding: 16px; }
+  .qoves-admin.qoves-super .sa-plan-seg { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; border-radius: 16px; gap: 3px; }
+  .qoves-admin.qoves-super .sa-plan-seg button { min-height: 44px; border-radius: 12px; font-size: 14px; }
+  .qoves-admin.qoves-super .sa-grant .btn { flex: 1 1 100%; }
+  .qoves-admin.qoves-super .sa-status-btn { align-self: stretch; }
+
+  .qoves-admin.qoves-super .sa-facts { padding: 4px 16px 10px; }
+  .qoves-admin.qoves-super .sa-fact { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .qoves-admin.qoves-super .sa-fact dd { text-align: left; }
+  .qoves-admin.qoves-super .sa-member-email { white-space: normal; overflow-wrap: break-word; min-width: 0; }
+
+  /* Costos: campo y botón ocupan la tarjeta */
+  .qoves-admin.qoves-super .sa-cost-in { max-width: none; }
+
+  /* Editor de paquetes: campos agrupados por intención */
+  .qoves-admin.qoves-super .pe-top .btn { width: 100%; }
+  .qoves-admin.qoves-super .pe-row { padding: 14px; }
+  .qoves-admin.qoves-super .pe-in { height: 44px; font-size: 16px; }
+  .qoves-admin.qoves-super .pe-sw { min-height: 44px; padding: 0 15px 0 10px; font-size: 14px; }
+  .qoves-admin.qoves-super .pe-toggles { width: 100%; }
+  .qoves-admin.qoves-super .pe-toggles .pe-sw { flex: 1; justify-content: center; }
+  .qoves-admin.qoves-super .pe-actions .btn { min-height: 44px; }
+  /* Con cambios pendientes, los botones de guardar quedan fijos al pie
+     mientras la tarjeta está en pantalla (los interruptores no). */
+  .qoves-admin.qoves-super .pe-row-foot { display: contents; }
+  .qoves-admin.qoves-super .pe-toggles { margin-top: 14px; }
+  .qoves-admin.qoves-super .pe-actions { margin-top: 12px; }
+  .qoves-admin.qoves-super .pe-row-dirty .pe-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    width: auto;
+    margin: 12px -14px -14px;
+    padding: 10px 14px calc(10px + env(safe-area-inset-bottom, 0px));
+    background: rgba(255, 255, 255, 0.92);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--blue-line);
+    box-shadow: 0 -12px 24px -20px rgba(27, 38, 48, 0.6);
+  }
+}
+
+@media (max-width: 380px) {
+  .qoves-admin.qoves-super .kpi-grid > .card > div { font-size: 23px !important; }
+  .qoves-admin.qoves-super .sa-act { font-size: 12.5px; gap: 5px; padding: 0 8px; }
+}
+
+/* ---------- Movimiento reducido ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .qoves-admin.qoves-super .sa-live-dot,
+  .qoves-admin.qoves-super .sa-mitem,
+  .qoves-admin.qoves-super .sf-row,
+  .qoves-admin.qoves-super .sf-bar { animation: none !important; }
+  .qoves-admin.qoves-super .sf-row:hover { transform: none; }
+  .qoves-admin.qoves-super .sa-mnav a,
+  .qoves-admin.qoves-super .sa-mbar,
+  .qoves-admin.qoves-super .sa-act,
+  .qoves-admin.qoves-super .sa-mgo { transition: none; }
+  .qoves-admin.qoves-super .sa-mlink:hover .sa-mgo,
+  .qoves-admin.qoves-super .sa-mlink:active .sa-mgo,
+  .qoves-admin.qoves-super .sa-act:active { transform: none; }
+}

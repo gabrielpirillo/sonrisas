@@ -378,3 +378,12 @@
 @media (max-width: 400px) {
   .qoves-admin .vs-kpi-wide { grid-column: span 2; }
 }
+
+/* ---------- Panel de la clínica en móvil: deslizadores cómodos con el dedo ---------- */
+@media (max-width: 760px) {
+  .qoves-admin.sf-touch .vs-range { height: 40px; }
+  .qoves-admin.sf-touch .vs-range::-webkit-slider-thumb { width: 28px; height: 28px; margin-top: -11px; }
+  .qoves-admin.sf-touch .vs-range::-moz-range-thumb { width: 24px; height: 24px; }
+  .qoves-admin.sf-touch .vs-num { height: 46px; }
+  .qoves-admin.sf-touch .vs-num input { width: 120px; }
+}

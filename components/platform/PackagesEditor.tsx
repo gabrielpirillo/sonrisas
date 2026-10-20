@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import { toast } from 'sonner';
@@ -92,6 +92,18 @@ export function PackagesEditor({ initial, loadError }: { initial: PackageRow[]; 
     const [base, setBase] = useState<Record<string, Draft>>(() => Object.fromEntries(initial.map((r) => [`s:${r.id}`, toDraft(r)])));
     const [saving, setSaving] = useState<string | null>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
+    // Paquete recién creado: se enfoca su nombre y se lleva a la vista.
+    const focusNext = useRef<string | null>(null);
+    useEffect(() => {
+        const key = focusNext.current;
+        if (!key) return;
+        focusNext.current = null;
+        const el = document.getElementById(`pe-${key}-name`);
+        if (!el) return;
+        el.focus({ preventScroll: true });
+        const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        el.closest('.pe-row')?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+    });
 
     const set = (key: string, patch: Partial<Draft>) => {
         setRows((rs) => rs.map((r) => (r.key === key ? { ...r, ...patch } : r)));
@@ -106,6 +118,7 @@ export function PackagesEditor({ initial, loadError }: { initial: PackageRow[]; 
             { key, saved: false, id: '', name: '', credits: '100', price: '', currency: rs[0]?.currency || 'usd', priceEur: '', priceArs: '', badge: '', highlight: false, active: true, sort: String(maxSort + 1) },
             ...rs,
         ]);
+        focusNext.current = key;
     }
 
     async function save(d: Draft) {
@@ -175,6 +188,7 @@ export function PackagesEditor({ initial, loadError }: { initial: PackageRow[]; 
             <div className="pe-top">
                 <p className="lead" style={{ fontSize: 13.5 }}>
                     Lo que ven y pagan las clínicas. El importe se cobra siempre desde aquí (servidor). Los paquetes inactivos no se muestran.
+                    Los precios de España y Argentina son opcionales: si quedan vacíos se cobra el precio base.
                 </p>
                 <button type="button" className="btn btn-primary btn-sm" onClick={addNew}>
                     <Plus size={15} aria-hidden /> Nuevo paquete
@@ -214,7 +228,7 @@ export function PackagesEditor({ initial, loadError }: { initial: PackageRow[]; 
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, height: 0, marginBottom: 0 }}
                                     transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                                    className={`pe-row${d.active ? '' : ' pe-row-off'}${d.highlight ? ' pe-row-hl' : ''}${!d.saved ? ' pe-row-new' : ''}`}
+                                    className={`pe-row${d.active ? '' : ' pe-row-off'}${d.highlight ? ' pe-row-hl' : ''}${!d.saved ? ' pe-row-new' : ''}${dirty ? ' pe-row-dirty' : ''}`}
                                 >
                                     <div className="pe-row-head">
                                         <div className="pe-title">
@@ -230,7 +244,7 @@ export function PackagesEditor({ initial, loadError }: { initial: PackageRow[]; 
                                     </div>
 
                                     <div className="pe-grid">
-                                        <label className="pe-f" htmlFor={fid('id')}>
+                                        <label className="pe-f pe-f-id" htmlFor={fid('id')}>
                                             <span className="mono">ID</span>
                                             <input
                                                 id={fid('id')}
@@ -248,31 +262,31 @@ export function PackagesEditor({ initial, loadError }: { initial: PackageRow[]; 
                                         </label>
                                         <label className="pe-f pe-f-wide" htmlFor={fid('name')}>
                                             <span className="mono">Nombre</span>
-                                            <input id={fid('name')} className="field pe-in" value={d.name} maxLength={40} onChange={(e) => set(d.key, { name: e.target.value })} placeholder="Clínica" />
+                                            <input id={fid('name')} className="field pe-in" value={d.name} maxLength={40} onChange={(e) => set(d.key, { name: e.target.value })} placeholder="p. ej. Clínica" />
                                         </label>
-                                        <label className="pe-f" htmlFor={fid('credits')}>
+                                        <label className="pe-f pe-f-credits" htmlFor={fid('credits')}>
                                             <span className="mono">Créditos</span>
-                                            <input id={fid('credits')} className="field pe-in" type="number" min={1} max={100000} step={1} inputMode="numeric" value={d.credits} onChange={(e) => set(d.key, { credits: e.target.value })} />
+                                            <input id={fid('credits')} className="field pe-in" type="number" min={1} max={100000} step={1} inputMode="numeric" enterKeyHint="next" value={d.credits} onChange={(e) => set(d.key, { credits: e.target.value })} />
                                         </label>
-                                        <label className="pe-f" htmlFor={fid('price')}>
+                                        <label className="pe-f pe-f-price" htmlFor={fid('price')}>
                                             <span className="mono">Precio</span>
                                             <input id={fid('price')} className="field pe-in" inputMode="decimal" value={d.price} onChange={(e) => set(d.key, { price: e.target.value })} placeholder={minorDigits(d.currency) === 0 ? '9900' : '99,00'} />
                                         </label>
-                                        <label className="pe-f" htmlFor={fid('cur')}>
+                                        <label className="pe-f pe-f-cur" htmlFor={fid('cur')}>
                                             <span className="mono">Moneda</span>
-                                            <select id={fid('cur')} className="field pe-in pe-select" value={d.currency} onChange={(e) => set(d.key, { currency: e.target.value })}>
+                                            <select id={fid('cur')} className="field pe-in" value={d.currency} onChange={(e) => set(d.key, { currency: e.target.value })}>
                                                 {CURRENCIES.map((c) => <option key={c} value={c}>{c.toUpperCase()}</option>)}
                                             </select>
                                         </label>
-                                        <label className="pe-f" htmlFor={fid('eur')}>
+                                        <label className="pe-f pe-f-eur" htmlFor={fid('eur')}>
                                             <span className="mono">España (EUR)</span>
-                                            <input id={fid('eur')} className="field pe-in" inputMode="decimal" value={d.priceEur} onChange={(e) => set(d.key, { priceEur: e.target.value })} placeholder="99,00" />
+                                            <input id={fid('eur')} className="field pe-in" inputMode="decimal" value={d.priceEur} onChange={(e) => set(d.key, { priceEur: e.target.value })} placeholder="Opcional" title="Vacío = precio base" />
                                         </label>
-                                        <label className="pe-f" htmlFor={fid('ars')}>
+                                        <label className="pe-f pe-f-ars" htmlFor={fid('ars')}>
                                             <span className="mono">Argentina (ARS)</span>
-                                            <input id={fid('ars')} className="field pe-in" inputMode="decimal" value={d.priceArs} onChange={(e) => set(d.key, { priceArs: e.target.value })} placeholder="Sin precio → USD" />
+                                            <input id={fid('ars')} className="field pe-in" inputMode="decimal" value={d.priceArs} onChange={(e) => set(d.key, { priceArs: e.target.value })} placeholder="Opcional" title="Vacío = precio base" />
                                         </label>
-                                        <label className="pe-f" htmlFor={fid('badge')}>
+                                        <label className="pe-f pe-f-badge" htmlFor={fid('badge')}>
                                             <span className="mono">Etiqueta</span>
                                             <input id={fid('badge')} className="field pe-in" value={d.badge} maxLength={24} onChange={(e) => set(d.key, { badge: e.target.value })} placeholder="Recomendado" />
                                         </label>
@@ -282,6 +296,7 @@ export function PackagesEditor({ initial, loadError }: { initial: PackageRow[]; 
                                         </label>
                                     </div>
 
+                                    {err && <p className="pe-err" role="alert">{err}</p>}
                                     <div className="pe-row-foot">
                                         <div className="pe-toggles">
                                             <Toggle label="Destacado" checked={d.highlight} onChange={(v) => set(d.key, { highlight: v })} />
@@ -299,7 +314,6 @@ export function PackagesEditor({ initial, loadError }: { initial: PackageRow[]; 
                                             </button>
                                         </div>
                                     </div>
-                                    {err && <p className="pe-err" role="alert">{err}</p>}
                                 </motion.div>
                             );
                         })}

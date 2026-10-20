@@ -349,8 +349,8 @@ export function WidgetStudio({
 
             {/* ── Confirmación: restablecer todo ── */}
             <Dialog open={resetOpen} onOpenChange={(o) => !resetting && setResetOpen(o)}>
-                <DialogContent className="!max-w-[440px] w-[calc(100vw-24px)] p-0 gap-0 bg-white rounded-[22px] border-[var(--blue-line)]">
-                    <div className="qoves-admin ws-confirm">
+                <DialogContent className="sf-dialog !max-w-[440px] w-[calc(100vw-24px)] p-0 gap-0 bg-white rounded-[22px] border-[var(--blue-line)]">
+                    <div className="qoves-admin sf-touch ws-confirm">
                         <span className="ws-confirm-ic" aria-hidden><RotateCcw size={20} /></span>
                         <DialogTitle className="ws-confirm-title">¿Restablecer todo el widget?</DialogTitle>
                         <DialogDescription className="ws-confirm-text">

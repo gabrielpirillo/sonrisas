@@ -576,3 +576,41 @@
 .qoves-admin .cr-free-ic { width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; flex-shrink: 0; background: rgba(255, 255, 255, 0.12); color: var(--blue-light); }
 .qoves-admin .cr-free strong { display: block; font-size: 15px; letter-spacing: -0.01em; }
 .qoves-admin .cr-free span { display: block; font-size: 13.5px; color: rgba(255, 255, 255, 0.75); margin-top: 2px; line-height: 1.45; }
+
+/* ---------- Panel de la clínica en móvil (táctil) ---------- */
+@media (max-width: 760px) {
+  .qoves-admin.sf-touch .cr-country { padding: 10px 12px; gap: 8px 10px; }
+  .qoves-admin.sf-touch .cr-country select { flex: 1 1 150px; min-width: 0; height: 44px; }
+  .qoves-admin.sf-touch .cr-country-cur { flex-basis: 100%; }
+  .qoves-admin.sf-touch .cr-free { padding: 14px; gap: 12px; align-items: flex-start; }
+  /* Barra de compra fija abajo mientras se eligen paquetes */
+  .qoves-admin.sf-touch .cr-checkout {
+    position: sticky;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    z-index: 5;
+    background: rgba(242, 246, 249, 0.94);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 18px 40px -22px rgba(19, 27, 34, 0.55);
+  }
+  .qoves-admin.sf-touch .cr-checkout { flex-direction: row; align-items: center; gap: 10px; padding: 10px 10px 10px 16px; }
+  .qoves-admin.sf-touch .cr-checkout-summary { flex: 1 1 auto; }
+  .qoves-admin.sf-touch .cr-checkout-summary strong {
+    font-size: 13.5px; line-height: 1.3;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .qoves-admin.sf-touch .cr-buy { width: auto; min-width: 0; min-height: 48px; padding: 12px 18px; }
+  .qoves-admin.sf-touch .cr-sum-pkg { display: none; }
+  .qoves-admin.sf-touch .cr-pkg-feats { font-size: 13px; }
+  .qoves-admin.sf-touch .cr-low-link { min-height: 36px; }
+  .qoves-admin.sf-touch .cr-row-buy .text-link { min-height: 36px; }
+  .qoves-admin.sf-touch .cr-hist-head .seg { width: 100%; display: grid; grid-template-columns: 1fr 1fr; }
+  .qoves-admin.sf-touch .cr-hist-head .seg button { justify-content: center; }
+  .qoves-admin.sf-touch .cr-ov-x { width: 44px; height: 44px; top: 10px; right: 10px; }
+  .qoves-admin.sf-touch .cr-ov-card { padding-bottom: calc(22px + env(safe-area-inset-bottom)); }
+  .qoves-admin.sf-touch .cr-ov-cta { width: 100%; min-height: 48px; }
+}
+@media (max-width: 340px) {
+  .qoves-admin.sf-touch .cr-checkout { flex-direction: column; align-items: stretch; }
+  .qoves-admin.sf-touch .cr-buy { width: 100%; }
+}

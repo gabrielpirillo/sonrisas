@@ -1066,3 +1066,263 @@
   font-size: 11.5px; font-weight: 600; white-space: nowrap;
 }
 .qoves-admin .lead-video-req svg { color: var(--blue-light); }
+
+/* ============================================================
+   Panel de la clínica · estructura y uso táctil
+   Clases nuevas (sf-shell, sf-touch, sf-dialog…): solo las usa el
+   panel de la clínica, así el superadmin no cambia.
+   ============================================================ */
+
+/* ---------- Estructura: escritorio con scroll interno, móvil con scroll de página ---------- */
+.qoves-admin.sf-shell { height: 100vh; height: 100dvh; overflow: hidden; }
+.qoves-admin .sf-shell-col { display: flex; flex-direction: column; height: 100%; }
+.qoves-admin .sf-shell-body { display: flex; flex: 1; min-height: 0; }
+.qoves-admin.sf-shell .main-scroll { overscroll-behavior-y: contain; }
+
+.qoves-admin .sf-imp-banner {
+  display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px 12px;
+  padding: 9px 16px; padding-top: max(9px, env(safe-area-inset-top));
+  background: linear-gradient(90deg, var(--blue-deep), var(--blue-ink));
+  color: #fff; font-size: 13px; text-align: center;
+}
+.qoves-admin .sf-imp-banner button {
+  min-height: 32px; padding: 0 4px; border: none; background: none; cursor: pointer;
+  color: inherit; font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px;
+}
+
+.qoves-admin .sf-mobile-header {
+  z-index: 40;
+  align-items: center; justify-content: space-between; gap: 12px;
+  padding: 6px 8px 6px 16px;
+  padding-top: max(6px, env(safe-area-inset-top));
+  padding-left: max(16px, env(safe-area-inset-left));
+  padding-right: max(8px, env(safe-area-inset-right));
+  background: linear-gradient(90deg, var(--navy-1), var(--navy-2));
+  color: #fff;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06), 0 10px 24px -18px rgba(19, 27, 34, 0.9);
+}
+.qoves-admin .sf-mobile-brand { display: inline-flex; align-items: center; min-height: 44px; border-radius: 10px; }
+.qoves-admin .sf-menu-btn {
+  width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+  display: grid; place-items: center;
+  border: none; background: transparent; color: #fff; cursor: pointer;
+  transition: background 0.2s var(--ease), transform 0.15s var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.qoves-admin .sf-menu-btn:hover { background: rgba(255, 255, 255, 0.08); }
+.qoves-admin .sf-menu-btn:active { transform: scale(0.94); background: rgba(255, 255, 255, 0.12); }
+.qoves-admin .sf-menu-btn:focus-visible,
+.qoves-admin .sf-mobile-brand:focus-visible,
+.qoves-admin .sf-auth-back:focus-visible { outline: 2px solid var(--blue-light); outline-offset: 2px; }
+
+/* Cambiar contraseña: barra de marca con vuelta al panel */
+.qoves-admin .sf-auth-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 8px 12px 8px 20px; padding-top: max(8px, env(safe-area-inset-top));
+  background: linear-gradient(90deg, var(--navy-1), var(--navy-2)); color: #fff;
+}
+.qoves-admin .sf-auth-back {
+  display: inline-flex; align-items: center; gap: 7px; min-height: 44px; padding: 0 12px; border-radius: 999px;
+  color: rgba(255, 255, 255, 0.85); font-size: 14px; font-weight: 500; text-decoration: none;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+.qoves-admin .sf-auth-back:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+
+/* Menú lateral dentro del Sheet móvil */
+.sf-sheet { width: min(300px, 86vw); max-width: none; background: var(--navy-2); }
+.qoves-admin .sidebar-sheet { width: 100%; padding-bottom: env(safe-area-inset-bottom); }
+.qoves-admin .sidebar-sheet .side-brand { padding-top: max(14px, env(safe-area-inset-top)); padding-right: 12px; }
+.qoves-admin .side-close {
+  margin-left: auto; width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+  display: grid; place-items: center; cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.12); background: rgba(255, 255, 255, 0.06); color: rgba(255, 255, 255, 0.85);
+  transition: background 0.2s var(--ease), color 0.2s var(--ease);
+}
+.qoves-admin .side-close:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.qoves-admin .side-close:focus-visible { outline: 2px solid var(--blue-light); outline-offset: 2px; }
+.qoves-admin .sidebar-sheet .navitem { min-height: 46px; padding-top: 11px; padding-bottom: 11px; }
+.qoves-admin .sidebar-sheet .clinic-switch { min-height: 56px; }
+.qoves-admin .sidebar-sheet .user-foot .icon-btn { width: 44px; height: 44px; }
+/* En teléfonos el acceso «Widget» ya está en la lista: la tarjeta solo si sobra altura */
+@media (max-height: 860px) { .qoves-admin .sidebar-sheet .side-widget { display: none; } }
+
+/* Teléfonos y tablets en vertical (< 1024 px): cabecera navy + menú en Sheet,
+   todo el ancho para el contenido y scroll de página (la barra del navegador se
+   recoge, funciona «tocar arriba para subir» y no hay doble scroll). */
+@media (max-width: 1023px) {
+  .qoves-admin.sf-shell .qoves-mobile-header { display: flex; }
+  .qoves-admin.sf-shell .qoves-desktop-sidebar { display: none; }
+  .qoves-admin.sf-shell { height: auto; min-height: 100vh; min-height: 100dvh; overflow: visible; }
+  .qoves-admin.sf-shell .sf-shell-col { height: auto; min-height: 100vh; min-height: 100dvh; }
+  .qoves-admin.sf-shell .sf-mobile-header { position: sticky; top: 0; }
+  .qoves-admin.sf-shell .sf-shell-body { flex: 1 0 auto; }
+  .qoves-admin.sf-shell .main-scroll { overflow: visible; }
+  .qoves-admin.sf-shell .admin-page { padding: 32px 28px calc(72px + env(safe-area-inset-bottom)); }
+  /* Anclas (#paquetes) bajo la cabecera fija */
+  .qoves-admin.sf-shell [id] { scroll-margin-top: 76px; }
+}
+@media (max-width: 767px) {
+  .qoves-admin.sf-shell .admin-page {
+    padding-top: 24px;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+}
+
+/* ---------- Táctil: objetivos de 44 px y campos de 16 px (sin zoom en iOS) ---------- */
+/* Táctil (teléfonos y tablets): tamaños de dedo y sin zoom automático de iOS */
+@media (max-width: 767px), (pointer: coarse) {
+  .qoves-admin.sf-touch .field,
+  .qoves-admin.sf-touch .ws-hex-input { font-size: 16px !important; }
+  .qoves-admin.sf-touch .btn-sm { min-height: 44px; }
+  .qoves-admin.sf-touch .icon-btn { width: 44px; height: 44px; }
+  .qoves-admin.sf-touch .seg button { min-height: 40px; padding: 9px 16px; }
+  .qoves-admin.sf-touch .chip { min-height: 40px; }
+  .qoves-admin.sf-touch .text-link { min-height: 44px; }
+}
+@media (min-width: 761px) and (max-width: 1023px) {
+  .qoves-admin.sf-touch .dash-hero-meta { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0 14px; }
+  .qoves-admin.sf-touch .dash-hero-meta > div { padding-right: 0; margin-right: 0; min-width: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; }
+  .qoves-admin.sf-touch .dash-hero-meta dd { margin: 0; }
+}
+@media (max-width: 767px) {
+  .qoves-admin.sf-touch .page-title { font-size: 30px; line-height: 1.06; }
+  .qoves-admin.sf-touch .page-head .lead { font-size: 15px !important; }
+  .qoves-admin.sf-touch .card:hover { box-shadow: var(--shadow-card); }
+  /* El hover no existe en táctil: sin saltos al tocar */
+  .qoves-admin.sf-touch .btn-primary:hover,
+  .qoves-admin.sf-touch .btn-white:hover,
+  .qoves-admin.sf-touch .btn-light:hover,
+  .qoves-admin.sf-touch .sf-row:hover { transform: none; }
+  .qoves-admin.sf-touch .btn:active { transform: scale(0.97); }
+}
+@media (max-width: 767px) and (prefers-reduced-motion: reduce) {
+  .qoves-admin.sf-touch .btn:active { transform: none; }
+}
+
+/* ---------- Diálogos del panel: botón de cierre grande y visible ---------- */
+[data-slot="dialog-content"].sf-dialog > [data-slot="dialog-close"] {
+  top: 12px; right: 12px; z-index: 5;
+  width: 40px; height: 40px; border-radius: 50%;
+  display: grid; place-items: center; opacity: 1;
+  background: #fff; border: 1px solid var(--blue-line); color: var(--ink-2);
+  box-shadow: 0 6px 16px -10px rgba(27, 38, 48, 0.5);
+  transition: border-color 0.2s var(--ease), color 0.2s var(--ease);
+}
+[data-slot="dialog-content"].sf-dialog > [data-slot="dialog-close"]:hover { border-color: var(--blue-accent); color: var(--blue-deep); }
+[data-slot="dialog-content"].sf-dialog > [data-slot="dialog-close"] svg { width: 18px; height: 18px; }
+@media (max-width: 767px) {
+  [data-slot="dialog-content"].sf-dialog > [data-slot="dialog-close"] { width: 44px; height: 44px; top: 10px; right: 10px; }
+}
+
+/* ---------- Resumen en móvil ---------- */
+@media (max-width: 760px) {
+  .qoves-admin.sf-touch .dash-hero-num { font-size: clamp(64px, 19vw, 84px); }
+  .qoves-admin.sf-touch .dash-hero-text { font-size: 23px; }
+  .qoves-admin.sf-touch .dash-hero-copy { font-size: 15px; }
+  .qoves-admin.sf-touch .dash-hero-actions { margin-top: 20px; }
+  .qoves-admin.sf-touch .dash-hero-actions > .btn { flex: 1 1 140px; }
+  /* Las tres cifras alineadas aunque una etiqueta ocupe dos líneas */
+  .qoves-admin.sf-touch .dash-hero-meta > div { display: flex; flex-direction: column; justify-content: space-between; gap: 6px; }
+  .qoves-admin.sf-touch .dash-hero-meta dd { margin: 0; }
+  .qoves-admin.sf-touch .dash-hero-meta-link { min-height: 40px; min-width: 56px; margin: -8px 0; }
+  .qoves-admin.sf-touch .ba-hero { height: 210px; }
+  /* Sonrisas recientes: carrusel horizontal con imán en vez de un muro de tarjetas */
+  .qoves-admin.sf-touch .recent-grid {
+    display: flex; gap: 10px;
+    overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory; scroll-padding-inline: 16px;
+    margin-inline: -16px; padding: 2px 16px 10px;
+    scrollbar-width: none;
+  }
+  .qoves-admin.sf-touch .recent-grid::-webkit-scrollbar { display: none; }
+  .qoves-admin.sf-touch .recent-grid > li { flex: 0 0 min(44%, 190px); scroll-snap-align: start; }
+  .qoves-admin.sf-touch .recent-card:hover { transform: none; }
+  .qoves-admin.sf-touch .queue-head { padding: 18px 18px 14px; }
+  .qoves-admin.sf-touch .queue-list { padding: 6px; }
+  .qoves-admin.sf-touch .queue-item { min-height: 60px; }
+  .qoves-admin.sf-touch .queue-foot { min-height: 48px; }
+}
+
+/* ---------- Leads en móvil: la tabla pasa a filas apiladas (sin scroll lateral) ---------- */
+.qoves-admin .lead-video-req-long { display: inline; }
+@media (min-width: 761px) and (max-width: 1023px) {
+  .qoves-admin.sf-touch .lead-video-req-long { display: none; }
+  .qoves-admin.sf-touch .lead-table thead th,
+  .qoves-admin.sf-touch .lead-table tbody td { padding-left: 14px; padding-right: 14px; }
+}
+@media (max-width: 760px) {
+  .qoves-admin.sf-touch .leads-search { flex: 1 1 100%; min-width: 0; }
+  .qoves-admin.sf-touch .leads-search .field { height: 48px !important; }
+  .qoves-admin.sf-touch .leads-toolbar { gap: 8px 12px; }
+  .qoves-admin.sf-touch .lead-table-wrap { overflow: visible !important; }
+  .qoves-admin.sf-touch .lead-table,
+  .qoves-admin.sf-touch .lead-table tbody { display: block; }
+  .qoves-admin.sf-touch .lead-table thead {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
+  .qoves-admin.sf-touch .lead-table tbody tr {
+    display: flex; align-items: center; gap: 10px;
+    padding: 14px 14px 14px 16px; min-height: 72px;
+    border-bottom: 1px solid var(--line);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .qoves-admin.sf-touch .lead-table tbody tr:last-child { border-bottom: none; }
+  .qoves-admin.sf-touch .lead-table tbody tr:active { background: var(--blue-tint); }
+  .qoves-admin.sf-touch .lead-table tbody td { display: block; padding: 0; border: none; }
+  .qoves-admin.sf-touch .lead-table tbody td:first-child { flex: 1; min-width: 0; }
+  .qoves-admin.sf-touch .lead-table tbody td.col-hide-sm { display: none; }
+  .qoves-admin.sf-touch .lead-table tbody tr.lead-row-pending { box-shadow: inset 3px 0 0 var(--navy-2); }
+  .qoves-admin.sf-touch .lead-table tbody tr.lead-row-pending td:first-child { box-shadow: none; }
+  .qoves-admin.sf-touch .lead-name { min-width: 0; }
+  .qoves-admin.sf-touch .lead-name-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .qoves-admin.sf-touch .lead-video-req-long { display: none; }
+  .qoves-admin.sf-touch .lead-table .status-pill { font-size: 11.5px; padding: 3px 9px 3px 8px; }
+  /* Embudo: cada pastilla tan ancha como su etiqueta */
+  .qoves-admin.sf-touch .pipe-tile { flex: 0 0 auto; min-width: 112px; }
+}
+
+/* ---------- Clínicas y equipo ---------- */
+.qoves-admin .sf-clinic-name {
+  font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; overflow-wrap: anywhere;
+}
+.qoves-admin .sf-clinic-row .sf-badge,
+.qoves-admin .sf-clinic-row .btn { flex-shrink: 0; }
+.qoves-admin .lead-name-text { min-width: 0; }
+.qoves-admin input[type="search"].field { -webkit-appearance: none; appearance: none; }
+.qoves-admin input[type="search"].field::-webkit-search-decoration { -webkit-appearance: none; }
+
+.qoves-admin .mm-invite { display: flex; gap: 8px; flex-wrap: wrap; }
+.qoves-admin .mm-invite .mm-email { flex: 1 1 200px; min-width: 0; height: 44px; font-size: 14px; }
+.qoves-admin .mm-invite .mm-role { width: 170px; height: 44px; font-size: 14px; }
+.qoves-admin .mm-invite .btn { height: 44px; }
+.qoves-admin .mm-row { padding: 10px 12px; }
+.qoves-admin .mm-who { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.qoves-admin .mm-name { display: flex; align-items: center; gap: 6px; min-width: 0; font-weight: 600; font-size: 14px; }
+.qoves-admin .mm-name > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qoves-admin .mm-mail { display: block; font-size: 12.5px; color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qoves-admin .mm-you { flex-shrink: 0; font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.14em; text-transform: uppercase; padding: 2px 7px; border-radius: 99px; background: var(--blue-soft); color: var(--blue-deep); }
+.qoves-admin .mm-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.qoves-admin .mm-actions select.field { width: 158px; height: 36px; font-size: 13px; padding: 0 38px 0 12px; background-position: right 12px center; }
+@media (max-width: 560px) {
+  .qoves-admin.sf-touch .mm-invite .mm-email { flex-basis: 100%; height: 48px; }
+  .qoves-admin.sf-touch .mm-invite .mm-role { flex: 1 1 0; width: auto; height: 48px; }
+  .qoves-admin.sf-touch .mm-invite .btn { flex: 1 1 0; height: 48px; }
+  .qoves-admin.sf-touch .mm-row { flex-wrap: wrap; row-gap: 10px; }
+  .qoves-admin.sf-touch .mm-who { flex: 1 1 100%; }
+  .qoves-admin.sf-touch .mm-actions { flex: 1 1 100%; }
+  .qoves-admin.sf-touch .mm-actions select.field { flex: 1 1 auto; width: auto; height: 44px; }
+  .qoves-admin.sf-touch .mm-actions .sf-badge { margin-left: 44px; }
+  .qoves-admin.sf-touch .mm-invites .mm-actions { justify-content: space-between; padding-left: 44px; }
+  .qoves-admin.sf-touch .mm-invites .mm-actions .sf-badge { margin-left: 0; }
+  .qoves-admin.sf-touch .sf-clinic-row { padding: 12px 12px 12px 14px; }
+}
+
+/* KPIs: si la tarjeta es estrecha (escritorio con 4 columnas, móvil con 2), la
+   etiqueta pasa bajo el icono y el minigráfico no la pisa. */
+.qoves-admin .kpi-card { container-type: inline-size; }
+@container (max-width: 300px) {
+  .qoves-admin .kpi-card > div:first-child > div { flex-direction: column; align-items: flex-start !important; gap: 10px !important; }
+}

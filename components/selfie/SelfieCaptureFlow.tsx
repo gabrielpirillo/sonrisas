@@ -2,21 +2,25 @@
 
 import { useRef, useState, useCallback } from "react";
 import Webcam from "react-webcam";
-import { CameraView } from "@/components/selfie/CameraView";
+import { CameraView, cameraErrorMessage } from "@/components/selfie/CameraView";
 import { FaceOverlay } from "@/components/selfie/FaceOverlay";
 import { useFaceDetection } from "@/hooks/selfie/useFaceDetection";
-import { Button } from "@/components/ui/button";
-// import Image from "next/image"; // Avoiding next/image for base64 blob previews to avoid config issues
-import { RefreshCcw, Check, Aperture, X } from "lucide-react";
+import { RefreshCcw, Check, Aperture, X, CameraOff } from "lucide-react";
 
 interface SelfieCaptureFlowProps {
     onCapture: (file: File) => void;
     onCancel: () => void;
 }
 
+/**
+ * Cámara con guía facial dentro del panel de foto del widget. Pensada para
+ * paneles bajos (≈300px en teléfonos pequeños): indicación arriba, óvalo al
+ * centro y controles abajo, sin solaparse.
+ */
 export function SelfieCaptureFlow({ onCapture, onCancel }: SelfieCaptureFlowProps) {
     const webcamRef = useRef<Webcam>(null);
     const [imgSrc, setImgSrc] = useState<string | null>(null);
+    const [camError, setCamError] = useState<string | null>(null);
 
     // Create a ref for the video element that useFaceDetection can key off of
     const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -28,7 +32,6 @@ export function SelfieCaptureFlow({ onCapture, onCancel }: SelfieCaptureFlowProp
         }
     }, [webcamRef]);
 
-    // Hook handles the logic
     const {
         isAligned,
         isSmiling,
@@ -57,7 +60,6 @@ export function SelfieCaptureFlow({ onCapture, onCancel }: SelfieCaptureFlowProp
     const confirmPhoto = async () => {
         if (imgSrc) {
             try {
-                // Convert base64 to File
                 const res = await fetch(imgSrc);
                 const blob = await res.blob();
                 const file = new File([blob], "selfie.jpg", { type: "image/jpeg" });
@@ -68,59 +70,61 @@ export function SelfieCaptureFlow({ onCapture, onCancel }: SelfieCaptureFlowProp
         }
     };
 
-    if (error) {
+    const failure = camError || (error ? "No pudimos iniciar el detector facial. Revisa tu conexión o sube una foto." : null);
+    if (failure) {
         return (
-            <div className="flex flex-col items-center justify-center h-full p-4 text-center">
-                <p className="mb-4" style={{ color: "#e8a59c" }}>Error: {error}</p>
-                <Button onClick={onCancel} variant="outline">Cerrar</Button>
+            <div className="relative flex h-full w-full flex-col items-center justify-center gap-4 bg-navy-3 p-6 text-center text-white" role="alert">
+                <span className="grid h-14 w-14 place-items-center rounded-full border border-white/20 bg-white/10">
+                    <CameraOff className="h-6 w-6" strokeWidth={1.6} />
+                </span>
+                <p className="m-0 max-w-[280px] text-[15px] leading-relaxed text-white/85">{failure}</p>
+                <button
+                    type="button"
+                    onClick={onCancel}
+                    className="min-h-12 rounded-full bg-white px-6 text-[15px] font-medium text-navy-2 transition-transform active:scale-[0.98]"
+                >
+                    Volver
+                </button>
             </div>
-        )
+        );
     }
 
     return (
         <div className="relative w-full h-full min-h-[500px] md:min-h-0 flex flex-col bg-navy-3 overflow-hidden rounded-xl">
-            {/* Close Button implementation if needed, but Widget usually handles navigation. 
-                Adding an absolute close button just in case. */}
-            <button
-                onClick={onCancel}
-                className="absolute top-4 right-4 z-50 p-2 bg-navy-2/55 text-white rounded-full border border-white/20 backdrop-blur-md hover:bg-navy-2/80 hover:rotate-90 transition-all duration-300"
-                title="Cancelar"
-                aria-label="Cancelar"
-            >
-                <X className="w-5 h-5" />
-            </button>
-
             {imgSrc ? (
                 // PREVIEW STATE
                 <div className="relative w-full h-full flex flex-col items-center justify-center bg-black">
-                    <img src={imgSrc} alt="Selfie" className="max-h-full max-w-full object-contain mirror-x" />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={imgSrc} alt="Tu selfie" className="absolute inset-0 h-full w-full object-cover" />
 
-                    <div className="absolute bottom-10 left-0 right-0 flex justify-center gap-8 z-20">
-                        <Button
-                            variant="outline"
-                            size="icon"
+                    <div className="absolute bottom-4 left-0 right-0 z-20 flex justify-center gap-6">
+                        <button
+                            type="button"
                             onClick={retake}
-                            className="rounded-full h-16 w-16 border-2 border-white/20 bg-black/40 text-white hover:bg-black/60 hover:text-white hover:scale-105 transition-all backdrop-blur-sm"
+                            aria-label="Repetir foto"
+                            className="grid h-14 w-14 place-items-center rounded-full border border-white/30 bg-navy-2/55 text-white backdrop-blur-md transition-transform hover:scale-105 active:scale-95"
                         >
-                            <RefreshCcw className="h-6 w-6" />
-                        </Button>
-                        <Button
-                            variant="default"
-                            size="icon"
+                            <RefreshCcw className="h-5 w-5" />
+                        </button>
+                        <button
+                            type="button"
                             onClick={confirmPhoto}
-                            className="rounded-full h-16 w-16 bg-blue-deep hover:bg-blue-ink text-white shadow-[0_14px_30px_-12px_rgba(79,107,127,0.8)] hover:scale-105 active:scale-95 transition-all"
+                            aria-label="Usar esta foto"
+                            className="grid h-14 w-14 place-items-center rounded-full bg-blue-deep text-white shadow-[0_14px_30px_-12px_rgba(79,107,127,0.8)] transition-transform hover:scale-105 active:scale-95"
                         >
-                            <Check className="h-8 w-8" />
-                        </Button>
+                            <Check className="h-7 w-7" />
+                        </button>
                     </div>
                 </div>
             ) : (
                 // CAMERA STATE
                 <div className="relative w-full h-full flex flex-col items-center justify-center bg-black">
-                    {/* Camera View - Forced to cover container or contain? 
-                        CameraView typically tries to fill. Let's ensure it fits nicely. */}
                     <div className="relative w-full h-full overflow-hidden">
-                        <CameraView ref={webcamRef} onUserMedia={handleUserMedia} />
+                        <CameraView
+                            ref={webcamRef}
+                            onUserMedia={handleUserMedia}
+                            onUserMediaError={(e) => setCamError(cameraErrorMessage(e))}
+                        />
 
                         {!isLoading && (
                             <FaceOverlay
@@ -137,26 +141,33 @@ export function SelfieCaptureFlow({ onCapture, onCancel }: SelfieCaptureFlowProp
                         )}
                     </div>
 
-                    {/* Capture Button */}
-                    <div className="absolute bottom-12 left-0 right-0 flex justify-center z-20 pointer-events-none">
-                        <Button
+                    {/* Controles: cancelar (izq.) + disparador (centro) */}
+                    <div className="absolute bottom-4 left-0 right-0 z-20 flex items-center justify-center">
+                        <button
+                            type="button"
+                            onClick={onCancel}
+                            aria-label="Cancelar"
+                            className="absolute left-4 grid h-11 w-11 place-items-center rounded-full border border-white/25 bg-navy-2/55 text-white backdrop-blur-md transition-transform active:scale-95"
+                        >
+                            <X className="h-5 w-5" />
+                        </button>
+                        <button
+                            type="button"
                             onClick={capture}
                             disabled={!isAligned}
-                            className={`
-                                rounded-full h-20 w-20 p-0 border-4 transition-all duration-500 flex items-center justify-center group pointer-events-auto
-                                ${isAligned
-                                    ? 'bg-white border-scan scale-110 shadow-[0_0_0_8px_rgba(6,182,212,0.18),0_0_34px_rgba(6,182,212,0.55)] cursor-pointer'
-                                    : 'bg-transparent border-white/30 scale-100 opacity-60 cursor-not-allowed'
-                                }
-                            `}
+                            aria-label={isAligned ? "Tomar foto" : "Tomar foto (alinea tu cara y sonríe)"}
+                            className={`grid h-16 w-16 place-items-center rounded-full border-4 p-0 transition-all duration-500 ${
+                                isAligned
+                                    ? "scale-105 cursor-pointer border-scan bg-white shadow-[0_0_0_8px_rgba(6,182,212,0.18),0_0_34px_rgba(6,182,212,0.55)]"
+                                    : "cursor-not-allowed border-white/40 bg-white/10 opacity-70"
+                            }`}
                         >
-                            <div className={`
-                                h-16 w-16 rounded-full transition-all duration-500
-                                ${isAligned ? 'bg-scan scale-90 group-hover:scale-75' : 'bg-transparent'}
-                            `}>
-                                {isAligned && <Aperture className="text-white h-full w-full p-3 animate-pulse" />}
-                            </div>
-                        </Button>
+                            <span
+                                className={`grid h-12 w-12 place-items-center rounded-full transition-all duration-500 ${isAligned ? "bg-scan" : "bg-white/20"}`}
+                            >
+                                {isAligned && <Aperture className="h-7 w-7 text-white motion-safe:animate-pulse" />}
+                            </span>
+                        </button>
                     </div>
 
                     {/* Loading State */}

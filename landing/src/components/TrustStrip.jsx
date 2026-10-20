@@ -37,7 +37,7 @@ function TrustGuarantees() {
       <div className="marquee">
         <div className="marquee-track ts-track">
           {[...GUARANTEES, ...GUARANTEES].map(([ic, t], i) =>
-          <span key={i} className="ts-chip"><span className="ts-chip-ic"><Ico name={ic} /></span>{t}</span>
+          <span key={i} className="ts-chip" aria-hidden={i >= GUARANTEES.length || undefined}><span className="ts-chip-ic"><Ico name={ic} /></span>{t}</span>
           )}
         </div>
       </div>

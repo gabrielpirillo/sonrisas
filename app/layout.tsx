@@ -39,6 +39,10 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#1b2630",
+  width: "device-width",
+  initialScale: 1,
+  // Permite usar env(safe-area-inset-*) en iPhone (notch y barra inferior).
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

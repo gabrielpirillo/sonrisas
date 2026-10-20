@@ -1,0 +1,232 @@
+/* ============================================================
+   Capa final — piezas nuevas y ajustes para móvil / tablet.
+   Se carga después de todas las hojas: aquí manda lo de teléfonos
+   (360–430 px) y tablet (768 px) sin tocar el escritorio.
+   ============================================================ */
+
+/* ---------- Base ---------- */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+#root a, #root button { -webkit-tap-highlight-color: rgba(79, 107, 127, 0.14); }
+/* anclas: el título no queda pegado/tapado por la píldora si reaparece al subir */
+section[id], header[id] { scroll-margin-top: 12px; }
+
+/* foco visible y coherente (azul acero; claro sobre fondos oscuros) */
+#root a:focus-visible,
+#root button:focus-visible,
+#root [tabindex]:focus-visible,
+#root summary:focus-visible { outline: 2px solid var(--blue-deep); outline-offset: 3px; }
+.hero2 :focus-visible, .tone-dark :focus-visible, .mx :focus-visible,
+.cta-final :focus-visible, .fx-win :focus-visible, .uc-a-dark :focus-visible { outline-color: var(--blue-light) !important; }
+.ba:focus-visible { outline-offset: 4px; }
+
+/* ---------- Tarjetas "Lo que verán tus visitantes" (antes en línea) ---------- */
+.fc { padding: 24px; display: flex; flex-direction: column; justify-content: flex-end; flex: 1; min-height: 230px; }
+.fc-ic { width: 52px; height: 52px; border-radius: 14px; background: var(--bg-tint); border: 1px solid var(--line); display: grid; place-items: center; color: var(--ink); margin-bottom: auto; flex-shrink: 0; }
+.fc-title { font-size: 21px; font-weight: 600; letter-spacing: -0.02em; margin: 20px 0 8px; }
+.fc-body { font-size: 14.5px; color: var(--ink-2); line-height: 1.5; margin: 0; }
+
+/* ---------- Recorrido: pasos y puntos ahora son botones ---------- */
+.journey .step { width: 100%; background: none; font: inherit; color: inherit; text-align: left; }
+.journey .step .st, .journey .step .sd { display: block; }
+.journey .step:focus-visible { outline-offset: 2px; }
+.journey .mdots { gap: 0; }
+.journey .mdots button { display: grid; place-items: center; width: 36px; height: 44px; padding: 0; border: 0; background: none; cursor: pointer; }
+.journey .mdots button.on i { width: 22px; background: var(--blue-deep); border-radius: 4px; }
+/* altura "pequeña" del visor: en móvil la barra del navegador no tapa los puntos */
+@supports (height: 100svh) { .journey .jsticky { height: 100svh; } }
+
+/* ---------- Casos de uso: puntos del carrusel (solo móvil) ---------- */
+.uc-a-copy { font-size: 14.5px; }
+.uc-dots { display: none; }
+.uc-dots button { display: grid; place-items: center; width: 36px; height: 44px; padding: 0; border: 0; background: none; cursor: pointer; }
+.uc-dots i { display: block; width: 7px; height: 7px; border-radius: 99px; background: var(--blue-line); transition: width 0.35s var(--ease), background 0.35s var(--ease); }
+.uc-dots button.on i { width: 22px; background: var(--blue-deep); }
+
+/* ---------- CTA final ---------- */
+.ctaf-brand { white-space: nowrap; }
+.ctaf-contact a { display: inline-block; padding: 12px 2px; margin: -12px 0; }
+.ctaf-actions { display: flex; gap: 16px; justify-content: center; align-items: center; flex-wrap: wrap; }
+
+/* ---------- Pie: enlaces legales ---------- */
+.ft-legal { display: flex; flex-wrap: wrap; gap: 4px 20px; }
+.ft-bottom .ft-legal a { display: inline-flex; align-items: center; min-height: 44px; border-bottom: 0; color: rgba(255, 255, 255, 0.7); }
+.ft-bottom .ft-legal a:hover { color: #fff; }
+.ft-bottom > span > a { display: inline-block; padding: 12px 0; margin: -12px 0; border-bottom: 0; text-decoration: underline; text-decoration-color: rgba(185, 207, 221, 0.45); text-underline-offset: 3px; }
+
+/* =================== Tablet y móvil (≤ 900 px) =================== */
+@media (max-width: 900px) {
+  /* Casos de uso: carrusel a sangre (el borde de la pantalla, no el de la columna),
+     alineado al margen de la página y con la siguiente tarjeta asomando */
+  .uc-a-grid.wrap {
+    width: 100%;
+    padding: 4px 24px 14px;
+    scroll-padding-inline: 24px;
+    overscroll-behavior-x: contain;
+  }
+  .uc-a-card { flex: 0 0 min(82%, 380px); scroll-snap-align: start; }
+  .uc-dots { display: flex; justify-content: center; margin-top: 2px; }
+  .uc-a-copy { font-size: 15px; }
+}
+
+/* =================== Tablet y móvil (≤ 860 px) =================== */
+@media (max-width: 860px) {
+  /* ---- Hero: el vídeo arriba (se ve la cara), la copy abajo sobre un velo navy ---- */
+  .hero2 {
+    height: auto;
+    min-height: 100vh;
+    align-items: flex-end;
+    background: linear-gradient(180deg, #9ebacc 0%, #9ebacc 34%, #33495a 66%, #1f2d38 100%);
+  }
+  @supports (min-height: 100svh) { .hero2 { min-height: 100svh; } }
+  .hero2-video {
+    top: 0; bottom: auto;
+    width: 100%; height: 66%;
+    transform: none;
+    object-position: 50% 28%;
+    opacity: 1;
+    -webkit-mask-image: linear-gradient(180deg, #000 52%, transparent 100%);
+    mask-image: linear-gradient(180deg, #000 52%, transparent 100%);
+  }
+  .hero2-scrim {
+    background: linear-gradient(180deg,
+      rgba(27, 38, 48, 0.38) 0%,
+      rgba(27, 38, 48, 0) 18%,
+      rgba(27, 38, 48, 0) 36%,
+      rgba(27, 38, 48, 0.55) 56%,
+      rgba(27, 38, 48, 0.88) 74%,
+      rgba(27, 38, 48, 0.94) 100%);
+  }
+  .hero2-inner { padding: 0 0 32px; }
+  .hero2-copy { max-width: 560px; }
+  .hero2-h1 { font-size: clamp(34px, 10vw, 46px); margin: 0 0 14px; }
+  .hero2-lead { font-size: 16.5px; text-align: left; max-width: 36em; }
+  .hero2-ctas { margin-top: 22px; gap: 10px; flex-wrap: nowrap; max-width: 460px; }
+  .hero2-ctas > .btn { flex: 1 1 0; min-width: 0; min-height: 50px; padding: 15px 12px; font-size: 15.5px; }
+  .hero2-stats {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 22px; padding-top: 16px; max-width: 460px;
+    border-top: 1px solid rgba(255, 255, 255, 0.18);
+  }
+  .hero2-stat { padding: 0 10px; margin: 0; max-width: none; border-right: 1px solid rgba(255, 255, 255, 0.18); }
+  .hero2-stat:first-child { padding-left: 0; }
+  .hero2-stat:last-child { padding-right: 0; border-right: 0; }
+  .hero2-stat-t { font-size: 13px; line-height: 1.25; text-align: left; }
+  .hero2-stat-d { font-size: 11.5px; line-height: 1.35; text-align: left; color: rgba(255, 255, 255, 0.66); }
+
+  /* ---- "Cada visita, un lead": título → tarjeta → checks → CTA ---- */
+  .la-grid { gap: 0; }
+  .la-copy { display: contents; }
+  .la-kicker { order: 1; }
+  .la-title { order: 2; }
+  .la-lead { order: 3; }
+  .la-card-wrap { order: 4; margin-bottom: 34px; }
+  .la-checks { order: 5; margin-bottom: 28px; }
+  .la-cta { order: 6; justify-self: start; min-height: 50px; }
+
+  /* ---- Cómo funciona ---- */
+  .hiw-body { padding: 22px 22px 24px; }
+  .hiw-copy { font-size: 15.5px; }
+  .hiw-title { font-size: 22px; }
+
+  /* ---- Análisis: mismo margen lateral que el resto de la página ---- */
+  .facial-analysis { padding-left: 24px; padding-right: 24px; }
+  .ax-copy { font-size: 15px; }
+  .fa-head .lead { font-size: 16.5px !important; }
+
+  /* ---- Recorrido: sin aire extra alrededor del visor fijo ---- */
+  #recorrido { padding-top: 0 !important; padding-bottom: 0 !important; }
+  .journey .jsticky { padding: 0 24px; }
+  .journey .mcap .md { font-size: 14.5px; }
+
+  /* ---- Vídeo ---- */
+  .video-grid > div:first-child .lead { margin-bottom: 26px !important; }
+}
+
+/* =================== Móvil grande / tablet (≤ 820 px) =================== */
+@media (max-width: 820px) {
+  /* "Lo que verán tus visitantes": primero el comparador (lo que se ve), luego las
+     cuatro ventajas en tarjetas compactas (icono + texto) en vez de 4×230 px */
+  .future-grid { gap: 12px !important; }
+  .pp-center { order: -1; min-height: 0 !important; margin-bottom: 14px; }
+  .pp-media { flex: none !important; width: 100%; aspect-ratio: 4 / 5; max-height: min(72vh, 560px); }
+  .pp-col { gap: 12px !important; }
+  .fc { flex-direction: row; align-items: flex-start; justify-content: flex-start; gap: 16px; min-height: 0; padding: 18px 18px 20px; }
+  .fc-ic { width: 44px; height: 44px; border-radius: 12px; margin: 0; }
+  .fc-title { font-size: 18px; margin: 2px 0 4px; }
+  .fc-body { font-size: 15px; }
+}
+@media (min-width: 600px) and (max-width: 820px) {
+  .future-grid { grid-template-columns: 1fr 1fr !important; }
+  .pp-center { grid-column: 1 / -1; }
+}
+
+/* =================== Móvil (≤ 768 px) =================== */
+@media (max-width: 768px) {
+  .sci-landing { padding-top: 68px; padding-bottom: 60px; }
+  .ft-wordmark { font-size: 18.4vw; }
+}
+
+/* =================== Teléfonos (≤ 560 px) =================== */
+@media (max-width: 560px) {
+  /* ---- Píldora: logo · Acceder · Quiero probarlo (todo ≥ 44 px de alto) ---- */
+  .navpill { top: 12px; width: calc(100% - 24px); height: 60px; padding: 0 8px 0 16px; }
+  .nav-logo { height: 22px !important; }
+  .nav-actions { gap: 2px; }
+  .nav-login { display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px; font-size: 14.5px !important; }
+  .navpill .nav-cta { min-height: 44px; padding: 0 16px; font-size: 14px; }
+
+  /* ---- Cada visita, un lead ---- */
+  .la-card { padding: 22px 20px; border-radius: 22px; }
+  .la-badge { position: static; display: inline-block; margin-bottom: 14px; }
+  .la-head { margin-bottom: 18px; }
+  .la-cta { justify-self: stretch; }
+  .la-check { font-size: 16px; }
+
+  /* ---- CTAs de sección a todo el ancho: mismo gesto en toda la página ---- */
+  .video-grid .btn-white { width: 100%; min-height: 50px; }
+  .bb-ctas > .btn { flex: 1 1 0; min-width: 0; min-height: 50px; padding-left: 12px !important; padding-right: 12px !important; }
+
+  /* ---- Testimonios / Brandboost ---- */
+  .bb-card, .bb-card-in { min-height: 300px !important; }
+  .bb-card-in { padding: 24px !important; }
+  .bb-card-tag { letter-spacing: 0.12em !important; }
+  .bb-logos { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .bb-logo-tile { min-height: 84px; padding: 16px 14px; }
+  .bb-logo-tile img { max-height: 42px; }
+  .bb-tst { padding: 22px !important; }
+  .bb-tst-foot { flex-direction: column; align-items: flex-start !important; gap: 14px !important; }
+  .bb-tst-stat { text-align: left !important; display: flex; align-items: baseline; gap: 8px; }
+  .bb-tst-lbl { max-width: none !important; margin-top: 0 !important; font-size: 13px !important; }
+  .bb-seal { font-size: 14px !important; }
+
+  /* ---- FAQ ---- */
+  .faq-q { font-size: 17px; padding: 20px 0; gap: 14px; }
+  .faq-a p { padding: 0 0 22px; }
+
+  /* ---- CTA final ---- */
+  .ctaf-title { font-size: clamp(40px, 12vw, 52px); }
+  .ctaf-lead { font-size: 17px; margin: 18px auto 32px; }
+  .ctaf-actions { flex-direction: column; align-items: stretch; gap: 12px; max-width: 340px; margin: 0 auto; }
+  .ctaf-actions > .btn { width: 100%; padding: 17px 24px !important; }
+
+  /* ---- Pie ---- */
+  .ft-col { gap: 0; }
+  .ft-h { margin-bottom: 4px; }
+  .ft-link { min-height: 44px; padding: 10px 0; }
+  .ft-cta { min-height: 48px; }
+  .ft-badges { gap: 12px 14px; }
+  .ft-bottom { gap: 8px; }
+  .ft-top-btn { min-height: 44px; }
+}
+
+/* =================== Teléfonos angostos (≤ 380 px) =================== */
+@media (max-width: 380px) {
+  .navpill { padding: 0 6px 0 14px; }
+  .nav-logo { height: 20px !important; }
+  .nav-login { padding: 0 8px; font-size: 14px !important; }
+  .navpill .nav-cta { padding: 0 13px; font-size: 13.5px; }
+  .hero2-ctas > .btn { font-size: 15px; padding: 15px 8px; }
+  .hero2-stat { padding: 0 7px; }
+  .hero2-stat-t { font-size: 12.5px; }
+  .hero2-stat-d { font-size: 11px; }
+}

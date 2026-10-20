@@ -37,7 +37,7 @@ export function SuccessStep({ variant, userEmail, onReset, whatsappHref }: Succe
                     <span className="pill-dot" />{isVideo ? "VÍDEO · POR WHATSAPP" : "CORREO · ENVIADO"}
                 </span>
                 <h2 className="wf-h2" style={{ textAlign: "center" }}>{title}</h2>
-                <p className="wf-sub" style={{ textAlign: "center", maxWidth: 340, margin: 0 }}>{sub}</p>
+                <p className="wf-sub" style={{ textAlign: "center", maxWidth: 340, margin: 0, textWrap: "pretty" }}>{sub}</p>
                 {isVideo && whatsappHref ? (
                     <a className="btn btn-primary" href={whatsappHref} target="_blank" rel="noopener noreferrer" style={{ marginTop: 6, textDecoration: "none" }}>
                         <WIcon name="wa" size={17} />
@@ -47,7 +47,7 @@ export function SuccessStep({ variant, userEmail, onReset, whatsappHref }: Succe
                 {!isVideo && userEmail ? (
                     <span className="wf-success-email">
                         <WIcon name="mail" size={15} />
-                        {userEmail}
+                        <span>{userEmail}</span>
                     </span>
                 ) : null}
                 <button type="button" className="btn btn-ghost" style={{ background: "#fff", marginTop: 10 }} onClick={onReset}>

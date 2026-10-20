@@ -184,8 +184,8 @@ export function PreviewPane({
             </p>
 
             <Dialog open={expanded} onOpenChange={setExpanded}>
-                <DialogContent className="!max-w-[min(1400px,96vw)] w-[96vw] h-[92vh] p-0 gap-0 overflow-hidden bg-white rounded-[24px] border-[var(--blue-line)]">
-                    <div className="qoves-admin ws-expanded">
+                <DialogContent className="sf-dialog !max-w-[min(1400px,96vw)] w-[96vw] h-[92vh] h-[92dvh] p-0 gap-0 overflow-hidden bg-white rounded-[24px] border-[var(--blue-line)]">
+                    <div className="qoves-admin sf-touch ws-expanded">
                         <div className="ws-preview-bar" style={{ paddingRight: 56 }}>
                             <div className="ws-preview-title">
                                 <span className="mono">VISTA PREVIA</span>

@@ -129,7 +129,7 @@ export function CheckoutReturn({ compra, sessionId, estado }: Props) {
                 <AnimatePresence>
                     {open && phase && (
                         <Dialog.Portal forceMount>
-                            <div className="qoves-admin">
+                            <div className="qoves-admin sf-touch">
                                 <Dialog.Overlay asChild forceMount>
                                     <motion.div
                                         className="cr-ov"

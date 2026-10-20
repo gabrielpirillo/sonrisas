@@ -11,6 +11,9 @@ export default async function SimulacionPage({
 }) {
   const { id } = await params
 
+  // Un id con formato inválido haría fallar la consulta (500): mejor "no encontrado".
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return notFound()
+
   const lead = await db.queryOne(
     'SELECT name, video_path FROM leads WHERE id = $1',
     [id]
@@ -42,7 +45,7 @@ export default async function SimulacionPage({
           display: flex;
           flex-direction: column;
           align-items: center;
-          padding: 20px 16px 28px;
+          padding: max(20px, env(safe-area-inset-top, 0px)) 16px max(28px, env(safe-area-inset-bottom, 0px));
           -webkit-font-smoothing: antialiased;
         }
 
@@ -184,7 +187,8 @@ export default async function SimulacionPage({
         .sf-note { color: rgba(255, 255, 255, 0.45); }
 
         @media (max-width: 600px) {
-          .sf-sim { padding: 16px 12px 22px; }
+          .sf-sim { padding: max(16px, env(safe-area-inset-top, 0px)) 12px max(22px, env(safe-area-inset-bottom, 0px)); }
+          .sf-mono { font-size: 10px; }
           .sf-sim-head { margin: 26px 0 18px; }
           .sf-video { height: 62vh; height: 62dvh; border-radius: 20px; }
           .sf-sim-cta { width: 100%; }
@@ -219,7 +223,9 @@ export default async function SimulacionPage({
             controls
             autoPlay
             playsInline
+            preload="metadata"
             src={videoSrc}
+            aria-label={firstName ? `Vídeo de la simulación de sonrisa de ${firstName}` : 'Vídeo de tu simulación de sonrisa'}
           />
         </div>
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { LeadFields } from "./LeadFields";
 import { PhotoPanel } from "./PhotoPanel";
 import { WIcon } from "../WIcon";
@@ -24,6 +25,20 @@ interface LeadFormStepProps {
     onSubmit: () => void;
 }
 
+/** Campos de texto a los que salta "Siguiente" (los desplegables se omiten: el prefijo casi nunca cambia). */
+const FIELD_SELECTOR = "input:not([type=hidden]):not([type=file]):not([type=checkbox]):not([type=radio]), textarea";
+
+/** Lleva la vista (y el foco) al primer dato pendiente marcado con data-missing. */
+function revealFirstMissing(root: HTMLElement | null) {
+    requestAnimationFrame(() => {
+        const el = root?.querySelector<HTMLElement>("[data-missing]");
+        if (!el) return;
+        const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+        el.scrollIntoView({ block: "center", behavior: reduce ? "auto" : "smooth" });
+        el.focus({ preventScroll: true });
+    });
+}
+
 export function LeadFormStep({
     isDesktop,
     formValues,
@@ -38,6 +53,9 @@ export function LeadFormStep({
     onSubmit,
 }: LeadFormStepProps) {
     const { config: { texts, features, customFields } } = useWidgetConfig();
+    const rootRef = useRef<HTMLFormElement & HTMLDivElement>(null);
+    // Se activa al tocar el CTA con algo pendiente: marca lo que falta.
+    const [showMissing, setShowMissing] = useState(false);
     const formOk =
         !!formValues.name &&
         !!formValues.email &&
@@ -52,14 +70,20 @@ export function LeadFormStep({
             setFormValues={setFormValues}
             selectedCountry={selectedCountry}
             setSelectedCountry={setSelectedCountry}
+            showMissing={showMissing}
         />
     );
 
     // ── Desktop: Datos (izq) + Foto (der) en un solo paso ──
     if (isDesktop) {
         const ready = formOk && photoReady;
+        const tryStart = () => {
+            if (ready) return onSubmit();
+            setShowMissing(true);
+            revealFirstMissing(rootRef.current);
+        };
         return (
-            <div className="dk-intake">
+            <div className="dk-intake" ref={rootRef}>
                 <div className="dk-grid">
                     <div className="dk-col">
                         <div className="wf-intro wf-stagger">
@@ -88,15 +112,22 @@ export function LeadFormStep({
                     </div>
                 </div>
                 <div className="dk-foot">
-                    <p className="mono" style={{ fontSize: 9, margin: 0 }}>
-                        <WIcon name="lock" size={13} /> VALIDACIÓN BIOMÉTRICA · DATOS CIFRADOS
-                    </p>
+                    {showMissing && !ready ? (
+                        <p className="wf-missing" role="alert" style={{ margin: 0 }}>
+                            <WIcon name="alert" size={16} />
+                            {formOk ? "Añade tu foto para ver tu simulación." : "Completa los datos marcados para continuar."}
+                        </p>
+                    ) : (
+                        <p className="mono" style={{ fontSize: 9.5, margin: 0 }}>
+                            <WIcon name="lock" size={13} /> VALIDACIÓN BIOMÉTRICA · DATOS CIFRADOS
+                        </p>
+                    )}
                     <button
                         type="button"
                         className="btn btn-primary"
-                        disabled={!ready}
+                        aria-disabled={!ready}
                         style={{ padding: "16px 30px" }}
-                        onClick={onSubmit}
+                        onClick={tryStart}
                     >
                         {texts.submitButton}
                         <WIcon name="arrow" size={17} className="btn-arrow" />
@@ -107,8 +138,38 @@ export function LeadFormStep({
     }
 
     // ── Mobile: solo datos (la foto es el siguiente paso) ──
+    const tryContinue = () => {
+        if (formOk) return onContinue();
+        setShowMissing(true);
+        revealFirstMissing(rootRef.current);
+    };
+
+    // "Siguiente" del teclado: pasa al próximo campo; en el último, intenta continuar.
+    const onKeyDown = (e: React.KeyboardEvent<HTMLFormElement>) => {
+        const t = e.target as HTMLElement;
+        if (e.key !== "Enter" || !(t instanceof HTMLInputElement)) return;
+        e.preventDefault();
+        if (formOk) return onContinue();
+        const list = Array.from(e.currentTarget.querySelectorAll<HTMLElement>(FIELD_SELECTOR));
+        const next = list[list.indexOf(t) + 1];
+        if (next) next.focus();
+        else {
+            t.blur();
+            tryContinue();
+        }
+    };
+
     return (
-        <div className="wf-body">
+        <form
+            ref={rootRef}
+            className="wf-body"
+            noValidate
+            onKeyDown={onKeyDown}
+            onSubmit={(e) => {
+                e.preventDefault();
+                tryContinue();
+            }}
+        >
             <div className="wf-intro wf-stagger">
                 <span className="mono wf-eyebrow">PASO 01 <b>· TUS DATOS</b></span>
                 <h2 className="wf-h2">
@@ -117,17 +178,22 @@ export function LeadFormStep({
                 <p className="wf-sub">{texts.subtitle}</p>
             </div>
             {fields}
-            <div className="sf-rise" style={{ animationDelay: "0.36s" }}>
+            <div className="wf-cta-bar sf-rise" style={{ animationDelay: "0.36s" }}>
                 <button
-                    type="button"
+                    type="submit"
                     className="btn btn-primary wf-cta"
-                    disabled={!formOk}
-                    onClick={onContinue}
+                    aria-disabled={!formOk}
                 >
                     Continuar
                     <WIcon name="arrow" size={17} className="btn-arrow" />
                 </button>
+                {showMissing && !formOk && (
+                    <p className="wf-missing" role="alert">
+                        <WIcon name="alert" size={16} />
+                        Completa los datos marcados para continuar.
+                    </p>
+                )}
             </div>
-        </div>
+        </form>
     );
 }

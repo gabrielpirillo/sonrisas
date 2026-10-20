@@ -67,10 +67,11 @@ export function AccountCards({
                 ) : (
                     <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
                         <Field label="CONTRASEÑA ACTUAL">
-                            <input className="field" type="password" value={current} onChange={(e) => setCurrent(e.target.value)} required style={{ height: 44 }} />
+                            <input className="field" type="password" autoComplete="current-password" value={current} onChange={(e) => setCurrent(e.target.value)} required style={{ height: 48 }} />
                         </Field>
                         <Field label="NUEVA CONTRASEÑA">
-                            <input className="field" type="password" value={next} onChange={(e) => setNext(e.target.value)} minLength={8} required style={{ height: 44 }} />
+                            <input className="field" type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} minLength={8} required style={{ height: 48 }} aria-describedby="acc-pass-hint" />
+                            <span id="acc-pass-hint" style={{ display: "block", fontSize: 12.5, color: "var(--ink-3)", marginTop: 7 }}>Mínimo 8 caracteres. Se cerrarán tus otras sesiones abiertas.</span>
                         </Field>
                         <button className="btn btn-primary" type="submit" disabled={loading} style={{ marginTop: 4 }}>
                             {loading ? <Loader2 className="animate-spin" size={16} /> : "Actualizar contraseña"}
@@ -86,7 +87,7 @@ export function AccountCards({
                 <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 20 }}>
                     <span className="avatar" style={{ width: 48, height: 48, fontSize: 15 }}>{initials(name, email)}</span>
                     <div style={{ minWidth: 0 }}>
-                        <div style={{ fontSize: 16, fontWeight: 600 }}>{name || "Usuario"}</div>
+                        <div style={{ fontSize: 16, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name || "Usuario"}</div>
                         <div style={{ fontSize: 13, color: "var(--ink-3)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{email || "—"}</div>
                     </div>
                 </div>

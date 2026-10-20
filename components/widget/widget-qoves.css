@@ -134,7 +134,8 @@
   border-radius: var(--r-pill);
   padding: 0 22px;
   font-family: var(--font-sans);
-  font-size: 15px;
+  /* 16px: por debajo, Safari en iOS hace zoom al enfocar el campo */
+  font-size: 16px;
   color: var(--ink);
   outline: none;
   transition: border-color 0.2s var(--ease), background 0.2s var(--ease), box-shadow 0.25s var(--ease);
@@ -142,7 +143,16 @@
 .qoves-widget .field::placeholder { color: var(--ink-3); }
 .qoves-widget .field:hover { border-color: var(--blue-line); }
 .qoves-widget .field:focus { border-color: var(--blue-deep); background: #fff; box-shadow: var(--w-ring); }
-.qoves-widget .field:user-invalid { border-color: var(--danger); background: #fff; box-shadow: 0 0 0 4px var(--danger-soft); }
+.qoves-widget .field:user-invalid,
+.qoves-widget .field[aria-invalid="true"] { border-color: var(--danger); background: #fff; box-shadow: 0 0 0 4px var(--danger-soft); }
+/* Fecha (iOS la pinta centrada y sin alto propio) */
+.qoves-widget input[type="date"].field {
+  -webkit-appearance: none; appearance: none;
+  display: flex; align-items: center; min-width: 0; line-height: normal;
+}
+.qoves-widget input[type="date"].field::-webkit-date-and-time-value { text-align: left; margin: 0; }
+.qoves-widget input[type="date"].field::-webkit-calendar-picker-indicator { opacity: 0.55; cursor: pointer; }
+.qoves-widget input[type="number"].field { -moz-appearance: textfield; }
 
 /* input con icono */
 .qoves-widget .wf-input { position: relative; display: block; }
@@ -161,9 +171,20 @@
 }
 .qoves-widget .wf-phone { display: flex; gap: 8px; }
 .qoves-widget .wf-select { position: relative; width: 108px; flex-shrink: 0; }
-.qoves-widget .wf-select select { appearance: none; -webkit-appearance: none; padding: 0 42px 0 18px; cursor: pointer; }
+.qoves-widget .wf-select select { appearance: none; -webkit-appearance: none; padding: 0 42px 0 18px; cursor: pointer; text-overflow: ellipsis; }
 /* Flecha de los desplegables: separada del borde redondeado */
 .qoves-widget .wf-select-chev { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: var(--ink-3); pointer-events: none; display: grid; place-items: center; }
+/* Prefijo: el desplegable nativo lista "bandera + país (+código)"; cerrado
+   solo se ve "bandera +código" (capa superpuesta; el select sigue siendo
+   el que recibe el toque). */
+.qoves-widget .wf-dial { width: 116px; }
+.qoves-widget .wf-dial select { color: transparent; }
+.qoves-widget .wf-dial select option { color: var(--ink); }
+.qoves-widget .wf-dial-value {
+  position: absolute; left: 16px; right: 38px; top: 50%; transform: translateY(-50%);
+  pointer-events: none; font-size: 16px; color: var(--ink); white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums;
+}
 .qoves-widget .wf-phone .wf-input { flex: 1; min-width: 0; }
 
 /* ============================================================
@@ -177,22 +198,28 @@
   padding: 16px 20px;
   flex-shrink: 0;
 }
-.qoves-widget .wf-header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.qoves-widget .wf-brand { display: inline-flex; align-items: center; }
+.qoves-widget .wf-header-left { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 0 1 auto; }
+.qoves-widget .wf-brand { display: inline-flex; align-items: center; min-width: 0; }
 .qoves-widget .wf-brand img { height: 17px; width: auto; display: block; }
-.qoves-widget .wf-brand img.wf-brand-logo { height: 32px; max-width: 180px; object-fit: contain; }
-.qoves-widget .wf-brand-name { font-size: 17px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+.qoves-widget .wf-brand img.wf-brand-logo { height: 32px; max-width: min(180px, 100%); object-fit: contain; object-position: left center; }
+.qoves-widget .wf-brand-name { font-size: 17px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; min-width: 0; }
+.qoves-widget .wf-header > .wf-online { flex-shrink: 0; }
 .qoves-widget .wf-back {
-  width: 34px; height: 34px; border-radius: 50%;
+  position: relative;
+  width: 40px; height: 40px; border-radius: 50%;
   border: 1px solid var(--w-line); background: #fff; cursor: pointer;
   display: grid; place-items: center; color: var(--ink-2); flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
   transition: border-color 0.2s var(--ease), color 0.2s var(--ease), transform 0.25s var(--ease-out), background 0.2s var(--ease);
 }
+/* zona táctil de 48px sin agrandar el círculo */
+.qoves-widget .wf-back::before { content: ""; position: absolute; inset: -4px; border-radius: 50%; }
 .qoves-widget .wf-back:hover { border-color: var(--blue-accent); color: var(--blue-deep); background: var(--blue-tint); transform: translateX(-2px); }
+.qoves-widget .wf-back:active { transform: scale(0.94); }
 .qoves-widget .wf-back:focus-visible { outline: none; box-shadow: var(--w-ring); }
 .qoves-widget .wf-online {
   display: inline-flex; align-items: center; gap: 7px;
-  font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.16em; color: var(--blue-deep);
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.16em; color: var(--blue-deep);
   padding: 6px 11px; border-radius: 99px; border: 1px solid var(--blue-line); background: var(--blue-tint);
   white-space: nowrap;
 }
@@ -212,7 +239,7 @@
   transition: background 0.4s var(--ease), border-color 0.4s var(--ease), color 0.4s var(--ease), box-shadow 0.4s var(--ease), transform 0.4s var(--ease-out);
 }
 .qoves-widget .stepper-dot svg { animation: sf-pop 0.4s var(--ease-out) both; }
-.qoves-widget .stepper-lbl { font-size: 10.5px; color: var(--ink-3); margin-top: 7px; letter-spacing: -0.01em; text-align: center; transition: color 0.3s var(--ease); }
+.qoves-widget .stepper-lbl { font-size: 11px; color: var(--ink-3); margin-top: 7px; letter-spacing: -0.01em; text-align: center; transition: color 0.3s var(--ease); }
 .qoves-widget .stepper-line {
   position: absolute; top: 14px; left: calc(50% + 18px); width: calc(100% - 36px);
   height: 2px; margin-top: -1px; border-radius: 2px; background: var(--w-line); z-index: 1; overflow: hidden;
@@ -248,7 +275,7 @@
    ============================================================ */
 .qoves-widget .wf-body { flex: 1; display: flex; flex-direction: column; padding: 6px 22px 22px; }
 .qoves-widget .wf-intro { margin-bottom: 18px; }
-.qoves-widget .wf-eyebrow { font-size: 9px; display: inline-flex; align-items: center; gap: 8px; color: var(--blue-deep); }
+.qoves-widget .wf-eyebrow { font-size: 10px; display: inline-flex; align-items: center; gap: 8px; color: var(--blue-deep); }
 .qoves-widget .wf-eyebrow b { font-weight: 500; color: var(--ink-3); }
 .qoves-widget .wf-h2 {
   font-family: var(--font-sans); font-size: 28px; font-weight: 600;
@@ -257,20 +284,44 @@
 .qoves-widget .wf-intro .wf-eyebrow + .wf-h2 { margin-top: 10px; }
 .qoves-widget .wf-sub { font-size: 14.5px; color: var(--ink-2); line-height: 1.5; margin: 8px 0 0; letter-spacing: -0.005em; }
 .qoves-widget .wf-fields { display: flex; flex-direction: column; gap: 12px; }
-.qoves-widget .wf-field { height: 52px; font-size: 15px; }
-.qoves-widget .wf-consents { display: flex; flex-direction: column; gap: 4px; margin-top: 4px; }
+.qoves-widget .wf-field { height: 52px; font-size: 16px; }
+.qoves-widget .wf-consents { display: flex; flex-direction: column; gap: 0; margin-top: 2px; }
 .qoves-widget .wf-consent {
-  display: flex; gap: 11px; align-items: center; font-size: 13px; color: var(--ink-2);
-  cursor: pointer; padding: 5px 6px; margin: 0 -6px; line-height: 1.4; border-radius: 12px;
-  transition: background 0.2s var(--ease), color 0.2s var(--ease);
-  -webkit-tap-highlight-color: transparent; user-select: none;
+  display: flex; gap: 12px; align-items: center; font-size: 14px; color: var(--ink-2);
+  cursor: pointer; padding: 8px; margin: 0 -8px; min-height: 44px; line-height: 1.4; border-radius: 14px;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease), box-shadow 0.25s var(--ease);
+  -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none;
 }
 .qoves-widget .wf-consent:hover { background: var(--blue-tint); color: var(--ink); }
+.qoves-widget .wf-consent:active { background: var(--blue-tint); }
 .qoves-widget .wf-consent:focus-visible { outline: none; box-shadow: var(--w-ring); }
-.qoves-widget .wf-consent a { color: var(--blue-deep); text-underline-offset: 2px; }
+.qoves-widget .wf-consent a { color: var(--blue-deep); text-underline-offset: 2px; padding: 6px 0; margin: -6px 0; }
 .qoves-widget .wf-consent a:hover { color: var(--blue-ink); }
+/* Falta marcarlo (tras tocar "Continuar" con algo pendiente) */
+.qoves-widget .wf-consent[aria-invalid="true"] { background: var(--danger-soft); color: var(--ink); }
+.qoves-widget .wf-consent[aria-invalid="true"] .wf-check { border-color: var(--danger); }
+.qoves-widget .wf-missing {
+  display: flex; align-items: center; gap: 8px; margin: 12px 0 0;
+  font-size: 13.5px; line-height: 1.4; color: var(--danger);
+  animation: sf-rise 0.35s var(--ease-out) both;
+}
+.qoves-widget .wf-missing svg { flex-shrink: 0; }
 .qoves-widget .wf-cta { width: 100%; margin-top: 22px; padding: 17px 24px; }
-.qoves-widget .wf-foot { font-size: 8.5px; text-align: center; margin-top: 16px; letter-spacing: 0.16em; display: flex; align-items: center; justify-content: center; gap: 7px; }
+/* CTA "desactivado" pero tocable: al tocarlo se señala lo que falta */
+.qoves-widget .btn[aria-disabled="true"] { opacity: 0.42; box-shadow: none; transform: none; }
+.qoves-widget .btn[aria-disabled="true"]::after { display: none; }
+.qoves-widget .btn[aria-disabled="true"] .btn-arrow { transform: none; }
+.qoves-widget .btn-primary[aria-disabled="true"]:hover { background: var(--blue-deep); transform: none; box-shadow: none; }
+/* Barra del CTA principal: en móvil queda fija abajo mientras el formulario
+   no cabe en pantalla (en modo embed el iframe no tiene scroll propio, así
+   que simplemente queda en su sitio). */
+.qoves-widget .wf-cta-bar {
+  position: sticky; bottom: 0; z-index: 20;
+  margin: 10px -22px 0; padding: 12px 22px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0), #fff 22px);
+}
+.qoves-widget .wf-cta-bar .wf-cta { margin-top: 0; }
+.qoves-widget .wf-foot { font-size: 9.5px; text-align: center; margin-top: 16px; letter-spacing: 0.16em; display: flex; align-items: center; justify-content: center; gap: 7px; }
 .qoves-widget .wf-foot svg { color: var(--blue-accent); flex-shrink: 0; }
 
 /* check redondo (consentimientos) */
@@ -377,7 +428,8 @@
 .qoves-widget .pf-btns { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 252px; }
 .qoves-widget .pf-btn {
   display: flex; align-items: center; justify-content: center; gap: 9px;
-  padding: 14px 18px; border-radius: 99px;
+  padding: 14px 18px; min-height: 48px; border-radius: 99px;
+  -webkit-tap-highlight-color: transparent;
   border: 1px solid rgba(255, 255, 255, 0.4); background: rgba(255, 255, 255, 0.12);
   -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   color: #fff; font-family: var(--font-sans); font-size: 14.5px; font-weight: 500;
@@ -401,6 +453,7 @@
   transition: background 0.2s var(--ease), transform 0.4s var(--ease-out);
 }
 .qoves-widget .pf-redo:hover { background: #fff; transform: rotate(-90deg); }
+.qoves-widget .pf-redo:active { transform: scale(0.94); }
 .qoves-widget .pf-redo:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.55); }
 .qoves-widget .pf-actions .btn { flex: 1; }
 .qoves-widget .dk-shot-ok {
@@ -410,10 +463,24 @@
   color: #fff; font-size: 13px; font-weight: 500;
 }
 .qoves-widget .dk-shot-ok svg { color: var(--scan); }
+.qoves-widget .pf-actions .btn { min-width: 0; white-space: normal; text-align: center; line-height: 1.2; }
 
 /* cámara en vivo (SelfieCaptureFlow) dentro del panel */
 .qoves-widget .pf-camera { position: absolute; inset: 0; z-index: 6; animation: sf-fade 0.4s var(--ease) both; }
 .qoves-widget .pf-camera > div { min-height: 0 !important; height: 100% !important; border-radius: 0 !important; }
+
+/* Móvil a pantalla completa (no embed): los paneles se adaptan al alto
+   disponible para que el botón principal quede a la vista en teléfonos
+   bajos. En modo embed NO se usan unidades de viewport: el iframe toma el
+   alto del contenido y se retroalimentaría. */
+/* Página /widget en el móvil: a sangre y a pantalla completa. */
+@media (max-width: 639px) {
+  .wf-page-card .qoves-widget:not([data-embed]) { min-height: 100dvh; }
+}
+@media (max-width: 767px) {
+  .qoves-widget:not([data-embed]) .photo-frame { height: clamp(300px, calc(100dvh - 330px), 440px); }
+  .qoves-widget:not([data-embed]) .proc-a-stage { height: clamp(300px, calc(100dvh - 300px), 440px); }
+}
 
 /* ============================================================
    Procesando — escáner inmersivo
@@ -465,7 +532,7 @@
 .qoves-widget .proc-corner.bl { bottom: 16px; left: 16px; border-bottom-width: 2px; border-left-width: 2px; border-bottom-left-radius: 7px; }
 .qoves-widget .proc-corner.br { bottom: 16px; right: 16px; border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 7px; }
 .qoves-widget .proc-tag {
-  position: absolute; z-index: 6; font-family: var(--font-mono); font-size: 8.5px;
+  position: absolute; z-index: 6; font-family: var(--font-mono); font-size: 9px;
   letter-spacing: 0.14em; color: #fff; background: rgba(19, 27, 34, 0.55);
   -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
   border: 1px solid rgba(6, 182, 212, 0.45); padding: 4px 9px 4px 8px; border-radius: 99px; white-space: nowrap;
@@ -475,7 +542,7 @@
 .qoves-widget .proc-tag::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: var(--scan); box-shadow: 0 0 8px var(--scan); }
 @keyframes wfFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 .qoves-widget .proc-a-bar { position: absolute; left: 0; right: 0; bottom: 0; padding: 50px 22px 20px; z-index: 7; }
-.qoves-widget .proc-a-bar .mono { color: rgba(255, 255, 255, 0.9); font-size: 9px; }
+.qoves-widget .proc-a-bar .mono { color: rgba(255, 255, 255, 0.9); font-size: 9.5px; }
 .qoves-widget .proc-pct { font-variant-numeric: tabular-nums; color: #fff !important; }
 .qoves-widget .proc-track { position: relative; height: 4px; background: rgba(255, 255, 255, 0.16); border-radius: 99px; overflow: hidden; }
 .qoves-widget .proc-track > div {
@@ -500,7 +567,7 @@
 .qoves-widget .st-item {
   display: inline-flex; align-items: center; gap: 7px;
   padding: 6px 11px 6px 7px; border-radius: 99px;
-  font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase;
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.12em; text-transform: uppercase;
   color: var(--ink-3); background: #fff; border: 1px solid var(--w-line);
   transition: color 0.35s var(--ease), background 0.35s var(--ease), border-color 0.35s var(--ease);
 }
@@ -521,7 +588,9 @@
 /* ============================================================
    Resultado
    ============================================================ */
-.qoves-widget .wf-result { height: 340px; }
+.qoves-widget .wf-result { height: auto; aspect-ratio: 4 / 5; max-height: 520px; }
+/* a pantalla completa, que el primer CTA asome sin hacer scroll */
+.qoves-widget:not([data-embed]) .wf-result { max-height: min(520px, calc(100dvh - 340px)); min-height: 280px; }
 .qoves-widget .wf-result-frame {
   position: relative; width: 100%; height: 100%; border-radius: var(--r-card); overflow: hidden;
   background: var(--w-stage);
@@ -529,7 +598,7 @@
 }
 .qoves-widget .wf-result-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
 .qoves-widget .wf-result-actions .btn,
-.qoves-widget .dk-result-actions .btn { width: 100%; padding: 16px 20px; }
+.qoves-widget .dk-result-actions .btn { width: 100%; padding: 16px 20px; min-height: 52px; white-space: normal; text-align: center; line-height: 1.25; }
 .qoves-widget .wf-result-actions .btn-ghost,
 .qoves-widget .dk-result-actions .btn-ghost { background: #fff; }
 .qoves-widget .wf-note { font-size: 13px; color: var(--ink-3); line-height: 1.55; margin: 0 0 24px; }
@@ -566,10 +635,11 @@
 .qoves-widget .ba-wrap:hover .ba-handle { transform: scale(1.08); }
 .qoves-widget .ba-wrap.dragging .ba-handle { transform: scale(0.94); box-shadow: 0 0 0 8px rgba(6, 182, 212, 0.25), 0 0 32px rgba(6, 182, 212, 0.65); }
 .qoves-widget .ba-wrap.dragging .ba-handle::after { animation: none; opacity: 0; }
+.qoves-widget .ba-wrap { touch-action: pan-y; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
 .qoves-widget .ba-wrap:focus-visible { outline: none; box-shadow: inset 0 0 0 3px var(--blue-light); }
 .qoves-widget .ba-hint {
   position: absolute; left: 50%; bottom: 52px; transform: translateX(-50%); z-index: 10; pointer-events: none;
-  font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.16em; text-transform: uppercase; white-space: nowrap;
+  font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; white-space: nowrap;
   color: #fff; padding: 6px 12px; border-radius: 99px; background: rgba(19, 27, 34, 0.45);
   -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   transition: opacity 0.4s var(--ease);
@@ -598,18 +668,27 @@
   display: inline-flex; align-items: center; gap: 8px; margin-top: 4px;
   font-size: 13.5px; font-weight: 500; color: var(--blue-ink);
   padding: 8px 14px; border-radius: 99px; background: var(--blue-tint); border: 1px solid var(--blue-line);
-  max-width: 100%; overflow: hidden; text-overflow: ellipsis;
+  max-width: 100%; min-width: 0;
 }
+.qoves-widget .wf-success > * { max-width: 100%; }
+.qoves-widget .wf-success-email svg { flex-shrink: 0; }
+.qoves-widget .wf-success-email span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qoves-widget .wf-success .btn { max-width: 100%; white-space: normal; text-align: center; line-height: 1.25; min-height: 52px; }
 
 /* ============================================================
    Overlay de envío
    ============================================================ */
 .qoves-widget .wf-overlay {
   position: absolute; inset: 0; z-index: 50;
+  overscroll-behavior: contain;
   display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center;
   background: rgba(242, 246, 249, 0.72);
   -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
 }
+/* A pantalla completa la tarjeta queda a la vista aunque el widget sea más
+   alto que la pantalla (se pega al centro del viewport al hacer scroll). */
+.qoves-widget:not([data-embed]) .wf-overlay { align-items: flex-start; padding-top: max(24px, calc(50dvh - 150px)); }
+.qoves-widget:not([data-embed]) .wf-overlay-card { position: sticky; top: max(24px, calc(50dvh - 150px)); }
 .qoves-widget .wf-overlay-card {
   width: 100%; max-width: 340px; padding: 30px 26px 26px; border-radius: 24px;
   background: #fff; border: 1px solid var(--blue-line);
@@ -689,23 +768,46 @@
 /* ── Campos adicionales de la clínica ─────────────────── */
 .qoves-widget .wf-custom { display: flex; flex-direction: column; gap: 14px; }
 .qoves-widget .wf-cf { display: flex; flex-direction: column; gap: 7px; border: 0; margin: 0; padding: 0; min-width: 0; }
-.qoves-widget .wf-cf > label, .qoves-widget .wf-cf legend { font-size: 13.5px; font-weight: 600; color: var(--ink); padding: 0; }
+.qoves-widget .wf-cf > label:not(.wf-consent), .qoves-widget .wf-cf legend { font-size: 13.5px; font-weight: 600; color: var(--ink); padding: 0; }
 .qoves-widget .wf-cf legend { margin-bottom: 7px; }
 .qoves-widget .wf-cf-label { display: inline-flex; align-items: baseline; gap: 5px; }
 .qoves-widget .wf-cf-req { color: var(--blue-deep); margin-left: 2px; }
 .qoves-widget .wf-cf-opt { font-weight: 400; font-size: 12px; color: var(--ink-3); }
 .qoves-widget .wf-cf-help { font-size: 12.5px; color: var(--ink-3); line-height: 1.4; }
 .qoves-widget .wf-cf .wf-field { padding: 0 18px; }
-.qoves-widget .wf-cf-area { height: auto; min-height: 92px; padding: 14px 18px; line-height: 1.5; resize: vertical; border-radius: 18px; }
+.qoves-widget .wf-cf-area { height: auto; min-height: 96px; max-height: 220px; padding: 14px 18px; line-height: 1.5; resize: none; border-radius: 18px; field-sizing: content; }
 .qoves-widget .wf-cf-select { position: relative; width: 100%; }
 .qoves-widget .wf-cf-select select { width: 100%; appearance: none; padding-right: 50px; }
 .qoves-widget .wf-cf-chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .qoves-widget .wf-cf-chip {
-  padding: 10px 16px; border-radius: var(--r-pill, 999px); border: 1px solid var(--line-strong, #d6d9d6);
-  background: var(--bg-soft, #f5f6f6); font: inherit; font-size: 14px; color: var(--ink-2); cursor: pointer;
+  min-height: 44px; padding: 10px 17px; border-radius: var(--r-pill, 999px); border: 1px solid var(--line-strong, #d6d9d6);
+  background: var(--bg-soft, #f5f6f6); font: inherit; font-size: 15px; line-height: 1.25; color: var(--ink-2); cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   transition: background 0.2s var(--ease), border-color 0.2s var(--ease), color 0.2s var(--ease), transform 0.15s var(--ease);
 }
 .qoves-widget .wf-cf-chip:hover { border-color: var(--blue-accent); color: var(--blue-deep); }
 .qoves-widget .wf-cf-chip:active { transform: scale(0.97); }
 .qoves-widget .wf-cf-chip.on { background: var(--blue-deep); border-color: var(--blue-deep); color: #fff; font-weight: 600; }
-.qoves-widget .wf-cf-check { align-items: flex-start; }
+.qoves-widget .wf-cf-check { align-items: center; }
+.qoves-widget .wf-cf.is-missing .wf-cf-chip { border-color: var(--danger); background: #fff; }
+.qoves-widget .wf-cf.is-missing > label:not(.wf-consent),
+.qoves-widget .wf-cf.is-missing legend { color: var(--danger); }
+@media (hover: none) {
+  /* en táctil no dejar "pegado" el hover tras tocar */
+  .qoves-widget .wf-cf-chip:hover:not(.on) { border-color: var(--line-strong, #d6d9d6); color: var(--ink-2); }
+  .qoves-widget .wf-consent:hover:not(:active) { background: transparent; color: var(--ink-2); }
+  .qoves-widget .wf-consent[aria-invalid="true"]:hover { background: var(--danger-soft); }
+  /* sin "levantar" ni girar botones al tocar (el hover se queda pegado en táctil) */
+  .qoves-widget .btn-primary:not(:disabled):hover:not(:active),
+  .qoves-widget .btn-ghost:not(:disabled):hover:not(:active),
+  .qoves-widget .pf-btn:hover:not(:active),
+  .qoves-widget .pf-redo:hover:not(:active),
+  .qoves-widget .wf-back:hover:not(:active) { transform: none; }
+  .qoves-widget .btn-primary:not(:disabled):hover { box-shadow: none; }
+  .qoves-widget .btn-primary:not(:disabled):hover::after { transform: translateX(-120%); transition: none; }
+  .qoves-widget .btn:not(:disabled):hover .btn-arrow { transform: none; }
+  .qoves-widget .ba-wrap:hover .ba-handle { transform: none; }
+  .qoves-widget .ba-wrap.dragging .ba-handle { transform: scale(0.94); }
+}
+/* El foco no debe quedar tapado por la barra fija del CTA */
+html:has(.qoves-widget .wf-cta-bar) { scroll-padding-bottom: 110px; }

@@ -20,7 +20,13 @@ export const useWidgetConfig = () => useContext(Ctx);
  * por postMessage (mismo origen) y los aplica al instante.
  */
 export function WidgetConfigProvider({ children }: { children: React.ReactNode }) {
-    const [state, setState] = useState<WidgetConfigState>({ config: DEFAULT_WIDGET_CONFIG, clinicName: "", preview: false });
+    // `preview` no cambia lo que se pinta (solo evita guardar datos), así que
+    // puede leerse de la URL al iniciar sin riesgo de desajuste de hidratación.
+    const [state, setState] = useState<WidgetConfigState>(() => ({
+        config: DEFAULT_WIDGET_CONFIG,
+        clinicName: "",
+        preview: typeof window !== "undefined" && new URLSearchParams(window.location.search).get("preview") === "1",
+    }));
 
     useEffect(() => {
         const params = new URLSearchParams(window.location.search);
@@ -28,7 +34,6 @@ export function WidgetConfigProvider({ children }: { children: React.ReactNode }
         const preview = params.get("preview") === "1";
         let cancelled = false;
         let draftReceived = false;
-        if (preview) setState((s) => ({ ...s, preview: true }));
 
         fetch(`/api/widget/config${key ? `?key=${encodeURIComponent(key)}` : ""}`, { cache: "no-store" })
             .then((r) => (r.ok ? r.json() : null))

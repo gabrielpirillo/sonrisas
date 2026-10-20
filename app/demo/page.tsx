@@ -133,7 +133,7 @@ function DemoContent() {
                         <a href="/" className="hide-sm sfd-back">
                             <ArrowLeft size={15} /> Volver a la web
                         </a>
-                        <Link href="/acceso" className="hide-sm">Acceder</Link>
+                        <Link href="/acceso" className="sfd-login">Acceder</Link>
                         <a href={CONTACT_HREF} target="_blank" rel="noopener noreferrer" className="hide-sm">Contactarnos</a>
                         <Link href={SIGNUP_HREF} className="sfd-btn sfd-btn-dark sfd-btn-sm">Crear cuenta</Link>
                     </nav>
@@ -210,7 +210,7 @@ function DemoContent() {
                     <div className="sfd-wrap">
                         <div>
                             <h2>¿Lo quieres en la web de <em>tu clínica?</em></h2>
-                            <p>Crea tu cuenta y activa el widget en tu web en 1 día. Implementación gratuita y sin costos extra: solo pagas los créditos que usas.</p>
+                            <p>Crea tu cuenta y activa el widget en tu web en 1 día. Implementación gratuita y sin costos extra: solo pagas los créditos que usas.</p>
                         </div>
                         <div className="sfd-actions">
                             <Link href={SIGNUP_HREF} className="sfd-btn sfd-btn-white">Crear cuenta</Link>
@@ -223,7 +223,11 @@ function DemoContent() {
             <footer className="sfd-foot">
                 <div className="sfd-wrap">
                     <span>© {new Date().getFullYear()} Smile Fast</span>
-                    <Link href="/acceso">Acceso para clínicas</Link>
+                    <nav aria-label="Pie de página">
+                        <Link href="/privacidad">Privacidad</Link>
+                        <Link href="/terminos">Términos</Link>
+                        <Link href="/acceso">Acceso para clínicas</Link>
+                    </nav>
                 </div>
             </footer>
         </div>

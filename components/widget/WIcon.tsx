@@ -5,7 +5,7 @@ import { LogoMark as BrandLogoMark } from "@/components/admin/qoves/LogoMark";
 
 type IconName =
     | "cam" | "upload" | "check" | "back" | "wa" | "mail" | "refresh" | "shutter"
-    | "arrow" | "lock" | "user" | "phone" | "chev" | "spark" | "slide";
+    | "arrow" | "lock" | "user" | "phone" | "chev" | "spark" | "slide" | "alert";
 
 const PATHS: Record<IconName, React.ReactNode> = {
     cam: (
@@ -53,6 +53,12 @@ const PATHS: Record<IconName, React.ReactNode> = {
     chev: <path d="M7 10l5 5 5-5" />,
     spark: <path d="M12 3.5l1.9 5.1 5.1 1.9-5.1 1.9L12 17.5l-1.9-5.1L5 10.5l5.1-1.9L12 3.5ZM18.5 16l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2Z" />,
     slide: <path d="M9 7l-5 5 5 5M15 7l5 5-5 5" />,
+    alert: (
+        <>
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7.5v5.5M12 16.4v.1" />
+        </>
+    ),
 };
 
 export function WIcon({ name, size = 18, className }: { name: IconName; size?: number; className?: string }) {

@@ -27,8 +27,8 @@ export default function InvitePage() {
             style={{ background: 'radial-gradient(60% 50% at 50% 0%, var(--blue-tint), #fff 70%)' }}
         >
             <div className="sf-rise"><Wordmark height={24} /></div>
-            <Loader2 className="h-7 w-7 animate-spin" style={{ color: 'var(--blue-deep)' }} />
-            <p className="text-sm" style={{ color: 'var(--ink-2)' }}>{message}</p>
+            <Loader2 className="h-7 w-7 motion-safe:animate-spin" style={{ color: 'var(--blue-deep)' }} aria-hidden="true" />
+            <p className="text-sm" style={{ color: 'var(--ink-2)' }} role="status" aria-live="polite">{message}</p>
         </div>
     );
 }

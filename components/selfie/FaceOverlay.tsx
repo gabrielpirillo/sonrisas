@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
 interface FaceOverlayProps {
     isAligned: boolean;
@@ -14,6 +14,12 @@ interface FaceOverlayProps {
     isCorrectSize: boolean;
 }
 
+/**
+ * Guía de encuadre sobre la cámara: óvalo con proporción de cara (no se
+ * deforma en contenedores altos o bajos) + indicación arriba. Usa unidades de
+ * contenedor (cqh/cqw) para encajar tanto en el panel del widget como en la
+ * página /selfie a pantalla completa.
+ */
 export const FaceOverlay: React.FC<FaceOverlayProps> = ({
     isAligned,
     isSmiling,
@@ -25,16 +31,15 @@ export const FaceOverlay: React.FC<FaceOverlayProps> = ({
     isCentered,
     isCorrectSize,
 }) => {
+    const reduceMotion = useReducedMotion();
     // Paleta de marca: neutro (sin cara) · ámbar (ajuste) · rosado (error) · cian (listo)
-    const NEUTRAL = "rgba(255, 255, 255, 0.75)";
+    const NEUTRAL = "rgba(255, 255, 255, 0.8)";
     const WARN = "#f2c879";
     const ERR = "#e8a59c";
     const OK = "#06b6d4";
 
-    // Determine stroke color and feedback text based on detailed state
     let strokeColor = NEUTRAL;
     let feedbackText = "Ubica tu cara en el óvalo";
-    let strokeWidth = 2; // Thinner by default
 
     if (multipleFacesDetected) {
         strokeColor = ERR;
@@ -42,106 +47,64 @@ export const FaceOverlay: React.FC<FaceOverlayProps> = ({
     } else if (!faceDetected) {
         strokeColor = NEUTRAL;
         feedbackText = "Ubica tu cara en el óvalo";
-    } else if (faceDetected && !isAligned) {
-        // Face detected but something is off (centering, size, or smile, or light)
-
+    } else if (!isAligned) {
         if (isLowLight) {
             strokeColor = WARN;
             feedbackText = "Necesitas más luz";
         } else if (!isSmiling) {
-            // Check specific reasons for not smiling
-            if (smileScore > 0.25 && jawOpenScore <= 0.01) {
-                strokeColor = WARN;
-                feedbackText = "Abre un poco más la boca";
-            } else {
-                strokeColor = WARN;
-                feedbackText = "¡Sonríe!";
-            }
+            strokeColor = WARN;
+            feedbackText = smileScore > 0.25 && jawOpenScore <= 0.01 ? "Abre un poco más la boca" : "¡Sonríe!";
         } else {
-            // Smiling but not aligned (position/size)
             strokeColor = ERR;
-            if (!isCentered) {
-                feedbackText = "Centra tu cara";
-            } else if (!isCorrectSize) {
-                feedbackText = "Acércate un poco más";
-            } else {
-                feedbackText = "Ajusta tu posición";
-            }
+            feedbackText = !isCentered ? "Centra tu cara" : !isCorrectSize ? "Acércate un poco más" : "Ajusta tu posición";
         }
-    } else if (isAligned) {
+    } else {
         strokeColor = OK;
-        strokeWidth = 4;
         feedbackText = "¡Perfecto!";
     }
 
     return (
-        <div className="absolute inset-0 pointer-events-none flex items-center justify-center font-sans">
-            <svg
-                viewBox="0 0 100 100"
-                className="w-full h-full opacity-60"
-                preserveAspectRatio="none"
-            >
-                <defs>
-                    <mask id="mask" x="0" y="0" width="100%" height="100%">
-                        <rect x="0" y="0" width="100%" height="100%" fill="white" />
-                        <motion.ellipse
-                            cx="50"
-                            cy="45"
-                            rx="20"
-                            ry="28"
-                            fill="black"
-                            animate={{
-                                rx: isAligned ? 21 : 20,
-                                ry: isAligned ? 29 : 28,
-                            }}
-                            transition={{
-                                duration: 0.5,
-                                repeat: isAligned ? 0 : Infinity,
-                                repeatType: "reverse",
-                            }}
-                        />
-                    </mask>
-                </defs>
-                <rect
-                    x="0"
-                    y="0"
-                    width="100%"
-                    height="100%"
-                    fill="rgba(19,27,34,0.72)"
-                    mask="url(#mask)"
-                />
+        <div
+            className="absolute inset-0 pointer-events-none overflow-hidden font-sans"
+            style={{ containerType: "size" }}
+        >
+            {/* Óvalo: el resto de la imagen queda atenuado con una sombra enorme */}
+            <motion.div
+                aria-hidden="true"
+                className="absolute left-1/2 rounded-[50%]"
+                style={{
+                    top: "46%",
+                    x: "-50%",
+                    y: "-50%",
+                    height: "min(54cqh, 76cqw)",
+                    aspectRatio: "3 / 4",
+                    border: `${isAligned ? 3 : 2}px ${isAligned ? "solid" : "dashed"} ${strokeColor}`,
+                    boxShadow: `0 0 0 100vmax rgba(19, 27, 34, 0.6)${isAligned ? `, 0 0 28px ${OK}, inset 0 0 22px rgba(6,182,212,0.35)` : ""}`,
+                    transition: "border-color 0.3s ease, box-shadow 0.3s ease",
+                }}
+                animate={reduceMotion ? { scale: 1 } : { scale: isAligned ? 1.02 : [1, 1.025, 1] }}
+                transition={
+                    reduceMotion || isAligned
+                        ? { duration: 0.3 }
+                        : { duration: 2.2, repeat: Infinity, ease: "easeInOut" }
+                }
+            />
 
-                <motion.ellipse
-                    cx="50"
-                    cy="45"
-                    rx="20"
-                    ry="28"
-                    fill="none"
-                    stroke={strokeColor}
-                    strokeWidth={strokeWidth}
-                    strokeDasharray={isAligned ? "0" : "1 4"}
-                    animate={{
-                        scale: isAligned ? 1.02 : 1,
-                        stroke: strokeColor,
-                    }}
-                    transition={{ duration: 0.3 }}
-                />
-            </svg>
-
-            <div className="absolute top-1/2 mt-16 w-full flex justify-center px-4">
+            {/* Indicación (arriba, lejos de la boca y del disparador) */}
+            <div className="absolute top-3.5 inset-x-3.5 flex justify-center" aria-live="polite">
                 <motion.p
                     key={feedbackText}
-                    initial={{ opacity: 0, y: 6, scale: 0.97 }}
+                    initial={reduceMotion ? false : { opacity: 0, y: -6, scale: 0.97 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-                    className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-[15px] font-medium tracking-[-0.01em] text-white backdrop-blur-md"
+                    className="m-0 inline-flex max-w-full items-center gap-2 rounded-full px-3.5 py-2 text-[14px] font-medium leading-tight tracking-[-0.01em] text-white backdrop-blur-md"
                     style={{
-                        background: isAligned ? "rgba(6,182,212,0.28)" : "rgba(19,27,34,0.55)",
+                        background: isAligned ? "rgba(6,182,212,0.3)" : "rgba(19,27,34,0.62)",
                         border: `1px solid ${isAligned ? "rgba(6,182,212,0.7)" : "rgba(255,255,255,0.22)"}`,
                         boxShadow: isAligned ? "0 0 24px rgba(6,182,212,0.45)" : "none",
                     }}
                 >
-                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: strokeColor, boxShadow: `0 0 8px ${strokeColor}` }} />
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: strokeColor, boxShadow: `0 0 8px ${strokeColor}` }} />
                     {feedbackText}
                 </motion.p>
             </div>

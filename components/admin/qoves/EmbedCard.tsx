@@ -15,7 +15,7 @@ export function EmbedCard({ widgetKey }: { widgetKey?: string | null }) {
     const snippet = buildEmbedSnippet(origin, widgetKey);
 
     return (
-        <div className="card card-navy" style={{ padding: 24 }}>
+        <div className="card card-navy ws-install-card" style={{ padding: 24 }}>
             {/* brillo decorativo */}
             <span aria-hidden style={{ position: "absolute", right: -80, top: -90, width: 260, height: 260, borderRadius: "50%", background: "radial-gradient(circle, rgba(185,207,221,0.22), transparent 65%)", pointerEvents: "none" }} />
 

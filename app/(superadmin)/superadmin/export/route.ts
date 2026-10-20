@@ -14,7 +14,7 @@ export async function GET() {
         return new Response(csv, {
             headers: { 'Content-Type': 'text/csv; charset=utf-8', 'Content-Disposition': 'attachment; filename="clinicas.csv"' },
         });
-    } catch (e: any) {
-        return new Response(e.message || 'error', { status: 403 });
+    } catch (e) {
+        return new Response((e instanceof Error && e.message) || 'error', { status: 403 });
     }
 }

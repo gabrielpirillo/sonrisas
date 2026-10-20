@@ -224,7 +224,7 @@ export function BuyCredits({ packages, imageCost, videoCost, stripeEnabled, stri
                                     exit={{ opacity: 0, y: -6 }}
                                     transition={{ duration: 0.18 }}
                                 >
-                                    {selected.name} · {fmtInt(selected.credits)} créditos por {formatMoney(selected.priceCents, selected.currency)}
+                                    <span className="cr-sum-pkg">{selected.name} · </span>{fmtInt(selected.credits)} créditos por {formatMoney(selected.priceCents, selected.currency)}
                                 </motion.strong>
                             </AnimatePresence>
                         </>

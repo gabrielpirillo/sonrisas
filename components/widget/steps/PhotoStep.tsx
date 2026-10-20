@@ -13,7 +13,7 @@ interface PhotoStepProps {
 }
 
 export function PhotoStep({ selectedFile, setSelectedFile, onUse }: PhotoStepProps) {
-    const { config: { texts, features } } = useWidgetConfig();
+    const { config: { texts } } = useWidgetConfig();
     return (
         <div className="wf-body wf-photo">
             <div className="wf-intro wf-stagger">

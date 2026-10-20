@@ -7,6 +7,7 @@ import { ArrowRight, Loader2, Mail, MailCheck } from 'lucide-react';
 import { authClient } from '@/lib/auth/client';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { AuthField } from '@/components/auth/AuthField';
+import { authErrorMessage } from '@/components/auth/authErrors';
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('');
@@ -16,9 +17,9 @@ export default function ForgotPasswordPage() {
     async function onSubmit(e: React.FormEvent) {
         e.preventDefault();
         setLoading(true);
-        const { error } = await authClient.requestPasswordReset({ email, redirectTo: '/reset-password' });
+        const { error } = await authClient.requestPasswordReset({ email: email.trim(), redirectTo: '/reset-password' });
         setLoading(false);
-        if (error) return toast.error(error.message || 'No se pudo enviar el correo');
+        if (error) return toast.error(authErrorMessage(error, 'No se pudo enviar el correo. Inténtalo de nuevo.'));
         setSent(true);
         toast.success('Si el correo existe, te enviamos un enlace de restablecimiento');
     }
@@ -41,7 +42,7 @@ export default function ForgotPasswordPage() {
                 </div>
             ) : (
                 <form onSubmit={onSubmit} className="sf-auth-form">
-                    <AuthField id="email" label="Email" icon={Mail} type="email" autoComplete="email" placeholder="tu@clinica.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                    <AuthField id="email" label="Email" icon={Mail} type="email" autoComplete="email" enterKeyHint="send" placeholder="tu@clinica.com" value={email} onChange={(e) => setEmail(e.target.value)} required />
                     <button type="submit" className="sf-auth-btn" disabled={loading}>
                         {loading ? <Loader2 size={18} className="animate-spin" /> : <>Enviar enlace <ArrowRight size={17} className="arrow" /></>}
                     </button>

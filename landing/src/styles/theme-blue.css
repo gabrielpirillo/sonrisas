@@ -14,7 +14,16 @@
   --navy-1:      #2a3a47;   /* bandas oscuras (derivadas del azul acero) */
   --navy-2:      #1b2630;
   --navy-3:      #131b22;
+
+  /* La rampa "sage" del lenguaje Qoves (gris verdoso) pasa a la familia azul
+     acero de la marca: titulares bicolor, checks, estrellas y acentos quedan
+     coherentes en toda la página. */
+  --sage:        #7d97aa;
+  --sage-deep:   #5d7a8f;
+  --accent:      #7d97aa;
+  --bg-tint:     #eef3f6;
 }
+::selection { background: var(--blue-line); color: var(--ink); }
 
 /* Botón azul */
 .btn-blue { background: var(--blue-deep); color: #fff; padding: 16px 30px; }
@@ -35,6 +44,10 @@
 .tone-blue .la-cta { background: var(--blue-deep); }
 .tone-blue .la-cta:hover { background: var(--blue-ink); }
 .tone-blue .mono-pill { border-color: var(--blue-line); color: var(--blue-deep); background: rgba(255, 255, 255, 0.7); }
+.tone-blue .la-avatar { background: linear-gradient(150deg, var(--blue), var(--blue-deep)); }
+.tone-blue .la-dot { background: var(--blue); }
+.tone-blue .la-badge { color: var(--blue-deep); background: var(--blue-tint); border-color: var(--blue-line); }
+.tone-blue .la-pill.active { background: var(--blue-deep); border-color: var(--blue-deep); }
 
 /* Lo que verán tus visitantes: tiles de íconos en azul */
 #producto .fc-ic { background: var(--blue-soft) !important; border-color: var(--blue-line) !important; color: var(--blue-deep) !important; }
@@ -47,13 +60,20 @@
 .hiw-on .hiw-node { box-shadow: 0 0 0 6px rgba(142, 164, 180, 0.22); }
 .hiw-card:not(.hiw-dark) .hiw-stage { background: linear-gradient(160deg, var(--blue-tint), var(--blue-soft)); }
 .hiw-card:hover .hiw-num { color: var(--blue-accent); }
+.hiw-dark { background: var(--navy-2); }
+.hiw-dark .hiw-stage { background: linear-gradient(160deg, #2a3a47, #1f2c37); }
+
+/* Casos de uso: la tarjeta destacada en navy (no negro) */
+.uc-a-dark { background: var(--navy-2); }
 
 /* Testimonios: estrellas y métricas con acento azul */
 .accent-blue.bb-section .bb-dots { background-image: radial-gradient(var(--blue) 1.1px, transparent 1.2px); }
 
 /* Banda oscura navy (vídeo): contraste fuerte entre secciones claras */
 .tone-dark { position: relative; overflow: hidden; color: #fff; background: radial-gradient(90% 140% at 12% 0%, var(--navy-1) 0%, var(--navy-2) 55%, var(--navy-3) 100%); }
-.tone-dark::after { content: ""; position: absolute; right: -10%; top: -30%; width: 55%; height: 160%; background: radial-gradient(circle, rgba(150, 190, 215, 0.16), transparent 70%); pointer-events: none; }
+/* closest-side: el halo se desvanece dentro de su caja (con "circle" quedaba un
+   corte vertical visible en móvil, donde la caja es angosta y alta) */
+.tone-dark::after { content: ""; position: absolute; right: -10%; top: -30%; width: 55%; height: 160%; background: radial-gradient(closest-side, rgba(150, 190, 215, 0.16), transparent); pointer-events: none; }
 .tone-dark > * { position: relative; z-index: 1; }
 .tone-dark .display { color: #fff; }
 .tone-dark .dim { color: var(--blue-light); }

@@ -182,7 +182,7 @@ export default async function DashboardPage() {
                   title: "Tu widget está listo para recibir pacientes",
                   copy: "Cuando un visitante de tu web pruebe la simulación y deje su contacto, aparecerá aquí con su nueva sonrisa.",
                   cta: isAdmin && !impersonating
-                      ? { href: "/administracion/settings", label: "Instalar el widget" }
+                      ? { href: "/administracion/widget", label: "Instalar el widget" }
                       : { href: "/administracion/leads", label: "Ir a leads" },
               }
             : pendingCount > 0
@@ -259,7 +259,7 @@ export default async function DashboardPage() {
                             Copia el código del widget en tu página. Cada visitante que vea su nueva sonrisa te deja su contacto en este panel.
                         </p>
                         {isAdmin && !impersonating ? (
-                            <Link href="/administracion/settings" className="btn btn-primary btn-sm" style={{ alignSelf: "flex-start" }}>
+                            <Link href="/administracion/widget" className="btn btn-primary btn-sm" style={{ alignSelf: "flex-start" }}>
                                 Instalar el widget <ArrowRight size={16} strokeWidth={2} />
                             </Link>
                         ) : (

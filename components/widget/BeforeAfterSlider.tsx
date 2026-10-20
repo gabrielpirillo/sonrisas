@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 interface BeforeAfterSliderProps {
     beforeImage: string;
@@ -12,6 +12,8 @@ interface BeforeAfterSliderProps {
 }
 
 const SMOOTH = "0.75s cubic-bezier(0.22, 1, 0.36, 1)";
+/** Movimiento (px) por debajo del cual un toque cuenta como "tap" y no como arrastre. */
+const TAP_SLOP = 6;
 
 export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
     beforeImage,
@@ -29,6 +31,10 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
     const [touched, setTouched] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+    // Gesto en curso (Pointer Events: ratón, táctil y lápiz con el mismo código).
+    const drag = useRef<{ id: number; startX: number; moved: boolean; touch: boolean } | null>(null);
+    const raf = useRef(0);
+    const pendingX = useRef<number | null>(null);
 
     const bothLoaded = imagesLoaded.before && imagesLoaded.after;
 
@@ -48,53 +54,68 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
     const positionFromClientX = (clientX: number) => {
         if (!containerRef.current) return null;
         const rect = containerRef.current.getBoundingClientRect();
+        if (!rect.width) return null;
         const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
         return (x / rect.width) * 100;
     };
 
-    // ── Slider logic ──────────────────────────────────────────────────────
-    const handleStart = (clientX?: number) => {
-        setIsResizing(true);
-        if (!qoves) return;
-        clearTimers();
-        setTouched(true);
-        // Salto suave hasta el punto tocado; el arrastre posterior es directo.
-        const p = clientX !== undefined ? positionFromClientX(clientX) : null;
-        if (p !== null) {
-            setSmooth(true);
+    /** Sigue al dedo/cursor sin transición, como mucho una vez por frame. */
+    const followTo = (clientX: number) => {
+        pendingX.current = clientX;
+        if (raf.current) return;
+        raf.current = requestAnimationFrame(() => {
+            raf.current = 0;
+            const x = pendingX.current;
+            pendingX.current = null;
+            if (x === null) return;
+            const p = positionFromClientX(x);
+            if (p === null) return;
+            setSmooth(false);
             setSliderPosition(p);
+        });
+    };
+
+    /** Salto animado al punto tocado (qoves). */
+    const jumpTo = (clientX: number) => {
+        const p = positionFromClientX(clientX);
+        if (p === null) return;
+        setSmooth(true);
+        setSliderPosition(p);
+    };
+
+    // ── Gestos ────────────────────────────────────────────────────────────
+    // touch-action: pan-y (CSS) deja el scroll vertical de la página al
+    // navegador: si el gesto es vertical llega pointercancel y se suelta.
+    const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+        if (e.pointerType === "mouse" && e.button !== 0) return;
+        const touch = e.pointerType !== "mouse";
+        drag.current = { id: e.pointerId, startX: e.clientX, moved: false, touch };
+        try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* sin captura */ }
+        setIsResizing(true);
+        if (qoves) {
+            clearTimers();
+            setTouched(true);
+            // Ratón: salto suave inmediato. Táctil: se decide al soltar (tap) o al
+            // arrastrar, para no mover el tirador al iniciar un scroll vertical.
+            if (!touch) jumpTo(e.clientX);
         }
     };
 
-    const handleMove = useCallback(
-        (clientX: number) => {
-            if (!isResizing || !containerRef.current) return;
-            const rect = containerRef.current.getBoundingClientRect();
-            const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
-            const percentage = (x / rect.width) * 100;
-            setSmooth(false);
-            setSliderPosition(percentage);
-        },
-        [isResizing]
-    );
+    const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+        const d = drag.current;
+        if (!d || d.id !== e.pointerId) return;
+        if (!d.moved && Math.abs(e.clientX - d.startX) < TAP_SLOP) return;
+        d.moved = true;
+        followTo(e.clientX);
+    };
 
-    useEffect(() => {
-        const handleGlobalEnd = () => setIsResizing(false);
-        const handleGlobalMove = (e: MouseEvent) => { if (isResizing) handleMove(e.clientX); };
-        const handleGlobalTouchMove = (e: TouchEvent) => { if (isResizing) handleMove(e.touches[0].clientX); };
-
-        window.addEventListener("mouseup", handleGlobalEnd);
-        window.addEventListener("touchend", handleGlobalEnd);
-        window.addEventListener("mousemove", handleGlobalMove);
-        window.addEventListener("touchmove", handleGlobalTouchMove);
-
-        return () => {
-            window.removeEventListener("mouseup", handleGlobalEnd);
-            window.removeEventListener("touchend", handleGlobalEnd);
-            window.removeEventListener("mousemove", handleGlobalMove);
-            window.removeEventListener("touchmove", handleGlobalTouchMove);
-        };
-    }, [isResizing, handleMove]);
+    const endDrag = (e: React.PointerEvent<HTMLDivElement>, cancelled: boolean) => {
+        const d = drag.current;
+        if (!d || d.id !== e.pointerId) return;
+        drag.current = null;
+        setIsResizing(false);
+        if (!cancelled && d.touch && !d.moved && qoves) jumpTo(e.clientX);
+    };
 
     // qoves: barrido de presentación cuando cargan ambas imágenes (sugiere que se puede arrastrar)
     useEffect(() => {
@@ -108,18 +129,26 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
         return clearTimers;
     }, [qoves, bothLoaded]);
 
-    useEffect(() => clearTimers, []);
+    useEffect(() => () => {
+        clearTimers();
+        if (raf.current) cancelAnimationFrame(raf.current);
+    }, []);
 
     const onKeyDown = (e: React.KeyboardEvent) => {
         if (!qoves) return;
         const step = e.shiftKey ? 10 : 4;
-        if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-            e.preventDefault();
-            clearTimers();
-            setTouched(true);
-            setSmooth(true);
-            setSliderPosition((p) => Math.max(0, Math.min(100, p + (e.key === "ArrowLeft" ? -step : step))));
-        }
+        let next: ((p: number) => number) | null = null;
+        if (e.key === "ArrowLeft" || e.key === "ArrowDown") next = (p) => p - step;
+        else if (e.key === "ArrowRight" || e.key === "ArrowUp") next = (p) => p + step;
+        else if (e.key === "Home") next = () => 0;
+        else if (e.key === "End") next = () => 100;
+        if (!next) return;
+        e.preventDefault();
+        clearTimers();
+        setTouched(true);
+        setSmooth(true);
+        const fn = next;
+        setSliderPosition((p) => Math.max(0, Math.min(100, fn(p))));
     };
 
     const clipTransition = qoves && smooth && !isResizing ? `clip-path ${SMOOTH}, opacity 0.3s` : undefined;
@@ -129,10 +158,14 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
     return (
         <div
             ref={containerRef}
-            className={`relative w-full overflow-hidden select-none cursor-ew-resize group ${fill ? "h-full" : "aspect-[9/16]"} ${qoves ? `ba-wrap${isResizing ? " dragging" : ""}` : ""} ${className}`}
-            onMouseDown={(e) => handleStart(e.clientX)}
-            onTouchStart={(e) => handleStart(e.touches[0]?.clientX)}
+            className={`relative w-full overflow-hidden select-none cursor-ew-resize group touch-pan-y ${fill ? "h-full" : "aspect-[9/16]"} ${qoves ? `ba-wrap${isResizing ? " dragging" : ""}` : ""} ${className}`}
+            onPointerDown={onPointerDown}
+            onPointerMove={onPointerMove}
+            onPointerUp={(e) => endDrag(e, false)}
+            onPointerCancel={(e) => endDrag(e, true)}
+            onLostPointerCapture={(e) => endDrag(e, true)}
             onContextMenu={(e) => e.preventDefault()}
+            onDragStart={(e) => e.preventDefault()}
             {...(qoves
                 ? {
                     role: "slider",
@@ -149,7 +182,7 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
                 src={afterImage}
-                alt="After"
+                alt="Después"
                 className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${imagesLoaded.after ? "opacity-100" : "opacity-0"}`}
                 draggable={false}
                 ref={markIfComplete("after")}
@@ -188,7 +221,7 @@ export const BeforeAfterSlider: React.FC<BeforeAfterSliderProps> = ({
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                     src={beforeImage}
-                    alt="Before"
+                    alt="Antes"
                     className="absolute inset-0 w-full h-full object-cover"
                     draggable={false}
                     ref={markIfComplete("before")}

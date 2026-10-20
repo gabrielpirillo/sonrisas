@@ -133,7 +133,7 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
     // ─── Loading State ───────────────────────────────────────
     const [isSubmittingPhoto, setIsSubmittingPhoto] = useState(false);
     const [isSubmittingVideo, setIsSubmittingVideo] = useState(false);
-    const [loadingMessage, setLoadingMessage] = useState("Completando tu solicitud...");
+    const [loadingMessage, setLoadingMessage] = useState("Enviando tu simulación…");
 
     // ─── Cross-Device Session State ──────────────────────────
     const [sessionId, setSessionId] = useState<string | null>(null);
@@ -368,7 +368,7 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
             setProcessStatus('designing');
 
             // 4. Auto-Generate Smile
-            const naturalVariation = analysisResult.variations.find((v: any) => v.type === VariationType.ORIGINAL_BG);
+            const naturalVariation = analysisResult.variations.find((v: { type: VariationType }) => v.type === VariationType.ORIGINAL_BG);
             if (!naturalVariation) throw new Error("No se encontró plan de restauración natural.");
 
             if (analysisResult.analysis_id) {
@@ -462,11 +462,11 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
                 setStep("LOCKED_RESULT");
             }
 
-        } catch (err: any) {
+        } catch (err) {
             console.error("WidgetContainer Error:", err);
 
-            const message: string = err?.message || "";
-            if (err?.userFacing) {
+            const message: string = err instanceof Error ? err.message : "";
+            if (err instanceof WidgetError) {
                 toast.error(message);
             } else if (!message.includes("analizando imagen") && !message.includes("generación de sonrisa")) {
                 toast.error("No pudimos procesar tu foto. Inténtalo de nuevo en unos segundos.");
@@ -510,10 +510,10 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
 
     const handleSendPhotoEmail = async () => {
         setIsSubmittingPhoto(true);
-        setLoadingMessage("Completando tu solicitud...");
+        setLoadingMessage("Enviando tu simulación…");
 
         const timeoutId = setTimeout(() => {
-            setLoadingMessage("Ya casi...");
+            setLoadingMessage("Ya casi está…");
         }, 3000);
 
         try {
@@ -537,7 +537,7 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
             }
         } catch (emailErr) {
             console.error('Email invoke error:', emailErr);
-            toast.error("Error enviando el correo");
+            toast.error("No pudimos enviar el correo. Inténtalo de nuevo en unos segundos.");
         } finally {
             clearTimeout(timeoutId);
             setIsSubmittingPhoto(false);

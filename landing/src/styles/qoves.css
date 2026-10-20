@@ -1,6 +1,6 @@
 /* ============================================================
    QOVES design language — extracted from qoves.com screenshots
-   Applied to: Smile Fast (Dental Corbella) dental simulator
+   Applied to: Smile Fast — simulador de sonrisa para clínicas dentales
    ============================================================ */
 
 /* Fonts: General Sans (grotesque) + JetBrains Mono (technical labels)
@@ -88,6 +88,7 @@ body { overflow-x: hidden; }
   line-height: 1.02;
   color: var(--ink);
   margin: 0;
+  text-wrap: balance; /* evita palabras sueltas en la última línea */
 }
 .display .dim { color: var(--sage); }
 
@@ -195,6 +196,8 @@ body { overflow-x: hidden; }
   z-index: 200;
 }
 .navpill-hidden { transform: translateX(-50%) translateY(-140%); opacity: 0; pointer-events: none; }
+.nav-brand { display: flex; align-items: center; gap: 14px; min-height: 44px; border-radius: 8px; }
+.nav-actions { display: flex; align-items: center; gap: 16px; }
 .navpill-scrolled {
   background: rgba(255,255,255,0.72);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
@@ -250,10 +253,11 @@ image-slot {
 .hero2-video {
   position: absolute;
   top: 0; right: 0; bottom: 0;
-  width: 50%;
+  width: 750px;
   height: 100%;
   object-fit: cover;
-  object-position: 50% 10%;
+  object-position: 0% 21%;
+  transform: translateX(-12%);
   z-index: 1;
   -webkit-mask-image: linear-gradient(to right, transparent 0%, #000 10%, #000 82%, transparent 100%);
   mask-image: linear-gradient(to right, transparent 0%, #000 10%, #000 82%, transparent 100%);
@@ -284,9 +288,11 @@ image-slot {
 }
 .hero2-inner { position: relative; z-index: 3; width: min(1280px, calc(100% - 48px)); padding: 96px 0 40px; }
 .hero2-copy { max-width: 560px; }
-.hero2-h1 { color: #fff; }
+.hero2-h1 { color: #fff; font-size: clamp(38px, 4.4vw, 60px); margin: 22px 0 24px; }
 .hero2-dim { color: rgba(255,255,255,0.5); }
-.hero2-lead { color: rgba(255,255,255,0.82); line-height: 1.5; font-weight: 400; margin: 0; }
+.hero2-lead { color: rgba(255,255,255,0.82); line-height: 1.5; font-weight: 400; margin: 0; font-size: 19px; max-width: 440px; text-align: justify; }
+.hero2-ctas { display: flex; gap: 12px; margin-top: 34px; flex-wrap: wrap; }
+.hero2-cta { padding: 16px 30px; font-size: 16px; }
 .hero2-ghost {
   padding: 16px 28px; font-size: 16px;
   background: rgba(255,255,255,0.12);
@@ -295,8 +301,10 @@ image-slot {
   -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
 }
 .hero2-ghost:hover { background: rgba(255,255,255,0.2); border-color: #fff; }
-.hero2-stats { display: flex; gap: 0; margin-top: 34px; flex-wrap: wrap; }
+.hero2-stats { display: flex; gap: 0; margin: 34px 0 0; padding: 0; list-style: none; flex-wrap: wrap; }
 .hero2-stat { padding-right: 26px; margin-right: 26px; border-right: 1px solid rgba(255,255,255,0.25); max-width: 170px; }
+.hero2-stat-t { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; color: #fff; text-align: center; }
+.hero2-stat-d { font-size: 12.5px; color: rgba(255,255,255,0.6); margin-top: 4px; line-height: 1.45; text-align: center; }
 .hero2-stat:last-child { border-right: none; margin-right: 0; }
 
 @media (max-width: 860px) {
@@ -609,20 +617,35 @@ image-slot {
 .faq-wrap { display: grid; grid-template-columns: 0.85fr 1.15fr; gap: 56px; align-items: start; }
 .faq-head { position: sticky; top: 100px; }
 .faq-list { display: flex; flex-direction: column; }
-.faq-item { border-top: 1px solid var(--line); cursor: pointer; }
+.faq-item { border-top: 1px solid var(--line); }
 .faq-item:last-child { border-bottom: 1px solid var(--line); }
-.faq-q { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 24px 0; font-size: 18.5px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
+.faq-h { margin: 0; font: inherit; }
+.faq-q {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 20px;
+  padding: 24px 0; background: none; border: 0; cursor: pointer; text-align: left;
+  font-family: var(--font-sans); font-size: 18.5px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.3; color: var(--ink);
+  -webkit-tap-highlight-color: transparent;
+}
+.faq-q:focus-visible { outline: 2px solid var(--blue-deep, #4f6b7f); outline-offset: 4px; border-radius: 6px; }
 .faq-ico { flex-shrink: 0; color: var(--ink-3); transition: transform 0.3s var(--ease), color 0.3s var(--ease); }
 .faq-ico.open { transform: rotate(45deg); color: var(--ink); }
-.faq-a { overflow: hidden; max-height: 0; transition: max-height 0.35s var(--ease); }
+.faq-q:hover .faq-ico { color: var(--ink); }
+.faq-a { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.35s var(--ease), visibility 0.35s; visibility: hidden; }
+.faq-item.open .faq-a { grid-template-rows: 1fr; visibility: visible; }
+.faq-a-in { overflow: hidden; min-height: 0; }
 .faq-a p { margin: 0; padding: 0 40px 26px 0; font-size: 15.5px; line-height: 1.6; color: var(--ink-2); }
+@media (prefers-reduced-motion: reduce) { .faq-a, .faq-ico { transition: none; } }
 @media (max-width: 880px) {
   .faq-wrap { grid-template-columns: 1fr; gap: 32px; }
   .faq-head { position: static; }
 }
 
 .bb-logo:hover { color: var(--ink) !important; border-color: var(--line-strong) !important; }
-@media (max-width: 820px) { .bb-tst-grid { grid-template-columns: 1fr !important; } .bb-intro { grid-template-columns: 1fr !important; } .bb-logos { grid-template-columns: 1fr 1fr 1fr !important; } }
+.bb-logos { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.bb-logo-tile { display: grid; place-items: center; min-width: 0; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 22px 18px; min-height: 96px; }
+.bb-logo-tile.dark { background: var(--navy-2, #1b2630); border-color: var(--navy-2, #1b2630); }
+.bb-logo-tile img { display: block; max-height: 48px; max-width: min(132px, 100%); width: auto; height: auto; object-fit: contain; }
+@media (max-width: 820px) { .bb-tst-grid { grid-template-columns: 1fr !important; } .bb-intro { grid-template-columns: 1fr !important; } .bb-logos { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .bb-dots { position: absolute; inset: -40px; z-index: 0; pointer-events: none; background-image: radial-gradient(var(--sage) 1.1px, transparent 1.2px); background-size: 34px 34px; opacity: 0.10; -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, #000 30%, transparent 78%); mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, #000 30%, transparent 78%); animation: bb-drift 42s linear infinite alternate; }
 @keyframes bb-drift { from { transform: translate3d(0,0,0); } to { transform: translate3d(-34px,-24px,0); } }
 @media (prefers-reduced-motion: reduce) { .bb-dots { animation: none; } }
@@ -963,28 +986,20 @@ image-slot {
     .video-grid { grid-template-columns: 1fr !important; gap: 30px !important; }
     /* section vertical rhythm */
     section[id], #producto, #como, #usos, #video, #transformaciones, #testimonios, #faq, #empezar { padding-top: 68px !important; padding-bottom: 68px !important; }
-    /* stack hero stats vertically, drop right dividers */
-    .hero2-stats { flex-direction: column; gap: 14px; margin-top: 26px; }
-    .hero2-stat { border-right: none !important; padding-right: 0; margin-right: 0; max-width: none; }
-    .hero2-copy { max-width: 100%; }
-    .hero2-lead { max-width: 100% !important; }
+    /* el hero móvil se define en mobile.css */
     /* metrics: 2-up */
     .wrap > div[style*="space-between"] { gap: 24px 20px !important; }
   }
   @media (max-width: 560px) {
     .navpill { padding: 0 8px 0 16px; height: 60px; }
-    .nav-login { display: none; }
     .trans-pair { grid-template-columns: 1fr !important; height: auto !important; }
     .trans-pair > div { height: 380px; }
-    /* keep the DEMO button compact so the pill never overflows */
-    .navpill .btn-white { padding: 10px 16px; font-size: 13px; }
-    .navpill span { font-size: 15px !important; }
+    /* la píldora móvil (Acceder + Quiero probarlo) se define en mobile.css */
     /* section headlines a touch tighter */
     .display { line-height: 1.06; }
     /* footer columns stack cleanly */
     footer .wrap > div[style*="gap: 60"] { gap: 34px !important; }
   }
 
-/* Enlace "Acceder" al panel: se oculta en móviles muy angostos */
+/* Enlace "Acceder" al panel */
 .nav-login:hover { color: var(--ink) !important; }
-@media (max-width: 420px) { .nav-login { display: none; } }

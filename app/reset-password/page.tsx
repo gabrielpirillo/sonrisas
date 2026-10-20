@@ -8,6 +8,7 @@ import { AlertTriangle, ArrowRight, Loader2, Lock, ShieldCheck } from 'lucide-re
 import { authClient } from '@/lib/auth/client';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { AuthField } from '@/components/auth/AuthField';
+import { authErrorMessage } from '@/components/auth/authErrors';
 
 function ResetInner() {
     const params = useSearchParams();
@@ -20,12 +21,12 @@ function ResetInner() {
 
     async function onSubmit(e: React.FormEvent) {
         e.preventDefault();
-        if (pass.length < 8) return toast.error('Mínimo 8 caracteres');
+        if (pass.length < 8) return toast.error('La contraseña debe tener al menos 8 caracteres');
         if (pass !== confirm) return toast.error('Las contraseñas no coinciden');
         setLoading(true);
         const res = await authClient.resetPassword({ newPassword: pass, token });
         setLoading(false);
-        if (res.error) return toast.error(res.error.message || 'El enlace es inválido o caducó');
+        if (res.error) return toast.error(authErrorMessage(res.error, 'El enlace es inválido o caducó. Solicita uno nuevo.'));
         toast.success('Contraseña restablecida. Inicia sesión.');
         router.push('/acceso');
     }
@@ -59,8 +60,8 @@ function ResetInner() {
             back={{ href: '/acceso', label: 'Volver al acceso' }}
         >
             <form onSubmit={onSubmit} className="sf-auth-form">
-                <AuthField id="pass" label="Nueva contraseña" icon={Lock} type="password" autoComplete="new-password" placeholder="Mínimo 8 caracteres" value={pass} onChange={(e) => setPass(e.target.value)} minLength={8} required />
-                <AuthField id="confirm" label="Confirmar contraseña" icon={ShieldCheck} type="password" autoComplete="new-password" placeholder="Repite la contraseña" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
+                <AuthField id="pass" label="Nueva contraseña" icon={Lock} type="password" autoComplete="new-password" enterKeyHint="next" placeholder="Mínimo 8 caracteres" value={pass} onChange={(e) => setPass(e.target.value)} minLength={8} required />
+                <AuthField id="confirm" label="Confirmar contraseña" icon={ShieldCheck} type="password" autoComplete="new-password" enterKeyHint="go" placeholder="Repite la contraseña" value={confirm} onChange={(e) => setConfirm(e.target.value)} required />
                 <button type="submit" className="sf-auth-btn" disabled={loading}>
                     {loading ? <Loader2 size={18} className="animate-spin" /> : <>Restablecer <ArrowRight size={17} className="arrow" /></>}
                 </button>
@@ -71,7 +72,7 @@ function ResetInner() {
 
 export default function ResetPasswordPage() {
     return (
-        <Suspense fallback={<div style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center' }}><Loader2 className="h-6 w-6 animate-spin" /></div>}>
+        <Suspense fallback={<div style={{ minHeight: '100dvh', display: 'grid', placeItems: 'center' }}><Loader2 className="h-6 w-6 animate-spin" style={{ color: 'var(--blue-deep)' }} aria-label="Cargando" /></div>}>
             <ResetInner />
         </Suspense>
     );

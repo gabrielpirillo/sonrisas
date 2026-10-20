@@ -43,8 +43,8 @@ export function LoadingOverlay({ visible, message }: LoadingOverlayProps) {
                                 {message}
                             </motion.h3>
                         </AnimatePresence>
-                        <p className="wf-sub" style={{ margin: 0, fontSize: 13.5 }}>Estamos procesando tu solicitud…</p>
-                        <span className="mono" style={{ fontSize: 8.5 }}>NO CIERRES ESTA VENTANA</span>
+                        <p className="wf-sub" style={{ margin: 0, fontSize: 13.5 }}>Solo tardará unos segundos.</p>
+                        <span className="mono" style={{ fontSize: 9.5 }}>NO CIERRES ESTA VENTANA</span>
                     </motion.div>
                 </motion.div>
             )}

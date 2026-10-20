@@ -274,8 +274,15 @@ function LogoDrop({ logoUrl, onChange, readOnly }: { logoUrl: string | null; onC
                         <span className="ws-drop-ic" aria-hidden>
                             {uploading ? <Loader2 size={20} className="ws-spin" /> : <ImageUp size={20} />}
                         </span>
-                        <span className="ws-drop-title">{uploading ? "Subiendo logo…" : over ? "Suelta para subir" : "Arrastra tu logo aquí"}</span>
-                        <span className="ws-drop-sub">o <u>elige un archivo</u></span>
+                        <span className="ws-drop-title">
+                            {uploading ? "Subiendo logo…" : over ? "Suelta para subir" : (
+                                <><span className="ws-only-pointer">Arrastra tu logo aquí</span><span className="ws-only-touch">Sube tu logo</span></>
+                            )}
+                        </span>
+                        <span className="ws-drop-sub">
+                            <span className="ws-only-pointer">o <u>elige un archivo</u></span>
+                            <span className="ws-only-touch"><u>Toca para elegir una imagen</u></span>
+                        </span>
                     </motion.button>
                 )}
             </AnimatePresence>

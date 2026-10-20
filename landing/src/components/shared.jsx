@@ -1,10 +1,9 @@
-import React from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { RES } from "../resources";
 
 /* ============================================================
    Shared components — Qoves visual language
    ============================================================ */
-const { useState, useRef, useEffect, useCallback } = React;
 
 /* ---- Q-style circular logo mark ---- */
 function LogoMark({ size = 38, dark = true }) {
@@ -53,6 +52,10 @@ function BeforeAfter({ height = "100%", radius = 22, beforeId, afterId, beforeSr
   const bPos = beforePos || pos30;
   const ref = useRef(null);
   const dragging = useRef(false);
+  const touched = useRef(false);   // el usuario ya interactuó: se corta el barrido de intro
+  const lastTouch = useRef(0);     // último gesto: el autoplay espera 3 s antes de retomar
+  const posRef = useRef(50);
+  useEffect(() => { posRef.current = pos; }, [pos]);
 
   const move = useCallback((clientX) => {
     const el = ref.current;
@@ -63,23 +66,43 @@ function BeforeAfter({ height = "100%", radius = 22, beforeId, afterId, beforeSr
     setPos(p);
   }, []);
 
+  // Táctil: el gesto se decide con el primer movimiento. Horizontal → arrastra el
+  // divisor; vertical → es un scroll de la página y no se toca nada. Un toque sin
+  // movimiento lleva el divisor a ese punto. Listeners pasivos: no frenan el scroll.
+  const gesture = useRef(null);
   useEffect(() => {
-    const onMove = (e) => {if (dragging.current) move(e.touches ? e.touches[0].clientX : e.clientX);};
-    const onUp = () => {if (dragging.current) lastTouch.current = performance.now();dragging.current = false;document.body.style.userSelect = "";};
+    const onMove = (e) => {
+      const t = e.touches ? e.touches[0] : e;
+      if (gesture.current) {
+        const dx = t.clientX - gesture.current.x, dy = t.clientY - gesture.current.y;
+        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        if (Math.abs(dx) > Math.abs(dy)) { dragging.current = true; touched.current = true; }
+        gesture.current = null;
+      }
+      if (dragging.current) { lastTouch.current = performance.now(); move(t.clientX); }
+    };
+    const onUp = () => {
+      if (gesture.current) { touched.current = true; move(gesture.current.x); gesture.current = null; }
+      if (dragging.current) lastTouch.current = performance.now();
+      dragging.current = false;
+      document.body.style.userSelect = "";
+    };
+    const onCancel = () => { gesture.current = null; dragging.current = false; };
     window.addEventListener("mousemove", onMove);
-    window.addEventListener("touchmove", onMove, { passive: false });
+    window.addEventListener("touchmove", onMove, { passive: true });
     window.addEventListener("mouseup", onUp);
     window.addEventListener("touchend", onUp);
+    window.addEventListener("touchcancel", onCancel);
     return () => {
       window.removeEventListener("mousemove", onMove);
       window.removeEventListener("touchmove", onMove);
       window.removeEventListener("mouseup", onUp);
       window.removeEventListener("touchend", onUp);
+      window.removeEventListener("touchcancel", onCancel);
     };
   }, [move]);
 
   // intro: al entrar en pantalla, el divisor recorre la foto una vez para invitar a arrastrar
-  const touched = useRef(false);
   useEffect(() => {
     if (!intro) return;
     const el = ref.current;
@@ -110,9 +133,6 @@ function BeforeAfter({ height = "100%", radius = 22, beforeId, afterId, beforeSr
 
   // autoplay: el divisor oscila solo, de forma continua y suave, mientras está en pantalla.
   // Si el usuario arrastra, se pausa; tras 3s sin tocarlo retoma desde donde quedó.
-  const lastTouch = useRef(0);
-  const posRef = useRef(50);
-  posRef.current = pos;
   useEffect(() => {
     if (!autoplay) return;
     const el = ref.current;
@@ -140,69 +160,75 @@ function BeforeAfter({ height = "100%", radius = 22, beforeId, afterId, beforeSr
   }, [autoplay]);
 
   const start = (e) => {
-    touched.current = true;
     lastTouch.current = performance.now();
+    if (e.touches) { gesture.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; return; }
+    touched.current = true;
     dragging.current = true;
     document.body.style.userSelect = "none";
-    move(e.touches ? e.touches[0].clientX : e.clientX);
+    move(e.clientX);
   };
 
-  return React.createElement("div", {
-    ref: ref,
-    style: {
-      position: "relative", width: "100%", height,
-      borderRadius: radius, overflow: "hidden",
-      background: "var(--photo)", cursor: "ew-resize",
-      border: "1px solid var(--line)"
-    },
-    onMouseDown: start, onTouchStart: start
-  },
-  /* after layer (full) — mitad «proyección» */
-  useImg ?
-  React.createElement("img", {
-    src: afterSrc, alt: "", draggable: false,
-    style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: aPos, filter: projection, userSelect: "none", WebkitUserDrag: "none" }
-  }) :
-  React.createElement("image-slot", {
-    id: afterImgId, src: afterSrc,
-    placeholder: "Foto «después»",
-    style: { position: "absolute", inset: 0, width: "100%", height: "100%", "--is-radius": "0px", filter: projection }
-  }),
-  /* before layer (clipped to divider) — mitad «antes», MISMO encuadre */
-  React.createElement("div", {
-    style: { position: "absolute", inset: 0, clipPath: `inset(0 ${100 - pos}% 0 0)` }
-  },
-  useImg ?
-  React.createElement("img", {
-    src: beforeSrc, alt: "", draggable: false,
-    style: { position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: bPos, userSelect: "none", WebkitUserDrag: "none" }
-  }) :
-  React.createElement("image-slot", {
-    id: beforeImgId, src: beforeSrc,
-    placeholder: "Foto «antes»",
-    style: { position: "absolute", inset: 0, width: "100%", height: "100%", "--is-radius": "0px" }
-  })
-  ),
-  /* corner labels */
-  React.createElement("span", { className: "mono", style: { position: "absolute", top: 16, left: 16, color: "rgba(255,255,255,0.92)", letterSpacing: "0.22em", fontSize: compact ? 9 : 11, mixBlendMode: "difference", pointerEvents: "none" } }, labelA),
-  React.createElement("span", { className: "mono", style: { position: "absolute", top: 16, right: 16, color: "rgba(255,255,255,0.92)", letterSpacing: "0.22em", fontSize: compact ? 9 : 11, mixBlendMode: "difference", pointerEvents: "none" } }, labelB),
-  /* seam line + handle */
-  React.createElement("div", {
-    style: { position: "absolute", top: 0, bottom: 0, left: `${pos}%`, width: 1, background: "rgba(255,255,255,0.9)", transform: "translateX(-0.5px)", pointerEvents: "none", boxShadow: "0 0 0 0.5px rgba(0,0,0,0.06)" }
-  }),
-  React.createElement("div", {
-    style: {
-      position: "absolute", top: "50%", left: `${pos}%`,
-      transform: "translate(-50%,-50%)",
-      width: 38, height: 38, borderRadius: "50%",
-      background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.9)",
-      backdropFilter: "blur(4px)", display: "grid", placeItems: "center",
-      pointerEvents: "none", color: "#fff"
-    }
-  },
-  React.createElement("span", { className: "mono", style: { fontSize: 12, letterSpacing: "0.05em", color: "#fff" } }, "‹›")
-  )
-  );
+  // Teclado: flechas mueven el divisor (y pausan el autoplay como al arrastrar).
+  const onKey = (e) => {
+    const step = e.shiftKey ? 10 : 5;
+    let p = null;
+    if (e.key === "ArrowLeft" || e.key === "ArrowDown") p = posRef.current - step;
+    else if (e.key === "ArrowRight" || e.key === "ArrowUp") p = posRef.current + step;
+    else if (e.key === "Home") p = 2;
+    else if (e.key === "End") p = 98;
+    if (p === null) return;
+    e.preventDefault();
+    touched.current = true;
+    lastTouch.current = performance.now();
+    setPos(Math.max(2, Math.min(98, p)));
+  };
+
+  const fill = { position: "absolute", inset: 0, width: "100%", height: "100%" };
+  const corner = { position: "absolute", top: 16, color: "rgba(255,255,255,0.92)", letterSpacing: "0.22em", fontSize: compact ? 9 : 11, mixBlendMode: "difference", pointerEvents: "none" };
+  return (
+    <div
+      ref={ref}
+      className="ba"
+      role="slider"
+      tabIndex={0}
+      aria-label={"Comparar " + labelA.toLowerCase() + " y " + labelB.toLowerCase() + " (arrastra o usa las flechas)"}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(pos)}
+      style={{
+        position: "relative", width: "100%", height,
+        borderRadius: radius, overflow: "hidden",
+        background: "var(--photo)", cursor: "ew-resize",
+        border: "1px solid var(--line)",
+        // el gesto vertical sigue desplazando la página; el horizontal mueve el divisor
+        touchAction: "pan-y", WebkitTapHighlightColor: "transparent"
+      }}
+      onMouseDown={start} onTouchStart={start} onKeyDown={onKey}>
+      {/* capa completa — mitad «proyección» */}
+      {useImg ?
+      <img src={afterSrc} alt="" draggable={false} style={{ ...fill, objectFit: "cover", objectPosition: aPos, filter: projection, userSelect: "none", WebkitUserDrag: "none" }} /> :
+      <image-slot id={afterImgId} src={afterSrc} placeholder="Foto «después»" style={{ ...fill, "--is-radius": "0px", filter: projection }} />}
+      {/* capa recortada al divisor — mitad «antes», MISMO encuadre */}
+      <div style={{ position: "absolute", inset: 0, clipPath: `inset(0 ${100 - pos}% 0 0)` }}>
+        {useImg ?
+        <img src={beforeSrc} alt="" draggable={false} style={{ ...fill, objectFit: "cover", objectPosition: bPos, userSelect: "none", WebkitUserDrag: "none" }} /> :
+        <image-slot id={beforeImgId} src={beforeSrc} placeholder="Foto «antes»" style={{ ...fill, "--is-radius": "0px" }} />}
+      </div>
+      <span className="mono" aria-hidden="true" style={{ ...corner, left: 16 }}>{labelA}</span>
+      <span className="mono" aria-hidden="true" style={{ ...corner, right: 16 }}>{labelB}</span>
+      {/* línea + tirador */}
+      <div style={{ position: "absolute", top: 0, bottom: 0, left: `${pos}%`, width: 1, background: "rgba(255,255,255,0.9)", transform: "translateX(-0.5px)", pointerEvents: "none", boxShadow: "0 0 0 0.5px rgba(0,0,0,0.06)" }} />
+      <div style={{
+        position: "absolute", top: "50%", left: `${pos}%`,
+        transform: "translate(-50%,-50%)",
+        width: 42, height: 42, borderRadius: "50%",
+        background: "rgba(255,255,255,0.18)", border: "1px solid rgba(255,255,255,0.9)",
+        backdropFilter: "blur(4px)", WebkitBackdropFilter: "blur(4px)", display: "grid", placeItems: "center",
+        pointerEvents: "none", color: "#fff"
+      }}>
+        <span className="mono" aria-hidden="true" style={{ fontSize: 12, letterSpacing: "0.05em", color: "#fff" }}>‹›</span>
+      </div>
+    </div>);
 }
 
 /* ============================================================
@@ -687,11 +713,10 @@ function ArqGingival({ title = "ARQUITECTURA GINGIVAL" }) {
    ============================================================ */
 function useInview(threshold = 0.3) {
   const ref = useRef(null);
-  const [inview, setInview] = useState(false);
+  const [inview, setInview] = useState(() => typeof window !== "undefined" && !("IntersectionObserver" in window));
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
-    if (!("IntersectionObserver" in window)) { setInview(true); return; }
+    if (!el || !("IntersectionObserver" in window)) return;
     const io = new IntersectionObserver((entries) => {
       entries.forEach((e) => { if (e.isIntersecting) { setInview(true); io.disconnect(); } });
     }, { threshold });
@@ -749,13 +774,20 @@ function AnalysisExplorer() {
   const [ref, inview] = useInview(0.25);
   const [active, setActive] = useState(0);
   const [hover, setHover] = useState(false);
-  const [reduced, setReduced] = useState(false);
+  const [reduced] = useState(() => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches));
+  // Solo avanza mientras el módulo se ve: fuera de pantalla no cambia la altura
+  // del acordeón (en móvil eso movía todo lo que hay debajo mientras se lee).
+  const [visible, setVisible] = useState(() => !("IntersectionObserver" in window));
   useEffect(() => {
-    setReduced(!!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches));
-  }, []);
+    const el = ref.current;
+    if (!el || !("IntersectionObserver" in window)) return;
+    const io = new IntersectionObserver(([e]) => setVisible(e.isIntersecting), { threshold: 0.35 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [ref]);
   const total = ANALYSIS_PARAMS.length;
   const next = () => setActive((a) => (a + 1) % total);
-  const playing = inview && !hover && !reduced;
+  const playing = inview && visible && !hover && !reduced;
   const cur = ANALYSIS_PARAMS[active];
   const pad = (n) => String(n).padStart(2, "0");
 
@@ -768,7 +800,7 @@ function AnalysisExplorer() {
     <div ref={ref} className={"ax" + (inview ? " in" : "")} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
       <div className="ax-viewer" aria-live="polite">
         {ANALYSIS_PARAMS.map((p, i) =>
-        <img key={i} className={"ax-img" + (i === active ? " on" : "")} src={p.img} alt={i === active ? p.alt : ""}
+        <img key={i} className={"ax-img" + (i === active ? " on" : "")} src={p.img} alt={i === active ? p.alt : ""} loading="lazy" decoding="async"
           aria-hidden={i !== active} style={{ "--zoom": p.zoom, transformOrigin: p.origin }} />
         )}
         <span key={"scan" + active} className="ax-scan" aria-hidden="true" />

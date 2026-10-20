@@ -211,6 +211,8 @@ export default function LeadsPage() {
                     <Search size={15} strokeWidth={2} color="var(--ink-3)" style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)" }} aria-hidden="true" />
                     <input
                         className="field"
+                        type="search"
+                        enterKeyHint="search"
                         placeholder="Buscar nombre, email o teléfono…"
                         aria-label="Buscar leads"
                         value={searchTerm}
@@ -238,7 +240,7 @@ export default function LeadsPage() {
                             Con el widget instalado en tu web, cada simulación llega con su foto, su objetivo y su contacto.
                         </p>
                         {canInstall ? (
-                            <Link href="/administracion/settings" className="btn btn-primary btn-sm" style={{ alignSelf: "flex-start" }}>
+                            <Link href="/administracion/widget" className="btn btn-primary btn-sm" style={{ alignSelf: "flex-start" }}>
                                 Instalar el widget <ArrowRight size={16} strokeWidth={2} />
                             </Link>
                         ) : (
@@ -261,7 +263,7 @@ export default function LeadsPage() {
                 </div>
             ) : (
                 <div className="card" style={{ overflow: "hidden", padding: 0 }}>
-                    <div style={{ overflowX: "auto" }}>
+                    <div className="lead-table-wrap" style={{ overflowX: "auto" }}>
                         <table className="lead-table">
                             <thead>
                                 <tr>
@@ -294,12 +296,12 @@ export default function LeadsPage() {
                                                     <LeadThumb src={thumb} name={lead.name} size={44} />
                                                     <div style={{ minWidth: 0 }}>
                                                         <div className="lead-name">
-                                                            {lead.name || "Sin nombre"}
+                                                            <span className="lead-name-text">{lead.name || "Sin nombre"}</span>
                                                             {fresh && <span className="lead-new" title="Nuevo · últimas 24 h" aria-label="Nuevo" />}
                                                         </div>
                                                         {lead.video_requested_at && (
                                                             <span className="lead-video-req" title={`Pidió su vídeo en consulta el ${new Date(lead.video_requested_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}`}>
-                                                                <Clapperboard size={12} strokeWidth={1.8} aria-hidden="true" /> Pidió vídeo en consulta
+                                                                <Clapperboard size={12} strokeWidth={1.8} aria-hidden="true" /> Pidió vídeo<span className="lead-video-req-long"> en consulta</span>
                                                             </span>
                                                         )}
                                                         <div className="mono" style={{ fontSize: 9, marginTop: 3 }}>

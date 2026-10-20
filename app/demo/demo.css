@@ -18,6 +18,7 @@
 /* ── Barra superior ───────────────────────────────────── */
 .sfd-top { border-bottom: 1px solid var(--line); background: #fff; position: sticky; top: 0; z-index: 30; }
 .sfd-top .sfd-wrap { display: flex; align-items: center; justify-content: space-between; height: 64px; gap: 16px; }
+.sfd-top .sfd-wrap > a:first-child { display: inline-flex; align-items: center; min-height: 44px; }
 .sfd-top nav { display: flex; align-items: center; gap: 22px; font-size: 14.5px; }
 .sfd-top nav a { text-decoration: none; color: var(--ink-2); }
 .sfd-top nav a:hover { color: var(--ink); }
@@ -45,7 +46,9 @@
   letter-spacing: -0.05em;
   font-weight: 600;
   margin: 0;
+  text-wrap: balance;
 }
+.sfd h2 { text-wrap: balance; }
 .sfd-hero h1 em { font-style: normal; color: var(--blue-accent); }
 .sfd-hero p.sfd-lead { font-size: 18px; line-height: 1.6; color: var(--ink-2); margin: 24px 0 32px; max-width: 470px; }
 .sfd-actions { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -88,7 +91,7 @@
 .sfd-tag.after { right: 18px; background: var(--navy-2); color: #fff; }
 
 /* ── Widget dentro de la web de una clínica ───────────── */
-.sfd-try { background: linear-gradient(180deg, var(--blue-tint), #fff 70%); padding: 80px 0 96px; border-top: 1px solid var(--blue-line); }
+.sfd-try { background: linear-gradient(180deg, var(--blue-tint), #fff 70%); padding: 80px 0 96px; border-top: 1px solid var(--blue-line); scroll-margin-top: 64px; /* bajo la barra fija */ }
 .sfd-try-head { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr); gap: 40px; align-items: end; margin-bottom: 36px; }
 .sfd-try-head-solo { grid-template-columns: 1fr; }
 .sfd-try-head h2 { font-size: clamp(30px, 3.6vw, 46px); line-height: 1.04; letter-spacing: -0.04em; font-weight: 600; margin: 0; }
@@ -152,9 +155,12 @@
 .sfd-close .sfd-btn-line:hover { box-shadow: inset 0 0 0 1px #fff; }
 .sfd-btn-white { background: #fff; color: var(--navy-2) !important; }
 .sfd-btn-white:hover { transform: translateY(-1px); box-shadow: 0 14px 28px -14px rgba(0, 0, 0, 0.5); }
-.sfd-foot { background: var(--navy-3); color: rgba(255, 255, 255, 0.5); font-size: 13px; padding: 20px 0; }
-.sfd-foot .sfd-wrap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.sfd-foot a { color: rgba(255, 255, 255, 0.7); text-decoration: none; }
+.sfd-foot { background: var(--navy-3); color: rgba(255, 255, 255, 0.5); font-size: 13px; padding: 10px 0; }
+.sfd-foot .sfd-wrap { display: flex; justify-content: space-between; align-items: center; gap: 4px 12px; flex-wrap: wrap; }
+.sfd-foot nav { display: flex; flex-wrap: wrap; gap: 0 18px; }
+.sfd-foot a { display: inline-flex; align-items: center; min-height: 44px; color: rgba(255, 255, 255, 0.7); text-decoration: none; }
+.sfd-foot a:hover { color: #fff; }
+.sfd :is(.sfd-close, .sfd-foot) :focus-visible { outline-color: var(--blue-light); }
 
 /* ── Entrada ──────────────────────────────────────────── */
 .sfd-in { animation: sf-rise 0.8s var(--ease-out) both; }
@@ -173,7 +179,18 @@
 }
 @media (max-width: 600px) {
   .sfd-wrap { padding: 0 16px; }
+  .sfd-top nav { gap: 4px; }
   .sfd-top nav .hide-sm { display: none; }
+  /* "Acceder" se mantiene en móvil: las clínicas que ya tienen cuenta entran desde aquí */
+  .sfd-login { display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px; }
+  .sfd-btn-sm { min-height: 44px; }
+  .sfd-hero h1 { font-size: clamp(36px, 11vw, 44px); }
+  .sfd-close { padding: 56px 0; }
+  .sfd-close .sfd-actions { width: 100%; }
+  .sfd-close .sfd-actions .sfd-btn { flex: 1 1 100%; justify-content: center; min-height: 50px; }
+  .sfd-hero .sfd-actions .sfd-btn { min-height: 50px; }
+  .sfd-more { padding: 64px 0; }
+  .sfd-foot .sfd-wrap { flex-direction: column; align-items: flex-start; padding-top: 8px; padding-bottom: 8px; }
   .sfd-facts { display: none; }
   .sfd-hero p.sfd-lead { font-size: 16.5px; margin: 18px 0 24px; }
   .sfd-hero .sfd-actions .sfd-btn { flex: 1 1 auto; justify-content: center; }

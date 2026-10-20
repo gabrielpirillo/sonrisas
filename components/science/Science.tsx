@@ -1,6 +1,7 @@
 /* "La ciencia detrás de verse antes de decidir".
    Componente compartido por la app Next (/demo) y la landing (Vite): no usa
    nada propio de Next. Contenido y fuentes: docs/EVIDENCIA.md. */
+/* eslint-disable @next/next/no-img-element -- también se compila con Vite (landing): sin next/image */
 import { useEffect, useRef, useState, type ReactElement } from "react";
 import "./science.css";
 
@@ -148,11 +149,11 @@ const STEPS: Step[] = [
 
 function useInView<T extends Element>(threshold = 0.3) {
     const ref = useRef<T>(null);
-    const [inView, setInView] = useState(false);
+    // Sin IntersectionObserver (navegadores muy viejos) se muestra todo de entrada.
+    const [inView, setInView] = useState(() => typeof window !== "undefined" && typeof IntersectionObserver === "undefined");
     useEffect(() => {
         const el = ref.current;
-        if (!el) return;
-        if (typeof IntersectionObserver === "undefined") { setInView(true); return; }
+        if (!el || typeof IntersectionObserver === "undefined") return;
         const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setInView(true); io.disconnect(); } }, { threshold });
         io.observe(el);
         return () => io.disconnect();

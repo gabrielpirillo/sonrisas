@@ -125,6 +125,21 @@ function WidgetInner(props: WidgetContainerProps) {
         };
     }, [isEmbedded, step]);
 
+    // Al cambiar de paso, si el inicio del widget quedó por encima de la
+    // pantalla (p. ej. tras "Continuar" al final de un formulario largo),
+    // volver arriba para que el nuevo paso se vea desde su título.
+    const prevStep = useRef(step);
+    useEffect(() => {
+        if (prevStep.current === step) return;
+        prevStep.current = step;
+        const el = containerRef.current;
+        if (!el || isEmbedded) return;
+        if (el.getBoundingClientRect().top < 0) {
+            const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+            el.scrollIntoView({ block: "start", behavior: reduce ? "auto" : "smooth" });
+        }
+    }, [step, isEmbedded]);
+
     const isSuccess = SUCCESS_STEPS.includes(step);
     const mobileIdx = MOBILE_IDX[step] ?? 0;
     const desktopIdx = DESKTOP_IDX[step] ?? 0;
@@ -151,7 +166,9 @@ function WidgetInner(props: WidgetContainerProps) {
         <div
             ref={containerRef}
             data-embed={isEmbedded ? "true" : undefined}
-            className={`qoves-widget relative w-full flex flex-col ${isEmbedded ? "overflow-visible" : "min-h-[100dvh] rounded-[2rem] overflow-hidden"}`}
+            // overflow-clip (no hidden): recorta las esquinas sin crear un contenedor
+            // de scroll, así la barra del CTA puede quedar fija (sticky) abajo.
+            className={`qoves-widget relative w-full flex flex-col ${isEmbedded ? "overflow-visible" : "sm:rounded-[2rem] overflow-clip"}`}
             style={widgetCssVars(config) as React.CSSProperties}
         >
             <LoadingOverlay visible={isSubmittingPhoto || isSubmittingVideo} message={loadingMessage} />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Bar } from "@visx/shape";
 import { scaleBand, scaleLinear } from "@visx/scale";
 import { LinearGradient } from "@visx/gradient";
@@ -9,7 +9,7 @@ import { Group } from "@visx/group";
 import { ParentSize } from "@visx/responsive";
 import { useTooltip, TooltipWithBounds } from "@visx/tooltip";
 import { localPoint } from "@visx/event";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { C, CHART } from "@/lib/brand";
 
 /* Barras redondeadas con la paleta Smile Fast (azul acero / navy): crecen al
@@ -65,6 +65,10 @@ function TrendChart({
     );
 
     const [hover, setHover] = useState<number | null>(null);
+    const reduceMotion = useReducedMotion();
+    // En táctil no hay "mouseleave": el tooltip se oculta solo poco después de soltar.
+    const touchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    useEffect(() => () => { if (touchTimer.current) clearTimeout(touchTimer.current); }, []);
     const {
         showTooltip,
         hideTooltip,
@@ -114,7 +118,7 @@ function TrendChart({
                                 width={bw}
                                 rx={empty ? minBar / 2 : radius}
                                 fill={empty ? C.blueSoft : on ? "url(#sf-bar-on)" : "url(#sf-bar)"}
-                                initial={{ height: 0, y: innerHeight }}
+                                initial={reduceMotion ? false : { height: 0, y: innerHeight }}
                                 animate={{ height: h, y: innerHeight - h }}
                                 transition={{ duration: 0.7, delay: 0.15 + i * 0.018, ease: [0.22, 1, 0.36, 1] }}
                             />
@@ -128,8 +132,12 @@ function TrendChart({
                         fill="transparent"
                         onMouseMove={handleTooltip}
                         onMouseLeave={() => { hideTooltip(); setHover(null); }}
-                        onTouchStart={handleTooltip}
+                        onTouchStart={(e) => { if (touchTimer.current) clearTimeout(touchTimer.current); handleTooltip(e); }}
                         onTouchMove={handleTooltip}
+                        onTouchEnd={() => {
+                            if (touchTimer.current) clearTimeout(touchTimer.current);
+                            touchTimer.current = setTimeout(() => { hideTooltip(); setHover(null); }, 1600);
+                        }}
                     />
                 </Group>
             </svg>
@@ -170,10 +178,10 @@ export function AreaTrend({ daily, height = 220 }: { daily: number[]; height?: n
                         Simulaciones <span style={{ color: C.ink3 }}>por {mode === "dia" ? "día" : mode === "semana" ? "semana" : "mes"}</span>
                     </h3>
                 </div>
-                <div className="seg">
-                    <button className={mode === "dia" ? "seg-on" : ""} onClick={() => setMode("dia")}>Día</button>
-                    <button className={mode === "semana" ? "seg-on" : ""} onClick={() => setMode("semana")}>Semana</button>
-                    <button className={mode === "mes" ? "seg-on" : ""} onClick={() => setMode("mes")}>Mes</button>
+                <div className="seg" role="group" aria-label="Agrupar simulaciones por">
+                    <button type="button" aria-pressed={mode === "dia"} className={mode === "dia" ? "seg-on" : ""} onClick={() => setMode("dia")}>Día</button>
+                    <button type="button" aria-pressed={mode === "semana"} className={mode === "semana" ? "seg-on" : ""} onClick={() => setMode("semana")}>Semana</button>
+                    <button type="button" aria-pressed={mode === "mes"} className={mode === "mes" ? "seg-on" : ""} onClick={() => setMode("mes")}>Mes</button>
                 </div>
             </div>
             <div style={{ width: "100%", height }}>

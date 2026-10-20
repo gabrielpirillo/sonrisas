@@ -4,22 +4,22 @@ import "./qoves-admin.css";
 
 import Link from "next/link";
 import {
-    LayoutGrid, Users, SlidersHorizontal, LogOut, Menu,
+    LayoutGrid, Users, SlidersHorizontal, LogOut, Menu, X, ArrowLeft,
     Coins, Building2, ShieldCheck, CircleUser, ChevronRight, Palette,
 } from "lucide-react";
 import { authClient, useListOrganizations, useActiveOrganization } from "@/lib/auth/client";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
+import { Sheet, SheetClose, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ComponentType } from "react";
 import { LogoMark, Wordmark } from "@/components/admin/qoves/LogoMark";
+import { useMounted } from "@/components/panel/credits/useMounted";
 
 type Role = "admin" | "basic";
-type NavItem = { href: string; label: string; icon: any; adminOnly?: boolean };
+type NavItem = { href: string; label: string; icon: ComponentType<{ size?: number; strokeWidth?: number }>; adminOnly?: boolean };
 type NavSection = { title: string; items: NavItem[] };
 
 // En impersonación (solo lectura) se ocultan acciones sensibles.
@@ -70,8 +70,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const [impersonating, setImpersonating] = useState(false);
     // Los menús Radix (Select/Sheet) solo se montan en el cliente: así el
     // servidor y el navegador no generan IDs distintos (error de hidratación).
-    const [mounted, setMounted] = useState(false);
-    useEffect(() => setMounted(true), []);
+    const mounted = useMounted();
     const { data: orgs } = useListOrganizations();
     const { data: activeOrg } = useActiveOrganization();
 
@@ -113,21 +112,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     // Resalta también las subrutas (p. ej. /leads/123), no solo la coincidencia exacta.
     const isActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
 
-    const ImpersonationBanner = () =>
+    // Elementos (no componentes) para no re-montar el menú en cada render.
+    const impersonationBanner =
         impersonating ? (
-            <div style={{ background: "linear-gradient(90deg, var(--blue-deep), var(--blue-ink))", color: "#fff", fontSize: 13, padding: "9px 16px", display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+            <div className="sf-imp-banner" role="status">
                 <span>Estás impersonando a otro usuario.</span>
-                <button onClick={stopImpersonating} style={{ textDecoration: "underline", fontWeight: 600, background: "none", border: "none", cursor: "pointer", color: "inherit" }}>
+                <button type="button" onClick={stopImpersonating}>
                     Salir de impersonación
                 </button>
             </div>
         ) : null;
 
-    const SidebarContent = () => (
-        <aside className="sidebar">
+    const renderSidebar = (inSheet = false) => (
+        <aside className={"sidebar" + (inSheet ? " sidebar-sheet" : "")}>
             <div className="side-brand">
                 <Wordmark tone="light" height={22} />
-                <span className="mono" style={{ fontSize: 8, marginLeft: "auto", padding: "4px 8px", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 99 }}>PANEL</span>
+                {inSheet ? (
+                    <SheetClose className="side-close" aria-label="Cerrar menú">
+                        <X size={20} strokeWidth={1.8} />
+                    </SheetClose>
+                ) : (
+                    <span className="mono" style={{ fontSize: 8, marginLeft: "auto", padding: "4px 8px", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 99 }}>PANEL</span>
+                )}
             </div>
 
             {/* Selector de clínica (organizaciones de Better Auth) */}
@@ -171,6 +177,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                         href={item.href}
                                         onClick={() => setOpen(false)}
                                         className={"navitem" + (active ? " navitem-on" : "")}
+                                        aria-current={active ? "page" : undefined}
                                     >
                                         <Icon size={18} strokeWidth={1.6} />
                                         <span style={{ flex: 1, textAlign: "left" }}>{item.label}</span>
@@ -225,48 +232,61 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </aside>
     );
 
-    // Flujo de autenticación: cambiar contraseña forzado, sin navegación.
+    // Flujo de autenticación: cambiar contraseña sin el menú lateral (solo marca y vuelta al panel).
     const isAuthFlow = pathname === "/administracion/update-password";
     if (isAuthFlow) {
         return (
-            <div className="qoves-admin" style={{ height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
-                <ImpersonationBanner />
-                <main className="main-scroll" style={{ flex: 1 }}>{children}</main>
+            <div className="qoves-admin sf-shell sf-touch">
+                <div className="sf-shell-col">
+                    {impersonationBanner}
+                    <header className="sf-auth-bar">
+                        <Wordmark tone="light" height={20} />
+                        <Link href="/administracion/dashboard" className="sf-auth-back">
+                            <ArrowLeft size={16} strokeWidth={1.8} aria-hidden /> Volver al panel
+                        </Link>
+                    </header>
+                    <main className="main-scroll">{children}</main>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="qoves-admin" style={{ height: "100vh", overflow: "hidden" }}>
-            <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-                <ImpersonationBanner />
+        <div className="qoves-admin sf-shell sf-touch">
+            <div className="sf-shell-col">
+                {impersonationBanner}
 
-                {/* Mobile header (solo móvil) */}
-                <div
-                    className="qoves-mobile-header"
-                    style={{ alignItems: "center", justifyContent: "space-between", padding: "12px 16px", background: "linear-gradient(90deg, var(--navy-1), var(--navy-2))", color: "#fff" }}
-                >
-                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                {/* Cabecera móvil (navy, fija arriba al hacer scroll) */}
+                <header className="qoves-mobile-header sf-mobile-header">
+                    <Link href="/administracion/dashboard" className="sf-mobile-brand" aria-label="Smile Fast · Ir al resumen">
                         <Wordmark tone="light" height={20} />
-                    </div>
-                    {mounted && (
-                    <Sheet open={open} onOpenChange={setOpen}>
-                        <SheetTrigger asChild>
-                            <Button variant="ghost" size="icon" aria-label="Abrir menú" style={{ color: "#fff" }}><Menu className="h-6 w-6" /></Button>
-                        </SheetTrigger>
-                        <SheetContent side="left" className="p-0 w-[266px] border-r-0">
-                            <SheetTitle className="sr-only">Navegación</SheetTitle>
-                            <div className="qoves-admin" style={{ height: "100%" }}>
-                                <SidebarContent />
-                            </div>
-                        </SheetContent>
-                    </Sheet>
+                    </Link>
+                    {mounted ? (
+                        <Sheet open={open} onOpenChange={setOpen}>
+                            <SheetTrigger asChild>
+                                <button type="button" className="sf-menu-btn" aria-label="Abrir menú">
+                                    <Menu size={22} strokeWidth={1.8} />
+                                </button>
+                            </SheetTrigger>
+                            <SheetContent
+                                side="left"
+                                className="sf-sheet p-0 gap-0 border-r-0 [&>button:last-child]:hidden"
+                                aria-describedby={undefined}
+                            >
+                                <SheetTitle className="sr-only">Navegación</SheetTitle>
+                                <div className="qoves-admin sf-touch" style={{ height: "100%" }}>
+                                    {renderSidebar(true)}
+                                </div>
+                            </SheetContent>
+                        </Sheet>
+                    ) : (
+                        <span className="sf-menu-btn" aria-hidden="true"><Menu size={22} strokeWidth={1.8} /></span>
                     )}
-                </div>
+                </header>
 
-                <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+                <div className="sf-shell-body">
                     <div className="qoves-desktop-sidebar">
-                        <SidebarContent />
+                        {renderSidebar()}
                     </div>
                     <main className="main-scroll">{children}</main>
                 </div>

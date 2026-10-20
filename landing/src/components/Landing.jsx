@@ -18,37 +18,46 @@ const extLink = { target: "_blank", rel: "noopener noreferrer" };
 const navLink = { color: "var(--ink-2)", textDecoration: "none", fontSize: 15, fontWeight: 450, letterSpacing: "-0.01em", whiteSpace: "nowrap" };
 
 /* ---------------- Nav ---------------- */
+/* Pasado el hero la píldora se oculta al bajar y reaparece al subir:
+   en móvil siempre queda a un gesto el acceso y la prueba. */
 function Nav({ onStart }) {
   const [scrolled, setScrolled] = React.useState(false);
   const [hidden, setHidden] = React.useState(false);
   React.useEffect(() => {
-    const onScroll = () => {
+    let lastY = window.scrollY;
+    let raf = 0;
+    const update = () => {
+      raf = 0;
       const y = window.scrollY;
+      const dy = y - lastY;
       setScrolled(y > 40);
       const hero = document.querySelector(".hero2");
       const h = hero ? hero.offsetHeight : window.innerHeight;
-      setHidden(y > h - 80);
+      if (y <= h - 80) setHidden(false);
+      else if (dy > 4) setHidden(true);
+      else if (dy < -10) setHidden(false);
+      if (Math.abs(dy) > 4) lastY = y;
     };
-    onScroll();
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(update); };
+    update();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => { window.removeEventListener("scroll", onScroll); if (raf) cancelAnimationFrame(raf); };
   }, []);
   return (
-    <nav className={"navpill" + (scrolled ? " navpill-scrolled" : "") + (hidden ? " navpill-hidden" : "")}>
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-        <img className="nav-logo nav-logo-white" src={RES.r11_logo_sf_white_png} alt="Smile Fast" style={{ height: 24, width: "auto", display: "block" }} />
-        <img className="nav-logo nav-logo-black" src={RES.r12_logo_sf_black_png} alt="Smile Fast" style={{ height: 24, width: "auto", display: "block" }} />
-      </div>
+    <nav className={"navpill" + (scrolled ? " navpill-scrolled" : "") + (hidden ? " navpill-hidden" : "")} aria-label="Principal">
+      <a href="#top" className="nav-brand" aria-label="Smile Fast, volver al inicio">
+        <img className="nav-logo nav-logo-white" src={RES.r11_logo_sf_white_png} alt="" style={{ height: 24, width: "auto", display: "block" }} />
+        <img className="nav-logo nav-logo-black" src={RES.r12_logo_sf_black_png} alt="" style={{ height: 24, width: "auto", display: "block" }} />
+      </a>
       <div className="nav-links" style={{ display: "flex", gap: 30, alignItems: "center" }}>
         <a href="#producto" style={navLink}>Producto</a>
         <a href="#como" style={navLink}>Cómo funciona</a>
         <a href="#usos" style={navLink}>Casos de uso</a>
         <a href={CONTACT_HREF} {...extLink} style={navLink}>Contacto</a>
-
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+      <div className="nav-actions">
         <a href="/acceso" className="nav-login" style={navLink}>Acceder</a>
-        <button className="btn btn-white btn-sm" onClick={onStart}>Quiero probarlo</button>
+        <button type="button" className="btn btn-white btn-sm nav-cta" onClick={onStart}>Quiero probarlo</button>
       </div>
     </nav>);
 
@@ -72,10 +81,21 @@ function BrowserFrame({ children, url = "tuclinica.com" }) {
 
 }
 
-/* ---------------- Hero ---------------- */
 /* ---------------- Hero (full-bleed, vídeo a la derecha) ---------------- */
+/* El mismo vídeo de Cloudinary sirve al hero y a la sección de vídeo. En
+   pantallas angostas pedimos una versión de 720 px de ancho (≈0,7 MB en vez
+   de ≈3 MB): se ve igual de nítida en un móvil y arranca antes. */
+const VIDEO_BASE = "https://res.cloudinary.com/dhzmkxbek/video/upload/";
+const VIDEO_FILE = "v1781638188/0614_2_upxmh1.mp4";
+const isNarrow = () => typeof window !== "undefined" && !!window.matchMedia && window.matchMedia("(max-width: 860px)").matches;
+const videoSrc = () => VIDEO_BASE + (isNarrow() ? "q_auto,w_720/" : "") + VIDEO_FILE;
+// primer fotograma como póster: algo que ver mientras el vídeo carga en móvil
+const videoPoster = () => VIDEO_BASE + "so_0,q_auto,w_" + (isNarrow() ? 720 : 1080) + "/" + VIDEO_FILE.replace(/\.mp4$/, ".jpg");
+
 function Hero({ onStart }) {
   const videoRef = React.useRef(null);
+  const [src] = React.useState(videoSrc);
+  const [poster] = React.useState(videoPoster);
 
   // garantiza silencio total (React no siempre fija el atributo muted en el DOM)
   React.useEffect(() => {
@@ -84,46 +104,45 @@ function Hero({ onStart }) {
   }, []);
 
   return (
-    <header className="hero2">
+    <header className="hero2" id="top">
 
-      {/* Vídeo de fondo a la derecha — bucle, sin sonido, reproducción automática */}
+      {/* Vídeo de fondo — a la derecha en escritorio, arriba en móvil; bucle, sin sonido */}
       <video
         ref={videoRef}
         className="hero2-video"
         autoPlay loop muted playsInline preload="auto"
-        style={{ width: "750px", objectPosition: "0% 21%", transform: "translateX(-12%)" }}>
-        
-        <source src="https://res.cloudinary.com/dhzmkxbek/video/upload/v1781638188/0614_2_upxmh1.mp4" type="video/mp4" />
+        poster={poster}
+        aria-hidden="true">
+        <source src={src} type="video/mp4" />
       </video>
-
 
       {/* Velo para legibilidad de la copy */}
       <div className="hero2-scrim" />
 
       <div className="wrap hero2-inner">
         <div className="hero2-copy">
-          <h1 className="display hero2-h1" style={{ fontSize: "clamp(38px, 4.4vw, 60px)", margin: "22px 0 24px" }}>
+          <h1 className="display hero2-h1">
             La herramienta<br />que llena tu clínica.
           </h1>
-          <p className="hero2-lead" style={{ fontSize: 19, maxWidth: 440, textAlign: "justify" }}>
+          <p className="hero2-lead">
             Tus visitantes ven su nueva sonrisa en tu web, dejan sus datos y <b>agendan su cita.</b>
           </p>
-          <div style={{ display: "flex", gap: 12, marginTop: 34, flexWrap: "wrap" }}>
-            <button className="btn btn-white" style={{ padding: "16px 30px", fontSize: 16 }} onClick={onStart}>Quiero probarlo</button>
+          <div className="hero2-ctas">
+            <button type="button" className="btn btn-white hero2-cta" onClick={onStart}>Quiero probarlo</button>
             <a href={SIGNUP_HREF} className="btn hero2-ghost">Crear cuenta</a>
           </div>
-          <div className="hero2-stats">
+          <ul className="hero2-stats">
             {[
             ["+38% de pacientes", "Mayor facturación"],
             ["Paciente + simulación", "Datos listos en tu panel"],
-            ["Activo en 1 día", "Sin programar nada"]].
+            ["Activo en 1 día", "Sin programar nada"]].
             map(([t, d], i) =>
-            <div key={i} className="hero2-stat">
-                <div style={{ fontSize: 14, fontWeight: 600, letterSpacing: "-0.01em", color: "#fff", textAlign: "center" }}>{t}</div>
-                <div style={{ fontSize: 12.5, color: "rgba(255,255,255,0.6)", marginTop: 4, lineHeight: 1.45, textAlign: "center" }}>{d}</div>
-              </div>
+            <li key={i} className="hero2-stat">
+                <div className="hero2-stat-t">{t}</div>
+                <div className="hero2-stat-d">{d}</div>
+              </li>
             )}
-          </div>
+          </ul>
         </div>
       </div>
     </header>);
@@ -135,18 +154,15 @@ function Hero({ onStart }) {
 /* ---------------- Qué recibe tu clínica por cada visitante ---------------- */
 function LeadAsset({ onStart }) {
   const [ref, inview] = useInview(0.3);
-  const reduce = React.useRef(false);
-  const [flip, setFlip] = React.useState(false);
+  const [reduced] = useState(() => !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches));
+  const [flipped, setFlip] = useState(false);
   React.useEffect(() => {
-    reduce.current = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduce.current) setFlip(true);
-  }, []);
-  React.useEffect(() => {
-    if (!inview || reduce.current) return;
+    if (!inview || reduced) return;
     const t = setTimeout(() => setFlip(true), 1150);
     return () => clearTimeout(t);
-  }, [inview]);
-  const on = inview || reduce.current;
+  }, [inview, reduced]);
+  const flip = flipped || reduced;
+  const on = inview || reduced;
   const checks = [
     "Nombre y contacto directo",
     "WhatsApp a un clic",
@@ -158,11 +174,11 @@ function LeadAsset({ onStart }) {
     <section id="activo" ref={ref} className={"lead-asset tone-blue" + (on ? " in" : "")} style={{ padding: "100px 0", background: "linear-gradient(180deg,#ffffff,var(--blue-soft))" }}>
       <div className="wrap la-grid">
         <div className="la-copy">
-          <div style={{ marginBottom: 22 }}><MonoPill>CADA VISITA, UN LEAD</MonoPill></div>
-          <h2 className="display" style={{ fontSize: "clamp(34px,4.4vw,56px)", lineHeight: 1.05 }}>
+          <div className="la-kicker" style={{ marginBottom: 22 }}><MonoPill>CADA VISITA, UN LEAD</MonoPill></div>
+          <h2 className="display la-title" style={{ fontSize: "clamp(34px,4.4vw,56px)", lineHeight: 1.05 }}>
             Cada visitante te deja <span className="dim">un lead listo para cerrar</span>
           </h2>
-          <p className="lead" style={{ fontSize: 17, margin: "20px 0 30px", maxWidth: "46ch" }}>
+          <p className="lead la-lead" style={{ fontSize: 17, margin: "20px 0 30px", maxWidth: "46ch" }}>
             No un clic anónimo. Nombre, correo y WhatsApp junto a su simulación de sonrisa, ordenados en tu panel para <b>contactar y agendar.</b>
           </p>
           <ul className="la-checks">
@@ -173,7 +189,7 @@ function LeadAsset({ onStart }) {
               </li>
             )}
           </ul>
-          <button className="la-cta" onClick={onStart} style={{ padding: "15px 30px", fontSize: 15 }}>Quiero probarlo</button>
+          <button type="button" className="la-cta" onClick={onStart} style={{ padding: "15px 30px", fontSize: 15 }}>Quiero probarlo</button>
         </div>
         <div className="la-card-wrap">
           <div className="la-card">
@@ -182,7 +198,7 @@ function LeadAsset({ onStart }) {
               <div className="la-avatar">MG</div>
               <div className="la-head-txt">
                 <div className="la-name la-f" style={{ transitionDelay: "0.2s" }}>María Fernández</div>
-                <div className="la-meta"><span className="la-dot"></span>hace 2 min · <span style={{ color: "var(--sage-deep)", fontWeight: 500 }}>nuevo</span></div>
+                <div className="la-meta"><span className="la-dot"></span>hace 2 min · <span style={{ color: "var(--blue-deep)", fontWeight: 500 }}>nuevo</span></div>
               </div>
             </div>
             <div className="la-rows">
@@ -198,8 +214,8 @@ function LeadAsset({ onStart }) {
             </div>
             <div className="la-thumb la-f" style={{ transitionDelay: "0.8s" }}>
               <div className={"la-flip" + (flip ? " flipped" : "")}>
-                <img className="la-face la-before" src={RES.r14_trans_1_before_jpg} alt="Antes de la simulación" />
-                <img className="la-face la-after" src={RES.r15_trans_1_after_jpg} alt="Simulación de sonrisa" />
+                <img className="la-face la-before" src={RES.r14_trans_1_before_jpg} alt="Antes de la simulación" loading="lazy" decoding="async" />
+                <img className="la-face la-after" src={RES.r15_trans_1_after_jpg} alt="Simulación de sonrisa" loading="lazy" decoding="async" />
               </div>
               <span className="la-thumb-tag">{flip ? "Después" : "Antes"}</span>
             </div>
@@ -296,8 +312,8 @@ function StepIntegrate() {
 function StepSimulate() {
   return (
     <div className="hiw-sim">
-      <img className="hiw-sim-img" src={RES.r16_preview_before_png} alt="" aria-hidden="true" />
-      <img className="hiw-sim-img hiw-sim-after" src={RES.r17_preview_after_png} alt="" aria-hidden="true" />
+      <img className="hiw-sim-img" src={RES.r16_preview_before_png} alt="" aria-hidden="true" loading="lazy" decoding="async" />
+      <img className="hiw-sim-img hiw-sim-after" src={RES.r17_preview_after_png} alt="" aria-hidden="true" loading="lazy" decoding="async" />
       <span className="hiw-sim-scan" />
       <span className="hiw-corner tl" /><span className="hiw-corner tr" /><span className="hiw-corner bl" /><span className="hiw-corner br" />
       <span className="hiw-sim-status mono">
@@ -319,7 +335,7 @@ function StepLead() {
       <div className="hiw-lead hiw-lead-new">
         <span className="hiw-av">MF</span>
         <span className="hiw-lead-txt"><b>María Fernández</b><small>Simulación adjunta · WhatsApp</small></span>
-        <img className="hiw-lead-thumb" src={RES.r17_preview_after_png} alt="" aria-hidden="true" />
+        <img className="hiw-lead-thumb" src={RES.r17_preview_after_png} alt="" aria-hidden="true" loading="lazy" decoding="async" />
         <span className="hiw-new mono">NUEVO</span>
       </div>
       <div className="hiw-lead hiw-lead-old">
@@ -355,16 +371,16 @@ function PatientPreview({ onStart }) {
         <p className="lead" style={{ fontSize: 18, marginTop: 16 }}>Así se ve Smile Fast dentro de la web de tu clínica.</p>
       </div>
       <div className="wrap future-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.15fr 1fr", gap: 22, alignItems: "stretch" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+        <div className="pp-col" style={{ display: "flex", flexDirection: "column", gap: 22 }}>
           {cards.slice(0, 2).map((c, i) => <FeatureCard key={i} title={c[0]} body={c[1]} icon={c[2]} />)}
         </div>
-        <div style={{ minHeight: 520, display: "flex", flexDirection: "column", gap: 16 }}>
-          <div style={{ flex: 1 }}>
+        <div className="pp-center" style={{ minHeight: 520, display: "flex", flexDirection: "column", gap: 16 }}>
+          <div className="pp-media" style={{ flex: 1 }}>
             <BeforeAfter beforeSrc={RES.r14_trans_1_before_jpg} afterSrc={RES.r15_trans_1_after_jpg} height="100%" radius={22} imgPos="center 30%" autoplay />
           </div>
-          <button className="btn btn-blue" style={{ width: "100%" }} onClick={onStart}>Quiero probarlo</button>
+          <button type="button" className="btn btn-blue pp-cta" style={{ width: "100%" }} onClick={onStart}>Quiero probarlo</button>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+        <div className="pp-col" style={{ display: "flex", flexDirection: "column", gap: 22 }}>
           {cards.slice(2, 4).map((c, i) => <FeatureCard key={i} title={c[0]} body={c[1]} icon={c[2]} />)}
         </div>
       </div>
@@ -380,12 +396,14 @@ function FeatureCard({ title, body, icon }) {
     inbox: <><path d="M4 13h4l2 3h4l2-3h4" /><path d="M4 13V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7M4 13v5a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5" /></>
   }[icon];
   return (
-    <div className="card card-hover" style={{ padding: 24, display: "flex", flexDirection: "column", justifyContent: "flex-end", flex: 1, minHeight: 230 }}>
-      <span className="fc-ic" style={{ width: 52, height: 52, borderRadius: 14, background: "var(--bg-tint)", border: "1px solid var(--line)", display: "grid", placeItems: "center", color: "var(--ink)", marginBottom: "auto" }}>
+    <div className="card card-hover fc">
+      <span className="fc-ic" aria-hidden="true">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{paths}</svg>
       </span>
-      <h3 style={{ fontSize: 21, fontWeight: 600, letterSpacing: "-0.02em", margin: "20px 0 8px" }}>{title}</h3>
-      <p style={{ fontSize: 14.5, color: "var(--ink-2)", lineHeight: 1.5, margin: 0 }}>{body}</p>
+      <div className="fc-txt">
+        <h3 className="fc-title">{title}</h3>
+        <p className="fc-body">{body}</p>
+      </div>
     </div>);
 
 }
@@ -394,7 +412,7 @@ function FeatureCard({ title, body, icon }) {
 function Analysis() {
   return (
     <section id="analisis" className="facial-analysis">
-      <img className="analysis-blur" src={RES.r10_analysis_blur_png} alt="" aria-hidden="true" />
+      <img className="analysis-blur" src={RES.r10_analysis_blur_png} alt="" aria-hidden="true" loading="lazy" decoding="async" />
       <div className="fa-head">
         <div style={{ marginBottom: 16 }}><MonoPill>ANÁLISIS PERSONALIZADO</MonoPill></div>
         <h2 className="display" style={{ fontSize: "clamp(34px, 4.4vw, 52px)", color: "#fff" }}>
@@ -431,6 +449,22 @@ function UseCases() {
     body: "Genera contenido antes y después para anuncios, campañas de captación y redes sociales."
   }];
 
+  // En móvil las tarjetas son un carrusel deslizable: los puntos siguen al scroll
+  // y permiten saltar a una tarjeta.
+  const railRef = React.useRef(null);
+  const [cur, setCur] = useState(0);
+  const onRail = () => {
+    const el = railRef.current; if (!el || el.children.length < 2) return;
+    const step = el.children[1].offsetLeft - el.children[0].offsetLeft;
+    const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
+    const i = atEnd ? el.children.length - 1 : Math.round(el.scrollLeft / (step || 1));
+    setCur(Math.max(0, Math.min(el.children.length - 1, i)));
+  };
+  const goCard = (i) => {
+    const el = railRef.current; const c = el && el.children[i]; if (!c) return;
+    el.scrollTo({ left: c.offsetLeft - el.children[0].offsetLeft, behavior: "smooth" });
+  };
+
   return (
     <section id="usos" className="accent-blue" style={{ padding: "100px 0", background: "linear-gradient(180deg,#ffffff,var(--blue-soft))" }}>
       <div className="wrap" style={{ textAlign: "center", marginBottom: 56 }}>
@@ -439,7 +473,7 @@ function UseCases() {
           Tres formas de <span className="dim">aprovecharlo</span>
         </h2>
       </div>
-      <div className="uc-a-grid wrap">
+      <div className="uc-a-grid wrap" ref={railRef} onScroll={onRail}>
         {uses.map((u, i) =>
         <div key={i} className={"uc-a-card" + (i === 0 ? " uc-a-dark" : "")}>
             <div className="uc-a-media">
@@ -451,9 +485,14 @@ function UseCases() {
                 <span style={{ fontSize: 30, fontWeight: 600, color: i === 0 ? "rgba(255,255,255,0.4)" : "var(--line-strong)" }}>0{i + 1}</span>
               </div>
               <h3 style={{ fontSize: 24, fontWeight: 600, letterSpacing: "-0.02em", margin: "16px 0 10px", color: i === 0 ? "#fff" : "var(--ink)" }}>{u.title}</h3>
-              <p style={{ fontSize: 14.5, lineHeight: 1.55, margin: 0, color: i === 0 ? "rgba(255,255,255,0.72)" : "var(--ink-2)" }}>{u.body}</p>
+              <p className="uc-a-copy" style={{ lineHeight: 1.55, margin: 0, color: i === 0 ? "rgba(255,255,255,0.72)" : "var(--ink-2)" }}>{u.body}</p>
             </div>
           </div>
+        )}
+      </div>
+      <div className="uc-dots" aria-label="Casos de uso">
+        {uses.map((u, i) =>
+        <button type="button" key={i} className={i === cur ? "on" : ""} aria-label={"Ver " + u.title} aria-current={i === cur ? "true" : undefined} onClick={() => goCard(i)}><i /></button>
         )}
       </div>
     </section>);
@@ -587,7 +626,7 @@ function FunnelRow({ title, steps, win, baseDelay, result }) {
   return (
     <div className={"fx-row" + (win ? " fx-win" : " fx-lose")}>
       <div className="fx-label">
-        <span className="fx-badge">{win ? <LogoMark size={20} dark={false} /> : <span className="fx-x"></span>}</span>
+        <span className="fx-badge" aria-hidden="true">{win ? <LogoMark size={22} /> : <span className="fx-x"></span>}</span>
         <div className="fx-title">{title}</div>
       </div>
       <div className="fx-track">
@@ -618,17 +657,21 @@ function FunnelRow({ title, steps, win, baseDelay, result }) {
 
 
 /* ---------------- FAQ (enfocado a dueños de clínicas) ---------------- */
-function FAQItem({ q, a, open, onToggle }) {
+/* Acordeón accesible: la pregunta es un botón; la respuesta se abre con
+   grid-template-rows 0fr→1fr, así la altura es exacta en cualquier ancho. */
+function FAQItem({ q, a, open, onToggle, id }) {
   return (
-    <div className="faq-item" onClick={onToggle}>
-      <div className="faq-q">
-        <span>{q}</span>
-        <span className={"faq-ico" + (open ? " open" : "")}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-        </span>
-      </div>
-      <div className="faq-a" style={{ maxHeight: open ? 260 : 0 }}>
-        <p>{a}</p>
+    <div className={"faq-item" + (open ? " open" : "")}>
+      <h3 className="faq-h">
+        <button type="button" className="faq-q" aria-expanded={open} aria-controls={id} id={id + "-q"} onClick={onToggle}>
+          <span>{q}</span>
+          <span className={"faq-ico" + (open ? " open" : "")} aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
+          </span>
+        </button>
+      </h3>
+      <div className="faq-a" id={id} role="region" aria-labelledby={id + "-q"} aria-hidden={!open}>
+        <div className="faq-a-in"><p>{a}</p></div>
       </div>
     </div>);
 
@@ -668,7 +711,7 @@ function FAQ() {
         </div>
         <div className="faq-list">
           {items.map(([q, a], i) =>
-          <FAQItem key={i} q={q} a={a} open={open === i} onToggle={() => setOpen(open === i ? -1 : i)} />
+          <FAQItem key={i} id={"faq-" + i} q={q} a={a} open={open === i} onToggle={() => setOpen(open === i ? -1 : i)} />
           )}
         </div>
       </div>
@@ -691,12 +734,12 @@ function Testimonios({ onStart }) {
     { quote: "Los leads llegan calificados y con contexto. Nuestros agentes cierran más y en menos visitas.", name: "José Miguel", role: "Broker Owner", company: "RE/MAX Exclusive", stat: "+38%", statLbl: "más leads calificados", avatar: RES.r24_avatar_josemiguel_jpg },
     { quote: "Pasamos de responder en horas a responder en minutos, sin sumar una sola persona al equipo.", name: "Lucía Fernández", role: "Coordinación", company: "Templo del Masaje", stat: "24/7", statLbl: "atención automatizada", initials: "LF" }];
   const Stars = () =>
-    <div style={{ display: "flex", gap: 3 }}>
-      {[0, 1, 2, 3, 4].map((s) => <svg key={s} width="14" height="14" viewBox="0 0 24 24" fill="var(--sage-deep)"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z" /></svg>)}
+    <div style={{ display: "flex", gap: 3 }} role="img" aria-label="5 de 5 estrellas">
+      {[0, 1, 2, 3, 4].map((s) => <svg key={s} width="14" height="14" viewBox="0 0 24 24" fill="var(--blue-accent)" aria-hidden="true"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z" /></svg>)}
     </div>;
   const Avatar = ({ t }) => t.avatar ?
-    <img src={t.avatar} alt={t.name} style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: "1px solid var(--line)" }} /> :
-    <span style={{ width: 44, height: 44, borderRadius: "50%", flexShrink: 0, display: "grid", placeItems: "center", fontSize: 15, fontWeight: 600, letterSpacing: "-0.01em", background: "var(--bg-tint)", color: "var(--sage-deep)", border: "1px solid var(--line)" }}>{t.initials}</span>;
+    <img src={t.avatar} alt="" loading="lazy" decoding="async" style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: "1px solid var(--line)" }} /> :
+    <span style={{ width: 44, height: 44, borderRadius: "50%", flexShrink: 0, display: "grid", placeItems: "center", fontSize: 15, fontWeight: 600, letterSpacing: "-0.01em", background: "var(--blue-soft)", color: "var(--blue-deep)", border: "1px solid var(--blue-line)" }} aria-hidden="true">{t.initials}</span>;
   const metrics = [["+15", "empresas activas"], ["+6", "países"]];
   const seals = [
     { label: "Datos cifrados", icon: <><rect x="4" y="10" width="16" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></> },
@@ -709,7 +752,7 @@ function Testimonios({ onStart }) {
       <div className="wrap" style={{ position: "relative", zIndex: 1 }}>
         <div className="bb-intro" style={{ display: "grid", gridTemplateColumns: "1.05fr 0.95fr", gap: 52, alignItems: "center" }}>
           <div>
-            <span className="mono" style={{ fontSize: 12, letterSpacing: "0.2em", color: "var(--sage-deep)", textTransform: "uppercase" }}>La agencia detrás de Smile Fast</span>
+            <span className="mono" style={{ fontSize: 12, letterSpacing: "0.2em", color: "var(--blue-deep)", textTransform: "uppercase" }}>La agencia detrás de Smile Fast</span>
             <h2 className="display" style={{ fontSize: "clamp(32px, 4vw, 52px)", margin: "16px 0 0", lineHeight: 1.05 }}>
               Detrás de Smile Fast <span className="dim">está Brandboost</span>
             </h2>
@@ -727,13 +770,13 @@ function Testimonios({ onStart }) {
             </div>
           </div>
           {/* Tarjeta oscura premium con imagen */}
-          <div style={{ position: "relative", borderRadius: "var(--r-img)", overflow: "hidden", minHeight: 340, background: "var(--ink)", boxShadow: "0 40px 90px -46px rgba(28,30,29,0.6)" }}>
-            <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=1200" alt="Infraestructura de IA global" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.42 }} />
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(160deg, rgba(28,30,29,0.35), rgba(28,30,29,0.92))" }} />
-            <div style={{ position: "relative", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 30, color: "#fff", minHeight: 340 }}>
+          <div className="bb-card" style={{ position: "relative", borderRadius: "var(--r-img)", overflow: "hidden", minHeight: 340, background: "var(--navy-2)", boxShadow: "0 40px 90px -46px rgba(19,27,34,0.6)" }}>
+            <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=70&w=1200" srcSet="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=70&w=700 700w, https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=70&w=1200 1200w" sizes="(max-width: 820px) 100vw, 600px" alt="" loading="lazy" decoding="async" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.42 }} />
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(160deg, rgba(27,38,48,0.35), rgba(27,38,48,0.92))" }} />
+            <div className="bb-card-in" style={{ position: "relative", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 30, color: "#fff", minHeight: 340 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <img src={RES.r25_brandboost_mark_png} alt="" style={{ width: 30, height: 30, objectFit: "contain", filter: "brightness(1.6)" }} />
-                <span className="mono" style={{ fontSize: 10, letterSpacing: "0.2em", color: "var(--blue-light)", textTransform: "uppercase" }}>Agentes · Automatización · IA</span>
+                <img src={RES.r25_brandboost_mark_png} alt="" style={{ width: 30, height: 30, objectFit: "contain", filter: "brightness(1.6)", flexShrink: 0 }} />
+                <span className="mono bb-card-tag" style={{ fontSize: 10, letterSpacing: "0.2em", color: "var(--blue-light)", textTransform: "uppercase" }}>Agentes · Automatización · IA</span>
               </div>
               <div>
                 <p style={{ fontSize: 20, fontWeight: 300, lineHeight: 1.4, margin: "0 0 22px", maxWidth: "24ch" }}>Agentes de IA, automatizaciones e integraciones <b>a medida de cada empresa.</b></p>
@@ -764,10 +807,10 @@ function Testimonios({ onStart }) {
               </React.Fragment>
             )}
           </div>
-          <div className="bb-logos" style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 12 }}>
+          <div className="bb-logos">
             {clients.map((c, i) =>
-            <div key={i} style={{ display: "grid", placeItems: "center", background: c.dark ? "var(--ink)" : "#fff", border: c.dark ? "1px solid var(--ink)" : "1px solid var(--line)", borderRadius: 14, padding: "22px 18px", minHeight: 96 }}>
-              <img src={c.src} alt={c.name} style={{ maxHeight: 48, maxWidth: 132, objectFit: "contain" }} />
+            <div key={i} className={"bb-logo-tile" + (c.dark ? " dark" : "")}>
+              <img src={c.src} alt={c.name} loading="lazy" decoding="async" />
             </div>
             )}
           </div>
@@ -776,10 +819,10 @@ function Testimonios({ onStart }) {
         {/* Testimonios */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 18, marginTop: 44 }} className="bb-tst-grid">
           {T.map((t, i) =>
-          <figure key={i} style={{ margin: 0, display: "flex", flexDirection: "column", background: "#fff", border: "1px solid var(--line)", borderRadius: "var(--r-card)", padding: 26 }}>
+          <figure key={i} className="bb-tst" style={{ margin: 0, display: "flex", flexDirection: "column", background: "#fff", border: "1px solid var(--line)", borderRadius: "var(--r-card)", padding: 26 }}>
               <Stars />
               <blockquote style={{ margin: "16px 0 0", fontSize: 15.5, lineHeight: 1.55, color: "var(--ink)", flex: 1 }}>“{t.quote}”</blockquote>
-              <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, marginTop: 22, paddingTop: 18, borderTop: "1px solid var(--line)" }}>
+              <figcaption className="bb-tst-foot" style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, marginTop: 22, paddingTop: 18, borderTop: "1px solid var(--line)" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
                   <Avatar t={t} />
                   <div style={{ minWidth: 0 }}>
@@ -787,11 +830,11 @@ function Testimonios({ onStart }) {
                     <div style={{ fontSize: 11.5, color: "var(--ink-3)", marginTop: 2 }}>{t.role} · {t.company}</div>
                   </div>
                 </div>
-                <div style={{ textAlign: "right", flexShrink: 0 }}>
-                  <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", color: "var(--sage-deep)", lineHeight: 1 }}>{t.stat}</div>
-                  <div style={{ fontSize: 9.5, letterSpacing: "0.04em", color: "var(--ink-3)", marginTop: 4, maxWidth: 120 }}>{t.statLbl}</div>
+                <div className="bb-tst-stat" style={{ textAlign: "right", flexShrink: 0 }}>
+                  <div className="bb-tst-num" style={{ fontSize: 22, fontWeight: 700, letterSpacing: "-0.02em", color: "var(--blue-deep)", lineHeight: 1 }}>{t.stat}</div>
+                  <div className="bb-tst-lbl" style={{ fontSize: 11, letterSpacing: "0.02em", color: "var(--ink-3)", marginTop: 4, maxWidth: 120 }}>{t.statLbl}</div>
                 </div>
-              </div>
+              </figcaption>
             </figure>
           )}
         </div>
@@ -799,16 +842,16 @@ function Testimonios({ onStart }) {
         {/* Franja de seguridad de datos */}
         <div className={"bb-seals" + (inview ? " in" : "")} style={{ display: "flex", flexWrap: "wrap", gap: 12, marginTop: 36 }}>
           {seals.map((s, i) =>
-          <span key={i} style={{ display: "inline-flex", alignItems: "center", gap: 9, padding: "10px 18px", borderRadius: 999, border: "1px solid var(--line-strong)", background: "transparent", fontSize: 13, color: "var(--ink-2)" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-3)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">{s.icon}</svg>
+          <span key={i} className="bb-seal" style={{ display: "inline-flex", alignItems: "center", gap: 9, padding: "10px 18px", borderRadius: 999, border: "1px solid var(--line-strong)", background: "transparent", fontSize: 13, color: "var(--ink-2)" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue-deep)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{s.icon}</svg>
               {s.label}
             </span>
           )}
         </div>
 
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px 20px", marginTop: 40 }}>
-          <a href={SIGNUP_HREF} className="btn btn-blue" style={{ padding: "14px 28px", fontSize: 14 }}>Crear cuenta</a>
-          <a href={CONTACT_HREF} {...extLink} className="btn btn-ghost" style={{ padding: "14px 28px", fontSize: 14 }}>Contactarnos</a>
+        <div className="bb-ctas" style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "10px 12px", marginTop: 40 }}>
+          <a href={SIGNUP_HREF} className="btn btn-blue" style={{ padding: "15px 28px", fontSize: 15 }}>Crear cuenta</a>
+          <a href={CONTACT_HREF} {...extLink} className="btn btn-ghost" style={{ padding: "15px 28px", fontSize: 15 }}>Contactarnos</a>
         </div>
       </div>
     </section>);
@@ -824,7 +867,7 @@ const FT_BADGES = [
   ["Cumple RGPD", <><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6l7-3Z" /><path d="M9 12l2 2 4-4" /></>],
   ["Datos cifrados", <><rect x="4.5" y="10.5" width="15" height="10" rx="2" /><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" /></>],
   ["Sin permanencia", <><path d="M3 12a9 9 0 0 1 15-6.7L21 8" /><path d="M21 3v5h-5" /><path d="M21 12a9 9 0 0 1-15 6.7L3 16" /><path d="M3 21v-5h5" /></>],
-  ["Activo en 1 día", <><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /><path d="M9 14.5l2 2 4-4" /></>],
+  ["Activo en 1 día", <><rect x="3.5" y="5" width="17" height="15" rx="2" /><path d="M3.5 10h17M8 3v4M16 3v4" /><path d="M9 14.5l2 2 4-4" /></>],
   ["Implementación gratuita", <><rect x="3.5" y="8" width="17" height="12" rx="2" /><path d="M12 8v12M3.5 12h17" /><path d="M12 8c-1.5-3-5-3.5-5-1.2C7 8 9.5 8 12 8Zm0 0c1.5-3 5-3.5 5-1.2C17 8 14.5 8 12 8Z" /></>]];
 
 function SiteFooter({ onStart }) {
@@ -861,8 +904,12 @@ function SiteFooter({ onStart }) {
       <div className="wrap ft-wordmark" aria-hidden="true">Smile Fast</div>
 
       <div className="wrap ft-bottom">
-        <span>© 2026 Smile Fast · Un producto de <a href="#testimonios">Brandboost</a></span>
+        <span>© {new Date().getFullYear()} Smile Fast · Un producto de <a href="#testimonios">Brandboost</a></span>
         <span className="mono ft-made">HECHO PARA CLÍNICAS DENTALES</span>
+        <nav className="ft-legal" aria-label="Legal">
+          <a href="/privacidad">Privacidad</a>
+          <a href="/terminos">Términos de uso</a>
+        </nav>
         <button type="button" className="ft-top-btn" onClick={toTop}><span aria-hidden="true">↑</span> Volver arriba</button>
       </div>
     </footer>);
@@ -894,9 +941,9 @@ function CTAFooter({ onStart }) {
     <>
       <section id="empezar" ref={ref} className={"cta-final" + (inview ? " in" : "")}>
         <div className="ctaf-cards" ref={cardsRef} aria-hidden="true">
-          <img className="ctaf-card c1" src={RES.r17_preview_after_png} alt="" />
-          <img className="ctaf-card c2" src={RES.r28_trans_2_after_jpg} alt="" />
-          <img className="ctaf-card c3" src={RES.r15_trans_1_after_jpg} alt="" />
+          <img className="ctaf-card c1" src={RES.r17_preview_after_png} alt="" loading="lazy" decoding="async" />
+          <img className="ctaf-card c2" src={RES.r28_trans_2_after_jpg} alt="" loading="lazy" decoding="async" />
+          <img className="ctaf-card c3" src={RES.r15_trans_1_after_jpg} alt="" loading="lazy" decoding="async" />
         </div>
         <div className="wrap cta-final-body" style={{ position: "relative", zIndex: 1 }}>
           <span className="mono ctaf-eyebrow">ÚLTIMO PASO</span>
@@ -907,9 +954,9 @@ function CTAFooter({ onStart }) {
             Actívalo en tu web y convierte cada visita en una cita agendada.<br />
             <b>Implementación gratuita y sin costos extra:</b> solo pagas los créditos que usas.
           </p>
-          <div style={{ display: "flex", gap: 16, justifyContent: "center", alignItems: "center", flexWrap: "wrap" }}>
+          <div className="ctaf-actions">
             <a href={SIGNUP_HREF} className="btn btn-white cta-glow" style={{ padding: "18px 42px", fontSize: 17 }}>Crear cuenta</a>
-            <button className="btn ctaf-ghost" style={{ padding: "18px 32px", fontSize: 17 }} onClick={onStart}>Quiero probarlo</button>
+            <button type="button" className="btn ctaf-ghost" style={{ padding: "18px 32px", fontSize: 17 }} onClick={onStart}>Quiero probarlo</button>
           </div>
           <p className="ctaf-contact">¿Dudas? <a href={CONTACT_HREF} {...extLink}>Escríbenos por WhatsApp</a></p>
         </div>
@@ -921,11 +968,11 @@ function CTAFooter({ onStart }) {
 
 /* ---------------- Compose ---------------- */
 const TF_ICONS = [
-  <><path d="M6 3h12l3 6-9 12L3 9z" /><path d="M3 9h18M12 21L8 9l4-6 4 6" /></>,
-  <><circle cx="12" cy="9" r="6" /><path d="M8.5 13.5L7 21l5-3 5 3-1.5-7.5" /></>,
-  <><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" /><path d="M14 3v6h6" /><path d="M9 15l2 2 4-4" /></>,
-  <><path d="M3 7l6 6 4-4 8 8" /><path d="M15 17h6v-6" /></>,
-  <path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z" />];
+  <React.Fragment key="gem"><path d="M6 3h12l3 6-9 12L3 9z" /><path d="M3 9h18M12 21L8 9l4-6 4 6" /></React.Fragment>,
+  <React.Fragment key="badge"><circle cx="12" cy="9" r="6" /><path d="M8.5 13.5L7 21l5-3 5 3-1.5-7.5" /></React.Fragment>,
+  <React.Fragment key="doc"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" /><path d="M14 3v6h6" /><path d="M9 15l2 2 4-4" /></React.Fragment>,
+  <React.Fragment key="trend"><path d="M3 7l6 6 4-4 8 8" /><path d="M15 17h6v-6" /></React.Fragment>,
+  <path key="crown" d="M3 8l4 4 5-7 5 7 4-4-2 11H5z" />];
 
 function Transformations() {
   const benefits = [
@@ -975,6 +1022,24 @@ function Transformations() {
 
 /* ---------------- Vídeo en movimiento (feature aparte) ---------------- */
 function VideoFeature({ onStart }) {
+  // El vídeo se carga al acercarse a la sección (no compite con el hero) y se
+  // pausa fuera de pantalla para no gastar batería en móvil.
+  const boxRef = React.useRef(null);
+  const vidRef = React.useRef(null);
+  const [src, setSrc] = useState(null);
+  React.useEffect(() => {
+    const el = boxRef.current;
+    if (!el || !("IntersectionObserver" in window)) { setSrc(videoSrc()); return; }
+    const io = new IntersectionObserver(([e]) => {
+      const v = vidRef.current;
+      if (e.isIntersecting) {
+        setSrc((s) => s || videoSrc());
+        if (v && v.src) v.play().catch(() => {});
+      } else if (v && !v.paused) v.pause();
+    }, { rootMargin: "300px 0px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
   return (
     <section id="video" className="tone-dark" style={{ padding: "110px 0" }}>
       <div className="wrap video-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1.15fr", gap: 50, alignItems: "center" }}>
@@ -986,10 +1051,10 @@ function VideoFeature({ onStart }) {
           <p className="lead" style={{ fontSize: 17, margin: "20px 0 34px", maxWidth: 420 }}>
             Además de la foto, tu paciente puede verse sonreír en un vídeo realista. Verse en movimiento es lo que termina de convencerlo para agendar.
           </p>
-          <button className="btn btn-white" onClick={onStart}>Quiero probarlo</button>
+          <button type="button" className="btn btn-white" style={{ padding: "15px 28px" }} onClick={onStart}>Quiero probarlo</button>
         </div>
-        <div style={{ position: "relative", borderRadius: 22, overflow: "hidden", border: "1px solid var(--line)", background: "var(--photo)", aspectRatio: "16 / 10" }}>
-          <video src="https://res.cloudinary.com/dhzmkxbek/video/upload/v1781638188/0614_2_upxmh1.mp4" autoPlay loop muted playsInline style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}></video>
+        <div ref={boxRef} className="video-box" style={{ position: "relative", borderRadius: 22, overflow: "hidden", border: "1px solid var(--line)", background: "var(--photo)", aspectRatio: "16 / 10" }}>
+          {src && <video ref={(v) => { vidRef.current = v; if (v) { v.muted = true; v.defaultMuted = true; } }} src={src} poster={videoPoster()} autoPlay loop muted playsInline preload="auto" aria-label="Vídeo de ejemplo: una sonrisa simulada en movimiento" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}></video>}
           <span className="mono" style={{ position: "absolute", top: 16, left: 16, fontSize: 9, letterSpacing: "0.18em", color: "#fff", background: "rgba(20,24,23,0.5)", padding: "6px 12px", borderRadius: 99 }}>VÍDEO REALISTA</span>
         </div>
       </div>

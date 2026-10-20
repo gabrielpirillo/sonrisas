@@ -102,6 +102,16 @@ export function AuthShell({
                     <div>{children}</div>
                 </div>
 
+                {/* Marca compacta en móvil/tablet (el escaparate navy se oculta) */}
+                <div className="sf-auth-mini" aria-hidden="true">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={PHOTOS[0]} alt="" loading="lazy" />
+                    <p style={{ margin: 0 }}>
+                        <b>Tus pacientes ven su nueva sonrisa</b>
+                        <span>antes de la primera cita, desde la web de tu clínica.</span>
+                    </p>
+                </div>
+
                 <div className="sf-auth-foot">
                     <span>© {new Date().getFullYear()} Smile Fast</span>
                     <span>Simulación de sonrisa con IA para clínicas dentales</span>

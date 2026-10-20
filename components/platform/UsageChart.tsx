@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Bar } from '@visx/shape';
 import { scaleBand, scaleLinear } from '@visx/scale';
 import { AxisBottom, AxisLeft } from '@visx/axis';
@@ -10,7 +10,7 @@ import { Group } from '@visx/group';
 import { ParentSize } from '@visx/responsive';
 import { useTooltip, TooltipWithBounds } from '@visx/tooltip';
 import { localPoint } from '@visx/event';
-import { motion } from 'framer-motion';
+import { MotionConfig, motion } from 'framer-motion';
 import { C, CHART } from '@/lib/brand';
 
 /* Uso diario de la plataforma: barras apiladas (imágenes abajo, videos arriba)
@@ -52,9 +52,12 @@ function Chart({ data, width, height }: { data: Datum[]; width: number; height: 
 
     const [hover, setHover] = useState<number | null>(null);
     const { showTooltip, hideTooltip, tooltipData, tooltipLeft = 0 } = useTooltip<typeof parsed[number]>();
+    const touchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    useEffect(() => () => { if (touchTimer.current) clearTimeout(touchTimer.current); }, []);
 
     const handleTooltip = useCallback(
         (event: React.TouchEvent<SVGRectElement> | React.MouseEvent<SVGRectElement>) => {
+            if (touchTimer.current) clearTimeout(touchTimer.current);
             const point = localPoint(event);
             if (!point) return;
             const step = xScale.step() || 1;
@@ -71,14 +74,28 @@ function Chart({ data, width, height }: { data: Datum[]; width: number; height: 
         [parsed, showTooltip, xScale]
     );
 
+    // En táctil no hay "mouseleave": el tooltip se retira solo tras unos segundos.
+    const releaseTouch = useCallback(() => {
+        if (touchTimer.current) clearTimeout(touchTimer.current);
+        touchTimer.current = setTimeout(() => { hideTooltip(); setHover(null); }, 2600);
+    }, [hideTooltip]);
+
     if (width < 10) return null;
     const bw = xScale.bandwidth();
     const r = Math.min(6, bw / 2);
     const labelEvery = Math.max(1, Math.ceil(parsed.length / (width > 520 ? 6 : 4)));
+    const sumImages = parsed.reduce((a, d) => a + d.images, 0);
+    const sumVideos = parsed.reduce((a, d) => a + d.videos, 0);
 
     return (
         <div className="relative">
-            <svg width={width} height={height} style={{ display: 'block' }}>
+            <svg
+                width={width}
+                height={height}
+                style={{ display: 'block', touchAction: 'pan-y' }}
+                role="img"
+                aria-label={`Generaciones de los últimos ${parsed.length} días: ${sumImages} imágenes y ${sumVideos} vídeos.`}
+            >
                 <LinearGradient id="usage-images" from={C.blueDeep} to={C.blueAccent} />
                 <LinearGradient id="usage-images-on" from={C.navy2} to={C.blueDeep} />
                 <Group left={margin.left} top={margin.top}>
@@ -148,6 +165,7 @@ function Chart({ data, width, height }: { data: Datum[]; width: number; height: 
                         onMouseLeave={() => { hideTooltip(); setHover(null); }}
                         onTouchStart={handleTooltip}
                         onTouchMove={handleTooltip}
+                        onTouchEnd={releaseTouch}
                     />
                 </Group>
             </svg>
@@ -177,7 +195,7 @@ function Chart({ data, width, height }: { data: Datum[]; width: number; height: 
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span style={{ width: 8, height: 8, borderRadius: 99, background: VIDEOS_COLOR, display: 'inline-block' }} />
-                        Videos: <strong>{tooltipData.videos}</strong>
+                        Vídeos: <strong>{tooltipData.videos}</strong>
                     </div>
                 </TooltipWithBounds>
             )}
@@ -187,22 +205,16 @@ function Chart({ data, width, height }: { data: Datum[]; width: number; height: 
 
 export function UsageChart({ data }: { data: Array<Datum> }) {
     return (
-        <div>
-            <div style={{ height: 260, width: '100%' }}>
+        <MotionConfig reducedMotion="user">
+            <div className="sa-chart">
                 <ParentSize debounceTime={10}>
                     {({ width, height }) => <Chart data={data} width={width} height={height} />}
                 </ParentSize>
             </div>
-            <div style={{ display: 'flex', gap: 18, marginTop: 12, justifyContent: 'center' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: AXIS_COLOR }}>
-                    <span style={{ width: 9, height: 9, borderRadius: 3, background: IMAGES_COLOR, display: 'inline-block' }} />
-                    Imágenes
-                </span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: AXIS_COLOR }}>
-                    <span style={{ width: 9, height: 9, borderRadius: 3, background: VIDEOS_COLOR, display: 'inline-block' }} />
-                    Videos
-                </span>
+            <div className="sa-chart-legend" aria-hidden>
+                <span><i style={{ background: IMAGES_COLOR }} />Imágenes</span>
+                <span><i style={{ background: VIDEOS_COLOR }} />Vídeos</span>
             </div>
-        </div>
+        </MotionConfig>
     );
 }

@@ -70,8 +70,8 @@ export default function EmbedConfigurator({ widgetKey }: { widgetKey?: string | 
                     Guía de instalación
                 </button>
             </DialogTrigger>
-            <DialogContent className="!max-w-[720px] w-[calc(100vw-24px)] max-h-[90vh] overflow-y-auto p-0 gap-0 bg-white rounded-[24px] border-[var(--blue-line)] shadow-[0_40px_90px_-30px_rgba(19,27,34,0.65)]">
-                <div className="qoves-admin ws-guide">
+            <DialogContent className="sf-dialog !max-w-[720px] w-[calc(100vw-24px)] max-h-[calc(100dvh-24px)] sm:max-h-[90vh] overflow-y-auto overscroll-contain p-0 gap-0 bg-white rounded-[24px] border-[var(--blue-line)] shadow-[0_40px_90px_-30px_rgba(19,27,34,0.65)]">
+                <div className="qoves-admin sf-touch ws-guide">
                     <div className="ws-guide-head">
                         <span className="mono" style={{ fontSize: 9 }}>INSTALACIÓN DEL WIDGET</span>
                         <DialogTitle className="ws-guide-title">

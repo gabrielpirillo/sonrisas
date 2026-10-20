@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import {
     Mail, Phone, User, ImageIcon, MonitorPlay,
-    Share2, CheckCircle2, Loader2, Archive, Trees, Home,
+    Share2, CheckCircle2, Loader2, Trees, Home,
     Briefcase, Wine, Palmtree, Trash2, XCircle, AlertCircle,
     ChevronLeft, Send, Check
 } from "lucide-react";
@@ -20,12 +20,13 @@ import { BeforeAfterSlider } from "@/components/widget/BeforeAfterSlider";
 import { toast } from "sonner";
 import { deleteLeadAction } from "@/app/(admin)/administracion/leads/actions";
 import { StatusPill } from "@/components/admin/qoves/StatusPill";
+import { leadImageSrc } from "@/components/admin/qoves/LeadThumb";
 import { LEAD_STATUS } from "@/lib/brand";
 
 /* ── Lead-modal helpers · lenguaje visual Smile Fast (navy / azul acero) ── */
 const Q_GOAL: Record<string, string> = { alignment: "Alineación", veneers: "Carillas", implants: "Implantes", full_smile: "Sonrisa completa", whitening: "Blanqueamiento" };
 const Q_TIME: Record<string, string> = { now: "Ahora", "1-3_months": "1-3 meses", later: "Más adelante" };
-const STATUS_CHOICES = ["pending", "contacted", "converted"] as const;
+const STATUS_CHOICES = ["pending", "contacted", "converted", "rejected"] as const;
 
 const NAVY_BG =
     "radial-gradient(80% 55% at 0% 0%, rgba(142,164,180,0.30), transparent 62%)," +
@@ -79,6 +80,33 @@ function KVRow({ label, value, first = false }: { label: string; value: React.Re
     );
 }
 
+/** Imagen de la simulación con respaldo si el archivo no carga (nunca un icono roto). */
+function ModalImage({ src, alt, fit = "cover", rounded = false }: { src?: string | null; alt: string; fit?: "cover" | "contain"; rounded?: boolean }) {
+    const url = leadImageSrc(src);
+    const [failed, setFailed] = useState<string | null>(null);
+    if (!url || failed === url) {
+        return (
+            <div style={{ flex: 1, width: "100%", height: "100%", display: "grid", placeItems: "center", color: "rgba(255,255,255,0.7)", textAlign: "center", padding: 16 }}>
+                <div>
+                    <div style={{ width: 52, height: 52, margin: "0 auto 10px", borderRadius: 16, display: "grid", placeItems: "center", background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.14)" }}>
+                        <ImageIcon size={22} strokeWidth={1.5} />
+                    </div>
+                    <p className="mono" style={{ fontSize: 9, color: "rgba(255,255,255,0.55)", margin: 0 }}>Imagen no disponible</p>
+                </div>
+            </div>
+        );
+    }
+    return (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+            src={url}
+            alt={alt}
+            onError={() => setFailed(url)}
+            style={{ width: "100%", height: "100%", objectFit: fit, objectPosition: "50% 30%", display: "block", borderRadius: rounded ? 16 : undefined }}
+        />
+    );
+}
+
 /** Pastilla seleccionable de estado (colores de LEAD_STATUS). */
 function StatusChoice({ status, active, disabled, onClick }: { status: string; active: boolean; disabled?: boolean; onClick: () => void }) {
     const s = LEAD_STATUS[status] || LEAD_STATUS.pending;
@@ -91,7 +119,7 @@ function StatusChoice({ status, active, disabled, onClick }: { status: string; a
             aria-pressed={active}
             style={{
                 display: "inline-flex", alignItems: "center", gap: 8,
-                padding: "8px 14px 8px 11px", borderRadius: 99,
+                minHeight: 40, padding: "8px 14px 8px 11px", borderRadius: 99,
                 border: `1px solid ${active ? s.border : "var(--blue-line)"}`,
                 background: active ? s.bg : "#fff",
                 color: active ? s.text : "var(--ink-2)",
@@ -153,13 +181,16 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
     // ── Browser Notification helpers ─────────────────────────────────────
     const notificationSoundRef = useRef<HTMLAudioElement | null>(null);
 
-    // Request notification permission on first render
+    // El permiso de notificaciones se pide al generar un vídeo (gesto del usuario), no al cargar la página.
+    const askNotificationPermission = useCallback(() => {
+        try {
+            if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
+                void Notification.requestPermission().catch(() => {});
+            }
+        } catch { /* Safari antiguo: sin promesa */ }
+    }, []);
+
     useEffect(() => {
-        if (typeof window !== 'undefined' && 'Notification' in window && Notification.permission === 'default') {
-            Notification.requestPermission().then(perm => {
-                console.log('[Notification] Permission:', perm);
-            });
-        }
         // Pre-create audio element for notification sound
         if (typeof window !== 'undefined' && !notificationSoundRef.current) {
             const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1eXGBkamtzd350b2ZfWFVTU1dcY2x1fYOIioyKhoB5cWliXFpbX2VsdHuBhYmLjIuJhX94cWlhW1lZXWNqcnl/g4eKi4uKiIR+d3BpYlxaWl5ka3J5f4OHiouLioiEfndwamNdW1teZGtzeYCEiIuMi4qIhH53cGpiXVtbX2VscnqAhYmLjIuJh4N9dnBqY11bW19la3N6gIWJi4yLioiDfXZvaWNdW1tfZGtzeoGFiYuMi4qIg312b2ljXVtbX2Rrc3qBhYmLjIuKiIN9dm9pY11bW19ka3N6gYWJi4yLioiDfXZwamNeXFxgZm10e4GGiYuLioiEfnhxamRfXV1hZ250e4KGiouLioiFf3hxamRfXV1hZm10fIKHiouLioiFgHlya2RfXl1hZm11fIKHiouLioiFgHlya2VgXl5hZm11fIKHiouLioiFgHlya2VgXl5hZm51fIKH');
@@ -207,8 +238,6 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
     const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const generatingRef = useRef(false);
     const stopProgressRef = useRef<(completed?: boolean) => void>(() => { });
-
-    const storageBaseUrl = process.env.NEXT_PUBLIC_STORAGE_URL || "";
 
     const scenarios = [
         { id: "park", label: "Parque", icon: Trees, description: "Exterior natural, luz de día" },
@@ -458,6 +487,7 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
         if (!lead.id) return;
 
         console.log("[VideoDebug] User clicked Generate Video.");
+        askNotificationPermission();
         setGeneratingVideo(true);
         generatingRef.current = true;
         setErrorMessage(null);
@@ -590,8 +620,9 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
 
     const handleWhatsApp = () => {
         if (!lead.phone) return;
-        const clean = lead.phone.replace(/\+/g, "").replace(/\s+/g, "").replace(/-/g, "");
-        window.open(`https://wa.me/${clean}`, "_blank");
+        const clean = String(lead.phone).replace(/\D/g, "");
+        if (!clean) return;
+        window.open(`https://wa.me/${clean}`, "_blank", "noopener,noreferrer");
     };
 
     const handleResendPhoto = async () => {
@@ -658,7 +689,7 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
 
     const mobileTabs = [
         { id: "info" as const, label: "Información", icon: User },
-        { id: "video" as const, label: "Video", icon: MonitorPlay },
+        { id: "video" as const, label: "Vídeo", icon: MonitorPlay },
         { id: "gestion" as const, label: "Gestión", icon: Briefcase },
     ];
 
@@ -671,7 +702,7 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                 <DialogDescription className="sr-only">Detalle, simulación y gestión del lead</DialogDescription>
 
                 <motion.div
-                    className="qoves-admin flex flex-col flex-1 min-h-0 h-full"
+                    className="qoves-admin sf-touch flex flex-col flex-1 min-h-0 h-full"
                     initial={reduceMotion ? false : { opacity: 0, y: 14, scale: 0.985 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={reduceMotion ? { duration: 0 } : SPRING}
@@ -680,37 +711,39 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                 {/* ═══════════════════════════════════════════════════════ */}
                 {/* ══  MOBILE LAYOUT  ═══════════════════════════════════ */}
                 {/* ═══════════════════════════════════════════════════════ */}
-                <div className="md:hidden flex flex-col h-full bg-white">
+                <div className="md:hidden flex flex-col h-full min-h-0 bg-white">
 
                     {/* ── Mobile Hero: Image Preview (navy) ── */}
-                    <div className="relative flex-none overflow-hidden" style={{ height: '42vh', background: NAVY_BG }}>
+                    <div className="relative flex-none overflow-hidden h-[38dvh] min-h-[220px] max-h-[380px]" style={{ background: NAVY_BG }}>
                         {/* Compact top bar overlay */}
-                        <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-2 p-3 bg-gradient-to-b from-[rgba(19,27,34,0.82)] to-transparent">
+                        <div className="absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-2 px-3 pb-3 pt-[max(0.625rem,env(safe-area-inset-top))] bg-gradient-to-b from-[rgba(19,27,34,0.82)] to-transparent">
                             <div className="flex items-center gap-2.5 min-w-0">
                                 <button
+                                    type="button"
                                     onClick={() => onOpenChange(false)}
-                                    aria-label="Cerrar"
-                                    className="w-9 h-9 rounded-full bg-white/15 border border-white/20 backdrop-blur-md flex items-center justify-center active:scale-90 transition-transform"
+                                    aria-label="Cerrar ficha"
+                                    className="w-11 h-11 shrink-0 rounded-full bg-white/15 border border-white/20 backdrop-blur-md flex items-center justify-center active:scale-90 transition-transform"
                                 >
                                     <ChevronLeft className="w-5 h-5 text-white" />
                                 </button>
-                                <NavyAvatar initials={leadInitials} size={34} glass />
                                 <div className="min-w-0">
-                                    <p className="text-white text-sm font-semibold tracking-[-0.01em] truncate">{lead.name}</p>
+                                    <p className="text-white text-[15px] font-semibold tracking-[-0.01em] truncate">{lead.name || "Sin nombre"}</p>
                                     <p className="mono" style={{ fontSize: 8.5, color: "rgba(255,255,255,0.55)", letterSpacing: "0.16em" }}>{requestDate}</p>
                                 </div>
                             </div>
-                            <StatusPill status={lead.status} />
+                            <span className="shrink-0"><StatusPill status={lead.status} /></span>
                         </div>
 
                         {/* Image/Video toggle pills */}
                         {isVideoCompleted && (
                             <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex bg-white/10 backdrop-blur-md p-1 rounded-full border border-white/15">
-                                {([["images", "Antes/Después"], ["video", "Video"]] as const).map(([mode, label]) => (
+                                {([["images", "Antes/Después"], ["video", "Vídeo"]] as const).map(([mode, label]) => (
                                     <button
                                         key={mode}
+                                        type="button"
                                         onClick={() => setViewMode(mode)}
-                                        className={`relative px-3.5 py-1.5 rounded-full text-[11px] font-semibold transition-colors ${viewMode === mode ? "text-navy-2" : "text-white/75"}`}
+                                        aria-pressed={viewMode === mode}
+                                        className={`relative min-h-9 px-4 py-2 rounded-full text-[12px] font-semibold transition-colors ${viewMode === mode ? "text-navy-2" : "text-white/75"}`}
                                     >
                                         {viewMode === mode && (
                                             <motion.span layoutId="lead-media-toggle" className="absolute inset-0 rounded-full bg-white shadow" transition={reduceMotion ? { duration: 0 } : SPRING} />
@@ -722,40 +755,36 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                         )}
 
                         {/* Image content */}
-                        <div className="w-full h-full flex items-center justify-center pt-12 pb-2">
+                        <div className={`w-full h-full flex items-center justify-center pt-16 ${isVideoCompleted ? "pb-14" : "pb-3"}`}>
                             <AnimatePresence mode="wait" initial={false}>
                                 {viewMode === "images" ? (
                                     generation ? (
-                                        <motion.div key="m-images" {...mediaMotion} className="relative w-full h-full flex items-center justify-center p-2">
-                                            {generation.input_path && generation.input_path !== "unknown" ? (
-                                                <div className="relative h-full w-auto aspect-[9/16] rounded-2xl overflow-hidden bg-navy-3 border border-white/10 shadow-[0_24px_48px_-24px_rgba(0,0,0,0.8)]">
+                                        <motion.div key="m-images" {...mediaMotion} className="relative w-full h-full flex items-center justify-center px-3">
+                                            <div className="relative h-full w-auto max-w-full aspect-[9/16] rounded-2xl overflow-hidden bg-navy-3 border border-white/10 shadow-[0_24px_48px_-24px_rgba(0,0,0,0.8)] flex">
+                                                {generation.input_path && generation.input_path !== "unknown" ? (
                                                     <BeforeAfterSlider
                                                         beforeImage={generation.input_path}
-                                                        afterImage={generation.output_path}
+                                                        afterImage={leadImageSrc(generation.output_path) ?? generation.output_path}
                                                         className="w-full h-full"
                                                     />
-                                                </div>
-                                            ) : (
-                                                <img
-                                                    src={generation.output_path}
-                                                    alt="Generated Smile"
-                                                    className="w-full h-full object-contain rounded-2xl"
-                                                />
-                                            )}
+                                                ) : (
+                                                    <ModalImage src={generation.output_path} alt={`Simulación de ${lead.name || "el paciente"}`} />
+                                                )}
+                                            </div>
                                         </motion.div>
                                     ) : (
                                         <motion.div key="m-empty" {...mediaMotion} className="text-center text-white/55">
                                             <div className="w-14 h-14 mx-auto mb-3 rounded-2xl grid place-items-center bg-white/10 border border-white/15">
                                                 <ImageIcon className="w-6 h-6" strokeWidth={1.5} />
                                             </div>
-                                            <p className="mono" style={{ fontSize: 9, color: "rgba(255,255,255,0.55)" }}>Sin imágenes</p>
+                                            <p className="mono" style={{ fontSize: 9, color: "rgba(255,255,255,0.55)" }}>Sin simulaciones todavía</p>
                                         </motion.div>
                                     )
                                 ) : isVideoCompleted ? (
-                                    <motion.div key="m-video" {...mediaMotion} className="relative h-full w-auto aspect-[9/16] rounded-2xl overflow-hidden bg-navy-3 border border-white/10 shadow-[0_24px_48px_-24px_rgba(0,0,0,0.8)]">
+                                    <motion.div key="m-video" {...mediaMotion} className="relative h-full w-auto max-w-full aspect-[9/16] rounded-2xl overflow-hidden bg-navy-3 border border-white/10 shadow-[0_24px_48px_-24px_rgba(0,0,0,0.8)]">
                                         <video
                                             key={videoGen.output_path}
-                                            src={`/api/storage/generated/${videoGen.output_path}`}
+                                            src={leadImageSrc(videoGen.output_path) ?? undefined}
                                             className="w-full h-full object-contain"
                                             controls
                                             autoPlay
@@ -763,92 +792,77 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                                             playsInline
                                             loop
                                         />
-                                        <button
-                                            className="absolute top-2 right-2 h-7 inline-flex items-center rounded-full bg-blue-deep hover:bg-blue-ink text-white text-[10px] font-semibold px-3 z-30 shadow-lg transition-colors disabled:opacity-60"
-                                            onClick={handleSendVideo}
-                                            disabled={sendingVideo}
-                                        >
-                                            {sendingVideo ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Send className="w-3 h-3 mr-1" />}
-                                            Enviar
-                                        </button>
                                     </motion.div>
                                 ) : null}
                             </AnimatePresence>
                         </div>
                     </div>
 
-                    {/* ── Quick Actions Bar ── */}
-                    <div className="flex-none border-b border-blue-line bg-white px-3 py-3">
+                    {/* ── Acciones rápidas: contactar ── */}
+                    <div className="flex-none border-b border-blue-line bg-white px-3 py-2.5">
                         <div className="flex items-center gap-2">
                             <motion.button
-                                whileTap={reduceMotion ? undefined : { scale: 0.97 }}
+                                type="button"
+                                whileTap={reduceMotion || !lead.phone ? undefined : { scale: 0.97 }}
                                 onClick={handleWhatsApp}
-                                className="flex-1 min-w-0 h-10 flex items-center justify-center gap-2 rounded-full bg-blue-deep hover:bg-blue-ink text-white text-[13px] font-medium shadow-[0_10px_22px_-14px_rgba(79,107,127,0.95)] transition-colors"
+                                disabled={!lead.phone}
+                                className="flex-1 min-w-0 h-11 flex items-center justify-center gap-2 rounded-full bg-blue-deep hover:bg-blue-ink text-white text-[14px] font-medium shadow-[0_10px_22px_-14px_rgba(79,107,127,0.95)] transition-colors disabled:opacity-50 disabled:shadow-none"
                             >
-                                <Share2 className="w-4 h-4 shrink-0" />
+                                <Share2 className="w-4 h-4 shrink-0" aria-hidden />
                                 <span className="truncate">WhatsApp</span>
                             </motion.button>
-                            <a
-                                href={`tel:${lead.phone}`}
-                                aria-label="Llamar"
-                                className="flex items-center justify-center w-10 h-10 rounded-full border border-blue-line bg-white text-blue-deep active:scale-95 transition-transform shrink-0"
-                            >
-                                <Phone className="w-4 h-4" />
-                            </a>
-                            {generation && (
-                                <button
-                                    onClick={handleResendPhoto}
-                                    disabled={sendingPhoto}
-                                    className="flex items-center justify-center w-10 h-10 rounded-full border border-blue-line bg-blue-soft text-blue-deep active:scale-95 transition-transform disabled:opacity-50 shrink-0"
-                                    title="Reenviar imagen por email"
+                            {lead.phone ? (
+                                <a
+                                    href={`tel:${String(lead.phone).replace(/[^\d+]/g, "")}`}
+                                    aria-label={`Llamar a ${lead.name || "el paciente"}`}
+                                    title="Llamar"
+                                    className="flex items-center justify-center w-11 h-11 rounded-full border border-blue-line bg-white text-blue-deep active:scale-95 transition-transform shrink-0"
                                 >
-                                    {sendingPhoto ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
-                                </button>
-                            )}
-                            {isVideoCompleted && (
-                                <button
-                                    onClick={handleSendVideo}
-                                    disabled={sendingVideo}
-                                    className="flex items-center justify-center w-10 h-10 rounded-full border border-blue-line bg-blue-soft text-blue-deep active:scale-95 transition-transform disabled:opacity-50 shrink-0"
-                                    title="Reenviar video por email"
+                                    <Phone className="w-[18px] h-[18px]" />
+                                </a>
+                            ) : null}
+                            {lead.email ? (
+                                <a
+                                    href={`mailto:${lead.email}`}
+                                    aria-label={`Escribir un email a ${lead.name || "el paciente"}`}
+                                    title="Enviar email"
+                                    className="flex items-center justify-center w-11 h-11 rounded-full border border-blue-line bg-white text-blue-deep active:scale-95 transition-transform shrink-0"
                                 >
-                                    {sendingVideo ? <Loader2 className="w-4 h-4 animate-spin" /> : <MonitorPlay className="w-4 h-4" />}
-                                </button>
-                            )}
-                            <a
-                                href={`mailto:${lead.email}`}
-                                className="flex items-center justify-center w-10 h-10 rounded-full border border-blue-line bg-white text-blue-deep active:scale-95 transition-transform shrink-0"
-                                title="Enviar email"
-                            >
-                                <Mail className="w-4 h-4" />
-                            </a>
+                                    <Mail className="w-[18px] h-[18px]" />
+                                </a>
+                            ) : null}
                             <button
+                                type="button"
                                 onClick={handleMarkContacted}
                                 disabled={loadingAction || lead.status === "contacted"}
-                                className={`flex items-center justify-center w-10 h-10 rounded-full active:scale-95 transition-all shrink-0 border ${lead.status === "contacted"
+                                aria-label={lead.status === "contacted" ? "Ya contactado" : "Marcar como contactado"}
+                                className={`flex items-center justify-center w-11 h-11 rounded-full active:scale-95 transition-all shrink-0 border ${lead.status === "contacted"
                                     ? "bg-navy-2 border-navy-2 text-blue-light"
                                     : "bg-white border-blue-line text-ink-3 hover:text-blue-deep"
                                     }`}
-                                title={lead.status === "contacted" ? "Ya contactado" : "Marcar contactado"}
+                                title={lead.status === "contacted" ? "Ya contactado" : "Marcar como contactado"}
                             >
-                                {loadingAction ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                                {loadingAction ? <Loader2 className="w-[18px] h-[18px] animate-spin" /> : <CheckCircle2 className="w-[18px] h-[18px]" />}
                             </button>
                         </div>
                     </div>
 
                     {/* ── Mobile Tab Bar ── */}
-                    <div className="flex-none border-b border-blue-line bg-white">
+                    <div className="flex-none border-b border-blue-line bg-white" role="tablist" aria-label="Secciones de la ficha">
                         <div className="flex">
                             {mobileTabs.map((tab) => (
                                 <button
                                     key={tab.id}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={mobileTab === tab.id}
                                     onClick={() => setMobileTab(tab.id)}
-                                    className={`relative flex-1 flex items-center justify-center gap-1.5 py-3 text-[12.5px] transition-colors ${mobileTab === tab.id
+                                    className={`relative flex-1 min-h-12 flex items-center justify-center gap-1.5 px-1 text-[13px] transition-colors ${mobileTab === tab.id
                                         ? "text-blue-deep font-semibold"
                                         : "text-ink-3 font-medium"
                                         }`}
                                 >
-                                    <tab.icon className="w-3.5 h-3.5" />
+                                    <tab.icon className="w-4 h-4 shrink-0" aria-hidden />
                                     {tab.label}
                                     {mobileTab === tab.id && (
                                         <motion.span
@@ -863,7 +877,7 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                     </div>
 
                     {/* ── Mobile Tab Content ── */}
-                    <div className="flex-1 overflow-y-auto overflow-x-hidden bg-[linear-gradient(180deg,#f8fafb_0%,#eef3f6_100%)]">
+                    <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain bg-[linear-gradient(180deg,#f8fafb_0%,#eef3f6_100%)] pb-[env(safe-area-inset-bottom)]">
                         <AnimatePresence mode="wait" initial={false}>
 
                         {/* ── Tab: Info ── */}
@@ -871,40 +885,50 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                             <motion.div key="tab-info" {...tabMotion} className="p-4 space-y-5">
                                 {/* Contact compact */}
                                 <div className="card overflow-hidden">
-                                    <a href={`mailto:${lead.email}`} className="flex items-center gap-3 p-3.5 active:bg-blue-tint transition-colors">
-                                        <div className="w-10 h-10 rounded-xl bg-blue-tint border border-blue-line flex items-center justify-center text-blue-deep shrink-0">
-                                            <Mail className="w-4 h-4" />
+                                    {lead.email ? (
+                                        <a href={`mailto:${lead.email}`} className="flex items-center gap-3 p-3.5 min-h-[64px] active:bg-blue-tint transition-colors">
+                                            <div className="w-10 h-10 rounded-xl bg-blue-tint border border-blue-line flex items-center justify-center text-blue-deep shrink-0">
+                                                <Mail className="w-4 h-4" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="mono" style={{ fontSize: 8.5 }}>Email</p>
+                                                <p className="text-[15px] font-medium text-ink truncate">{lead.email}</p>
+                                            </div>
+                                        </a>
+                                    ) : (
+                                        <div className="flex items-center gap-3 p-3.5 min-h-[64px]">
+                                            <div className="w-10 h-10 rounded-xl bg-blue-tint border border-blue-line flex items-center justify-center text-ink-3 shrink-0"><Mail className="w-4 h-4" /></div>
+                                            <div className="min-w-0"><p className="mono" style={{ fontSize: 8.5 }}>Email</p><p className="text-[15px] text-ink-3">Sin email</p></div>
                                         </div>
-                                        <div className="min-w-0">
-                                            <p className="mono" style={{ fontSize: 8.5 }}>Email</p>
-                                            <p className="text-sm font-medium text-ink truncate">{lead.email}</p>
+                                    )}
+                                    {lead.phone ? (
+                                        <a href={`tel:${String(lead.phone).replace(/[^\d+]/g, "")}`} className="flex items-center gap-3 p-3.5 min-h-[64px] border-t border-line active:bg-blue-tint transition-colors">
+                                            <div className="w-10 h-10 rounded-xl bg-blue-tint border border-blue-line flex items-center justify-center text-blue-deep shrink-0">
+                                                <Phone className="w-4 h-4" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="mono" style={{ fontSize: 8.5 }}>Teléfono</p>
+                                                <p className="text-[15px] font-medium text-ink truncate">{lead.phone}</p>
+                                            </div>
+                                        </a>
+                                    ) : (
+                                        <div className="flex items-center gap-3 p-3.5 min-h-[64px] border-t border-line">
+                                            <div className="w-10 h-10 rounded-xl bg-blue-tint border border-blue-line flex items-center justify-center text-ink-3 shrink-0"><Phone className="w-4 h-4" /></div>
+                                            <div className="min-w-0"><p className="mono" style={{ fontSize: 8.5 }}>Teléfono</p><p className="text-[15px] text-ink-3">Sin teléfono</p></div>
                                         </div>
-                                    </a>
-                                    <a href={`tel:${lead.phone}`} className="flex items-center gap-3 p-3.5 border-t border-line active:bg-blue-tint transition-colors">
-                                        <div className="w-10 h-10 rounded-xl bg-blue-tint border border-blue-line flex items-center justify-center text-blue-deep shrink-0">
-                                            <Phone className="w-4 h-4" />
-                                        </div>
-                                        <div>
-                                            <p className="mono" style={{ fontSize: 8.5 }}>Teléfono</p>
-                                            <p className="text-sm font-medium text-ink">{lead.phone}</p>
-                                        </div>
-                                    </a>
+                                    )}
                                 </div>
 
-                                {/* Survey Data */}
-                                {lead.survey_data && Object.keys(lead.survey_data).length > 0 && (
-                                    <div className="space-y-2.5">
-                                        <h3 className="mono px-1" style={{ fontSize: 9 }}>
-                                            Cuestionario
-                                        </h3>
-                                        <div className="card overflow-hidden">
-                                            <KVRow first label="Edad" value={lead.survey_data.ageRange} />
-                                            <KVRow label="Objetivo" value={goalLabel} />
-                                            <KVRow label="Plazo" value={timeLabel} />
-                                            <KVRow label="Clínica" value={lead.survey_data.clinicPreference} />
-                                        </div>
+                                {/* Datos de la simulación (mismo bloque que en escritorio) */}
+                                <div className="space-y-2.5">
+                                    <h3 className="mono px-1" style={{ fontSize: 9 }}>Datos de la simulación</h3>
+                                    <div className="card overflow-hidden">
+                                        <KVRow first label="Edad" value={ageLabel} />
+                                        <KVRow label="Objetivo" value={goalLabel} />
+                                        <KVRow label="Plazo" value={timeLabel} />
+                                        <KVRow label="Origen" value={sourceLabel} />
                                     </div>
-                                )}
+                                </div>
 
                                 {customAnswers.length > 0 && (
                                     <div className="space-y-2.5">
@@ -913,7 +937,7 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                                             {customAnswers.map((a, i) => (
                                                 <div key={i} style={{ padding: "12px 16px", borderTop: i === 0 ? "none" : "1px solid var(--line)" }}>
                                                     <div style={{ fontSize: 12, color: "var(--ink-3)", marginBottom: 3 }}>{a.label}</div>
-                                                    <div style={{ fontSize: 14, fontWeight: 500, color: "var(--ink)", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{a.value}</div>
+                                                    <div style={{ fontSize: 14.5, fontWeight: 500, color: "var(--ink)", whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{a.value}</div>
                                                 </div>
                                             ))}
                                         </div>
@@ -922,34 +946,42 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                             </motion.div>
                         )}
 
-                        {/* ── Tab: Video ── */}
+                        {/* ── Tab: Vídeo ── */}
                         {mobileTab === "video" && (
                             <motion.div key="tab-video" {...tabMotion} className="p-4 space-y-4">
                                 {generation ? (
                                     <>
                                         {/* Scenario selector */}
-                                        <div className="space-y-2.5">
-                                            <h3 className="mono px-1" style={{ fontSize: 9 }}>
-                                                Escenario
-                                            </h3>
-                                            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
-                                                {scenarios.map((s) => (
-                                                    <motion.button
-                                                        key={s.id}
-                                                        whileTap={reduceMotion ? undefined : { scale: 0.95 }}
-                                                        onClick={() => setSelectedScenario(s.id)}
-                                                        disabled={generatingVideo || isVideoCompleted}
-                                                        className={`flex flex-col items-center justify-center min-w-[66px] px-2 py-2.5 rounded-2xl border transition-colors shrink-0 ${selectedScenario === s.id
-                                                            ? "bg-blue-tint border-blue-deep text-blue-deep shadow-[0_8px_18px_-12px_rgba(79,107,127,0.8)]"
-                                                            : "bg-white border-blue-line text-ink-3"
-                                                            } ${(generatingVideo || isVideoCompleted) ? "opacity-50" : ""}`}
-                                                    >
-                                                        <s.icon className="w-5 h-5 mb-1" />
-                                                        <span className="text-[10px] font-semibold">{s.label}</span>
-                                                    </motion.button>
-                                                ))}
+                                        {!isVideoCompleted && (
+                                            <div className="space-y-2.5">
+                                                <h3 className="mono px-1" style={{ fontSize: 9 }} id="lead-scenario-label">
+                                                    Escenario del vídeo
+                                                </h3>
+                                                <div className="grid grid-cols-5 gap-2" role="radiogroup" aria-labelledby="lead-scenario-label">
+                                                    {scenarios.map((s) => (
+                                                        <motion.button
+                                                            key={s.id}
+                                                            type="button"
+                                                            role="radio"
+                                                            aria-checked={selectedScenario === s.id}
+                                                            whileTap={reduceMotion ? undefined : { scale: 0.95 }}
+                                                            onClick={() => setSelectedScenario(s.id)}
+                                                            disabled={generatingVideo}
+                                                            className={`flex flex-col items-center justify-center min-w-0 min-h-[64px] px-1 py-2.5 rounded-2xl border transition-colors ${selectedScenario === s.id
+                                                                ? "bg-blue-tint border-blue-deep text-blue-deep shadow-[0_8px_18px_-12px_rgba(79,107,127,0.8)]"
+                                                                : "bg-white border-blue-line text-ink-3"
+                                                                } ${generatingVideo ? "opacity-50" : ""}`}
+                                                        >
+                                                            <s.icon className="w-5 h-5 mb-1" aria-hidden />
+                                                            <span className="text-[10.5px] font-semibold max-w-full truncate">{s.label}</span>
+                                                        </motion.button>
+                                                    ))}
+                                                </div>
+                                                {!selectedScenario && !generatingVideo && (
+                                                    <p className="px-1 text-[12.5px] text-ink-3">Elige dónde aparece el paciente para generar su vídeo.</p>
+                                                )}
                                             </div>
-                                        </div>
+                                        )}
 
                                         {/* Error Message */}
                                         <AnimatePresence>
@@ -958,12 +990,13 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                                                     initial={reduceMotion ? false : { opacity: 0, y: -6 }}
                                                     animate={{ opacity: 1, y: 0 }}
                                                     exit={{ opacity: 0 }}
+                                                    role="alert"
                                                     className="p-3 rounded-2xl flex items-start gap-2 text-sm border border-[#ecd3cf] bg-[var(--danger-soft)] text-[#8f4f47]"
                                                 >
                                                     <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-[var(--danger)]" />
                                                     <div>
-                                                        <p className="font-semibold text-xs">Generación detenida</p>
-                                                        <p className="opacity-90 text-[11px] mt-0.5">{errorMessage}</p>
+                                                        <p className="font-semibold text-[13px]">Generación detenida</p>
+                                                        <p className="opacity-90 text-[12.5px] mt-0.5 leading-snug">{errorMessage}</p>
                                                     </div>
                                                 </motion.div>
                                             )}
@@ -971,10 +1004,11 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
 
                                         {/* Generate / Progress button */}
                                         <button
+                                            type="button"
                                             onClick={handleGenerateVideo}
                                             disabled={!canGenerate}
                                             className={`
-                                                relative w-full h-12 rounded-full overflow-hidden font-medium text-sm
+                                                relative w-full h-12 rounded-full overflow-hidden font-medium text-[15px]
                                                 transition-all duration-300 select-none
                                                 ${isVideoCompleted
                                                     ? "bg-navy-2 text-white"
@@ -997,7 +1031,7 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                                                     <>
                                                         <span className="flex items-center gap-2 min-w-0">
                                                             <Loader2 className="w-4 h-4 animate-spin shrink-0" />
-                                                            <span className="truncate text-xs">{videoStage || "Iniciando..."}</span>
+                                                            <span className="truncate text-[13px]">{videoStage || "Iniciando…"}</span>
                                                         </span>
                                                         <span className="text-xs font-mono opacity-80 shrink-0 ml-2 tabular-nums">
                                                             {Math.round(videoProgress)}%
@@ -1006,30 +1040,43 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                                                 ) : isVideoCompleted ? (
                                                     <span className="flex items-center gap-2 w-full justify-center">
                                                         <CheckCircle2 className="w-4 h-4 text-blue-light" />
-                                                        Vídeo Generado
+                                                        Vídeo generado
                                                     </span>
                                                 ) : (
                                                     <span className="flex items-center gap-2 w-full justify-center">
                                                         <MonitorPlay className="w-4 h-4" />
-                                                        Generar Vídeo Smile
+                                                        Generar vídeo
                                                     </span>
                                                 )}
                                             </span>
                                         </button>
 
+                                        {isVideoCompleted && (
+                                            <button
+                                                type="button"
+                                                className="w-full h-12 inline-flex items-center justify-center gap-2 rounded-full border border-blue-line bg-white text-[15px] font-medium text-blue-deep active:scale-[0.98] transition-transform disabled:opacity-60"
+                                                onClick={() => { setViewMode("video"); handleSendVideo(); }}
+                                                disabled={sendingVideo}
+                                            >
+                                                {sendingVideo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                                                Reenviar vídeo por email
+                                            </button>
+                                        )}
+
                                         {/* Cancel */}
                                         {generatingVideo && (
                                             <button
-                                                className="w-full h-9 inline-flex items-center justify-center rounded-full text-xs text-ink-3 hover:text-[var(--danger)] hover:bg-[var(--danger-soft)] transition-colors"
+                                                type="button"
+                                                className="w-full h-11 inline-flex items-center justify-center rounded-full text-[13px] text-ink-3 hover:text-[var(--danger)] hover:bg-[var(--danger-soft)] transition-colors"
                                                 onClick={handleCancelGeneration}
                                             >
-                                                <XCircle className="w-3.5 h-3.5 mr-1.5" />
-                                                Cancelar
+                                                <XCircle className="w-4 h-4 mr-1.5" />
+                                                Cancelar generación
                                             </button>
                                         )}
 
                                         {generatingVideo && (
-                                            <div className="relative w-full h-1.5 bg-blue-soft rounded-full overflow-hidden">
+                                            <div className="relative w-full h-1.5 bg-blue-soft rounded-full overflow-hidden" aria-hidden>
                                                 <div
                                                     className="h-full rounded-full transition-all duration-700 ease-linear"
                                                     style={{
@@ -1041,11 +1088,14 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                                                 />
                                             </div>
                                         )}
+                                        {generatingVideo && (
+                                            <p className="px-1 text-[12.5px] text-ink-3">Tarda unos dos minutos. Puedes cerrar la ficha: te avisaremos cuando esté listo.</p>
+                                        )}
                                     </>
                                 ) : (
                                     <div className="empty-state">
                                         <div className="empty-ic"><MonitorPlay className="w-6 h-6" /></div>
-                                        <p className="text-sm text-ink-2">No hay imágenes generadas para crear un video.</p>
+                                        <p className="text-sm text-ink-2">Este paciente aún no tiene una simulación para crear su vídeo.</p>
                                     </div>
                                 )}
                             </motion.div>
@@ -1053,36 +1103,55 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
 
                         {/* ── Tab: Gestión ── */}
                         {mobileTab === "gestion" && (
-                            <motion.div key="tab-gestion" {...tabMotion} className="p-4 space-y-3">
+                            <motion.div key="tab-gestion" {...tabMotion} className="p-4 space-y-5">
+                                <div className="space-y-2.5">
+                                    <h3 className="mono px-1" style={{ fontSize: 9 }} id="lead-status-label">Estado del paciente</h3>
+                                    <div className="flex flex-wrap items-center gap-2" role="group" aria-labelledby="lead-status-label">
+                                        {STATUS_CHOICES.map((k) => (
+                                            <StatusChoice key={k} status={k} active={lead.status === k} disabled={settingStatus} onClick={() => handleSetStatus(k)} />
+                                        ))}
+                                        {settingStatus && <Loader2 className="animate-spin" size={16} style={{ color: "var(--blue-deep)" }} />}
+                                    </div>
+                                </div>
+
+                                {(generation && lead.email) || isVideoCompleted ? (
+                                    <div className="space-y-2.5">
+                                        <h3 className="mono px-1" style={{ fontSize: 9 }}>Enviar al paciente</h3>
+                                        {generation && lead.email && (
+                                            <button
+                                                type="button"
+                                                className="w-full h-12 px-5 inline-flex items-center gap-2.5 rounded-full border border-blue-line bg-white text-[15px] font-medium text-ink hover:border-blue-accent hover:text-blue-deep transition-colors disabled:opacity-60"
+                                                onClick={handleResendPhoto}
+                                                disabled={sendingPhoto}
+                                            >
+                                                {sendingPhoto ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4 text-blue-deep" />}
+                                                Reenviar su simulación por email
+                                            </button>
+                                        )}
+                                        {isVideoCompleted && (
+                                            <button
+                                                type="button"
+                                                className="w-full h-12 px-5 inline-flex items-center gap-2.5 rounded-full border border-blue-line bg-white text-[15px] font-medium text-ink hover:border-blue-accent hover:text-blue-deep transition-colors disabled:opacity-60"
+                                                onClick={handleSendVideo}
+                                                disabled={sendingVideo}
+                                            >
+                                                {sendingVideo ? <Loader2 className="w-4 h-4 animate-spin" /> : <MonitorPlay className="w-4 h-4 text-blue-deep" />}
+                                                Reenviar su vídeo por email
+                                            </button>
+                                        )}
+                                    </div>
+                                ) : null}
+
+                                <div className="h-px bg-blue-line" />
+
                                 <button
-                                    className="w-full h-12 px-5 inline-flex items-center gap-2.5 rounded-full border border-blue-line bg-white text-sm font-medium text-ink hover:border-blue-accent hover:text-blue-deep transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                                    onClick={handleMarkContacted}
-                                    disabled={loadingAction || lead.status === "contacted"}
-                                >
-                                    {loadingAction ? (
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                    ) : lead.status === "contacted" ? (
-                                        <CheckCircle2 className="w-4 h-4 text-blue-deep" />
-                                    ) : (
-                                        <CheckCircle2 className="w-4 h-4" />
-                                    )}
-                                    {lead.status === "contacted" ? "Ya contactado" : "Marcar como Contactado"}
-                                </button>
-
-                                <button className="w-full h-12 px-5 inline-flex items-center gap-2.5 rounded-full border border-blue-line bg-blue-tint text-sm font-medium text-ink-2 hover:text-blue-deep transition-colors">
-                                    <Archive className="w-4 h-4" />
-                                    Archivar Lead
-                                </button>
-
-                                <div className="h-px bg-blue-line my-2" />
-
-                                <button
-                                    className="w-full h-12 px-5 inline-flex items-center gap-2.5 rounded-full border border-[#ecd3cf] bg-[var(--danger-soft)] text-sm font-medium text-[#8f4f47] hover:bg-[var(--danger)] hover:text-white hover:border-[var(--danger)] transition-colors disabled:opacity-60"
+                                    type="button"
+                                    className="w-full h-12 px-5 inline-flex items-center gap-2.5 rounded-full border border-[#ecd3cf] bg-[var(--danger-soft)] text-[15px] font-medium text-[#8f4f47] hover:bg-[var(--danger)] hover:text-white hover:border-[var(--danger)] transition-colors disabled:opacity-60"
                                     onClick={() => setShowDeleteConfirm(true)}
                                     disabled={deleting}
                                 >
                                     <Trash2 className="w-4 h-4" />
-                                    Eliminar Lead
+                                    Eliminar lead
                                 </button>
                             </motion.div>
                         )}
@@ -1103,7 +1172,7 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                                     <motion.div key="d-video" {...mediaMotion} style={{ width: "100%", height: "100%", display: "flex" }}>
                                         <video
                                             key={videoGen.output_path}
-                                            src={`/api/storage/generated/${videoGen.output_path}`}
+                                            src={leadImageSrc(videoGen.output_path) ?? undefined}
                                             style={{ width: "100%", height: "100%", objectFit: "cover" }}
                                             controls autoPlay muted playsInline loop
                                         />
@@ -1111,9 +1180,9 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                                 ) : generation ? (
                                     <motion.div key="d-images" {...mediaMotion} style={{ width: "100%", height: "100%", display: "flex" }}>
                                         {(generation.input_path && generation.input_path !== "unknown") ? (
-                                            <BeforeAfterSlider beforeImage={generation.input_path} afterImage={generation.output_path} className="w-full h-full" />
+                                            <BeforeAfterSlider beforeImage={generation.input_path} afterImage={leadImageSrc(generation.output_path) ?? generation.output_path} className="w-full h-full" />
                                         ) : (
-                                            <img src={generation.output_path} alt="Sonrisa generada" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                            <ModalImage src={generation.output_path} alt={`Simulación de ${lead.name || "el paciente"}`} />
                                         )}
                                     </motion.div>
                                 ) : (
@@ -1218,7 +1287,7 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                             <div style={{ display: "flex", gap: 14, alignItems: "center", minWidth: 0 }}>
                                 <NavyAvatar initials={leadInitials} size={48} />
                                 <div style={{ minWidth: 0 }}>
-                                    <div style={{ fontSize: 21, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{lead.name}</div>
+                                    <div style={{ fontSize: 21, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--ink)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{lead.name || "Sin nombre"}</div>
                                     <div className="mono" style={{ fontSize: 9, marginTop: 4 }}>SOLICITUD · {requestDate}</div>
                                 </div>
                             </div>
@@ -1287,12 +1356,15 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                         </motion.div>
 
                         <div style={{ padding: "14px 24px", borderTop: "1px solid var(--blue-line)", display: "flex", gap: 10, background: "#fff" }}>
-                            <button className="btn btn-primary" style={{ flex: 1, padding: "14px 24px", fontSize: 15 }} onClick={handleWhatsApp}><Share2 size={17} /> Contactar por WhatsApp</button>
-                            {generation && (
-                                <button className="btn btn-ghost" style={{ background: "#fff", width: 50, padding: 0 }} title="Reenviar imagen" aria-label="Reenviar imagen" onClick={handleResendPhoto} disabled={sendingPhoto}>
+                            <button className="btn btn-primary" style={{ flex: 1, padding: "14px 24px", fontSize: 15 }} onClick={handleWhatsApp} disabled={!lead.phone}><Share2 size={17} /> Contactar por WhatsApp</button>
+                            {generation && lead.email && (
+                                <button className="btn btn-ghost" style={{ background: "#fff", width: 50, padding: 0 }} title="Reenviar su simulación por email" aria-label="Reenviar su simulación por email" onClick={handleResendPhoto} disabled={sendingPhoto}>
                                     {sendingPhoto ? <Loader2 className="animate-spin" size={17} /> : <Send size={17} />}
                                 </button>
                             )}
+                            <button className="btn btn-ghost" style={{ background: "#fff", width: 50, padding: 0, color: "var(--danger)" }} title="Eliminar lead" aria-label="Eliminar lead" onClick={() => setShowDeleteConfirm(true)} disabled={deleting}>
+                                <Trash2 size={17} />
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -1300,18 +1372,20 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
 
                 {/* Delete Confirmation Dialog (shared) */}
                 <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-                    <DialogContent className="max-w-[90vw] sm:max-w-md rounded-[22px] border-[var(--blue-line)] p-0 overflow-hidden shadow-[0_40px_80px_-30px_rgba(19,27,34,0.6)]">
-                        <div className="qoves-admin" style={{ padding: 24 }}>
+                    <DialogContent className="sf-dialog w-[calc(100vw-24px)] max-w-[calc(100vw-24px)] sm:max-w-md rounded-[22px] border-[var(--blue-line)] p-0 overflow-hidden shadow-[0_40px_80px_-30px_rgba(19,27,34,0.6)]">
+                        <div className="qoves-admin sf-touch" style={{ padding: 24 }}>
                             <DialogHeader>
                                 <div className="mx-auto sm:mx-0" style={{ width: 44, height: 44, borderRadius: 14, display: "grid", placeItems: "center", background: "var(--danger-soft)", color: "var(--danger)", marginBottom: 6 }}>
                                     <Trash2 size={20} />
                                 </div>
-                                <DialogTitle style={{ fontSize: 19, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--ink)" }}>¿Estás completamente seguro?</DialogTitle>
-                                <DialogDescription style={{ color: "var(--ink-2)" }}>
-                                    Esta acción no se puede deshacer.
+                                <DialogTitle style={{ fontSize: 19, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--ink)", lineHeight: 1.25 }}>
+                                    ¿Eliminar a {lead.name || "este paciente"}?
+                                </DialogTitle>
+                                <DialogDescription style={{ color: "var(--ink-2)", lineHeight: 1.5 }}>
+                                    Se borrarán su ficha, sus simulaciones y sus vídeos. Esta acción no se puede deshacer.
                                 </DialogDescription>
                             </DialogHeader>
-                            <div className="flex justify-end gap-2.5 mt-6">
+                            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5 mt-6 [&>button]:w-full sm:[&>button]:w-auto">
                                 <button className="btn btn-ghost btn-sm" onClick={() => setShowDeleteConfirm(false)} disabled={deleting}>
                                     Cancelar
                                 </button>
@@ -1322,7 +1396,7 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                                     disabled={deleting}
                                 >
                                     {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
-                                    Eliminar
+                                    Eliminar lead
                                 </button>
                             </div>
                         </div>

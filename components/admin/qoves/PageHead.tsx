@@ -37,11 +37,12 @@ export function PageHead({
     );
 }
 
+/** Campo con etiqueta mono. Es un <label>: tocar el texto enfoca el campo. */
 export function Field({ label, children }: { label: string; children: ReactNode }) {
     return (
-        <div>
-            <div className="mono" style={{ fontSize: 9, marginBottom: 7 }}>{label}</div>
+        <label style={{ display: "block" }}>
+            <span className="mono" style={{ display: "block", fontSize: 9, marginBottom: 7 }}>{label}</span>
             {children}
-        </div>
+        </label>
     );
 }

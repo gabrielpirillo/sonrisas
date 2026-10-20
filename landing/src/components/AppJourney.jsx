@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { RES } from "../resources";
 
 /* ============================================================
@@ -6,7 +6,6 @@ import { RES } from "../resources";
    Sección con scroll: pin + stack de naipes (desktop) /
    carrusel horizontal (móvil). Portada de la Opción B.
    ============================================================ */
-const { useState, useEffect, useRef } = React;
 
 const JOURNEY_STEPS = [
   { n: "01", tag: "DATOS", t: "Deja sus datos", d: "Nombre, email y teléfono: ya es tu lead.", img: RES.r6_app_step1_png },
@@ -69,9 +68,23 @@ function AppJourney() {
   const goto = (i) => {
     const el = ref.current; if (!el) return;
     const total = el.offsetHeight - window.innerHeight;
-    window.scrollTo({ top: el.offsetTop + total * ((i + 0.001) / N), behavior: "smooth" });
+    // centro del tramo de cada paso: al llegar no queda en el borde con el anterior
+    window.scrollTo({ top: el.offsetTop + total * ((i + 0.5) / N), behavior: "smooth" });
   };
   const sd = JOURNEY_STEPS[active];
+
+  // Móvil: además del scroll, se puede deslizar el teléfono a izquierda/derecha.
+  const swipe = useRef(null);
+  const onTouchStart = (e) => { const t = e.touches[0]; swipe.current = { x: t.clientX, y: t.clientY }; };
+  const onTouchEnd = (e) => {
+    const s = swipe.current; swipe.current = null;
+    if (!s) return;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - s.x, dy = t.clientY - s.y;
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+    const to = Math.max(0, Math.min(N - 1, active + (dx < 0 ? 1 : -1)));
+    if (to !== active) goto(to);
+  };
 
   return (
     <section className="journey" id="recorrido" ref={ref} style={{ height: "320vh" }}>
@@ -85,20 +98,22 @@ function AppJourney() {
             <div className="steps">
               <div className="steprail" style={{ "--fill": (fill * 100).toFixed(1) + "%" }} />
               {JOURNEY_STEPS.map((s, i) =>
-                <div key={i} className={"step" + (i === active ? " active" : "")} onClick={() => goto(i)}>
+                <button type="button" key={i} className={"step" + (i === active ? " active" : "")} aria-current={i === active ? "step" : undefined} onClick={() => goto(i)}>
                   <span className="n">{s.n}</span>
-                  <div><div className="st">{s.t}</div><div className="sd">{s.d}</div></div>
-                </div>)}
+                  <span><span className="st">{s.t}</span><span className="sd">{s.d}</span></span>
+                </button>)}
             </div>
           </div>
-          <div className="stage">
+          <div className="stage" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
             {JOURNEY_STEPS.map((s, i) =>
-              <div key={i} className="slide" style={slideStyle(i, active, mob)}>
-                <div className="jphone"><img src={s.img} alt={"Paso " + s.n + " · " + s.tag} /></div>
+              <div key={i} className="slide" style={slideStyle(i, active, mob)} aria-hidden={i !== active}>
+                <div className="jphone"><img src={s.img} alt={"Paso " + s.n + ": " + s.t} loading={i === 0 ? "eager" : "lazy"} decoding="async" /></div>
               </div>)}
           </div>
-          <div className="mcap"><span className="mn">{sd.n}</span><div><div className="mt">{sd.t}</div><div className="md">{sd.d}</div></div></div>
-          <div className="mdots">{JOURNEY_STEPS.map((s, i) => <i key={i} className={i === active ? "on" : ""} />)}</div>
+          <div className="mcap" aria-live="polite"><span className="mn">{sd.n}</span><div><div className="mt">{sd.t}</div><div className="md">{sd.d}</div></div></div>
+          <div className="mdots">{JOURNEY_STEPS.map((s, i) =>
+            <button type="button" key={i} className={i === active ? "on" : ""} aria-label={"Paso " + s.n + ": " + s.t} aria-current={i === active ? "step" : undefined} onClick={() => goto(i)}><i /></button>)}
+          </div>
         </div>
       </div>
     </section>);
