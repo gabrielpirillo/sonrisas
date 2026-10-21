@@ -198,3 +198,35 @@
   .sci-arrow { transform: none; animation: none !important; }
   .sci-card { opacity: 1; transform: translate(-50%, 0); animation: none !important; }
 }
+
+/* ── Versión desplegable (landing) ─────────────────────────── */
+.sci-collapsible .sci-head { margin-bottom: 28px; }
+.sci-toggle {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 18px 20px 18px 24px; border-radius: 20px; cursor: pointer; text-align: left;
+  border: 1px solid var(--s-line, rgba(28, 42, 54, 0.12));
+  background: linear-gradient(120deg, #ffffff 0%, rgba(185, 207, 221, 0.22) 100%);
+  color: inherit; font: inherit;
+  box-shadow: 0 18px 40px -32px rgba(19, 27, 34, 0.55);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.sci-toggle:hover { transform: translateY(-2px); box-shadow: 0 24px 48px -30px rgba(19, 27, 34, 0.6); }
+.sci-toggle-txt { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.sci-toggle-txt b { font-size: 17px; font-weight: 600; letter-spacing: -0.015em; }
+.sci-toggle-txt small { font-size: 13px; color: var(--s-ink-2, #5b6770); }
+.sci-toggle-ic {
+  width: 44px; height: 44px; flex: none; border-radius: 50%; display: grid; place-items: center;
+  background: #1b2630; color: #fff; transition: transform 0.45s cubic-bezier(.22, 1, .36, 1);
+}
+.sci-collapsible:not(.is-open) .sci-toggle-ic { animation: sciNudge 2.4s ease-in-out infinite; }
+.is-open .sci-toggle-ic { transform: rotate(180deg); }
+@keyframes sciNudge { 0%, 100% { transform: none; } 50% { transform: translateY(3px); } }
+.sci-detail { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.6s cubic-bezier(.22, 1, .36, 1); }
+.is-open .sci-detail { grid-template-rows: 1fr; }
+.sci-detail-in { overflow: hidden; min-height: 0; }
+.is-open .sci-detail-in { padding-top: 34px; }
+@media (prefers-reduced-motion: reduce) {
+  .sci-detail, .sci-toggle-ic { transition: none; }
+  .sci-collapsible:not(.is-open) .sci-toggle-ic { animation: none; }
+}

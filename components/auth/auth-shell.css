@@ -471,3 +471,23 @@
 @media (prefers-reduced-motion: reduce) {
   .sf-auth *, .sf-auth *::before, .sf-auth *::after { animation: none !important; transition: none !important; }
 }
+
+/* ── Escritorio: todo en una sola pantalla, sin scroll ───────── */
+@media (min-width: 981px) {
+  .sf-auth { height: 100dvh; min-height: 0; overflow: hidden; }
+  .sf-auth-form-side { padding-top: clamp(16px, 3vh, 32px); padding-bottom: clamp(14px, 2.4vh, 28px); overflow-y: auto; scrollbar-width: none; }
+  .sf-auth-form-side::-webkit-scrollbar { display: none; }
+  .sf-auth-body { padding: clamp(8px, 2vh, 32px) 0; }
+  .sf-auth-title { font-size: clamp(30px, min(3.4vw, 5.2vh), 44px); margin: clamp(10px, 1.8vh, 18px) 0 8px; }
+  .sf-auth-sub { margin-bottom: clamp(14px, 2.6vh, 28px); }
+  .sf-auth-show { margin: 12px; padding: clamp(24px, 3.6vh, 48px) clamp(28px, 3.6vw, 52px); }
+  .sf-auth-stage { min-height: 0; margin: clamp(10px, 2vh, 24px) 0; }
+  .sf-auth-photo { width: auto; height: min(46vh, 420px); max-width: 56%; }
+  .sf-auth-show-copy h2 { font-size: clamp(24px, min(2.5vw, 4vh), 36px); }
+}
+@media (min-width: 981px) and (max-height: 820px) {
+  .sf-auth-input { height: 46px; }
+  .sf-auth-form { gap: 12px; }
+  .sf-auth-tabs { margin-bottom: 16px; }
+  .sf-auth-show-copy p { font-size: 14px; line-height: 1.5; }
+}

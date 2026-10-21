@@ -203,3 +203,15 @@
 @media (prefers-reduced-motion: reduce) {
   .sfd-in { animation: none; }
 }
+
+/* ── Demo en escritorio: el marco entero cabe en pantalla ─────── */
+@media (min-width: 768px) {
+  .sfd-browser-bar { padding: 8px 14px; }
+  .sfd-url { padding: 4px 14px; }
+  .sfd-site-nav { padding: 9px 24px; }
+  .sfd-browser .qoves-widget .wf-header { padding: 10px 30px; }
+  .sfd-browser .qoves-widget .wf-h2 { font-size: 28px; }
+  .sfd-browser .qoves-widget .dk-grid { padding: 20px 40px 4px; gap: 40px; }
+  .sfd-browser .qoves-widget .dk-col .photo-frame { min-height: 250px; }
+  .sfd-browser .qoves-widget .dk-foot { padding: 12px 40px; margin-top: 12px; }
+}

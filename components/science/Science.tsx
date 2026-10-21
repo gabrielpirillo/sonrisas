@@ -192,10 +192,26 @@ function StepItem({ step, index }: { step: Step; index: number }) {
     );
 }
 
-export function Science({ className = "" }: { className?: string }) {
+export function Science({ className = "", collapsible = false }: { className?: string; collapsible?: boolean }) {
     const [headRef, headIn] = useInView<HTMLDivElement>(0.2);
+    // Desplegable (landing): resumen siempre visible; el detalle se abre a pedido
+    // para no cortar el recorrido de la página.
+    const [open, setOpen] = useState(!collapsible);
+    // "inert" a mano: la landing usa React 18, que no conoce el atributo.
+    const detailRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const el = detailRef.current;
+        if (!el) return;
+        if (open) el.removeAttribute("inert");
+        else el.setAttribute("inert", "");
+    }, [open]);
+    const steps = (
+        <ol className="sci-steps">
+            {STEPS.map((s, i) => <StepItem key={s.verb} step={s} index={i} />)}
+        </ol>
+    );
     return (
-        <section className={`sci ${className}`} aria-labelledby="sci-title">
+        <section className={`sci ${className}${collapsible ? " sci-collapsible" : ""}${open ? " is-open" : ""}`} aria-labelledby="sci-title">
             <div className="sci-wrap">
                 <div ref={headRef} className={`sci-head${headIn ? " in" : ""}`}>
                     <p className="sci-kicker">Por qué funciona</p>
@@ -205,13 +221,42 @@ export function Science({ className = "" }: { className?: string }) {
                         {STEPS.map((s, i) => <li key={s.verb} style={{ transitionDelay: `${0.15 + i * 0.08}s` }}><b>{i + 1}</b>{s.verb}</li>)}
                     </ol>
                 </div>
-                <ol className="sci-steps">
-                    {STEPS.map((s, i) => <StepItem key={s.verb} step={s} index={i} />)}
-                </ol>
-                <p className="sci-disclaimer">
-                    Citamos cada estudio con su alcance real: muestras pequeñas y contextos distintos al tuyo. La simulación es orientativa;
-                    el resultado clínico lo define la valoración de tu equipo.
-                </p>
+                {collapsible ? (
+                    <>
+                        <button
+                            type="button"
+                            className="sci-toggle"
+                            aria-expanded={open}
+                            aria-controls="sci-detail"
+                            onClick={() => setOpen((o) => !o)}
+                        >
+                            <span className="sci-toggle-txt">
+                                <b>{open ? "Ocultar la evidencia" : "Ver la evidencia paso a paso"}</b>
+                                <small>5 pasos · estudios citados con su fuente</small>
+                            </span>
+                            <span className="sci-toggle-ic" aria-hidden="true">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+                            </span>
+                        </button>
+                        <div id="sci-detail" className="sci-detail" ref={detailRef}>
+                            <div className="sci-detail-in">
+                                {steps}
+                                <p className="sci-disclaimer">
+                                    Citamos cada estudio con su alcance real: muestras pequeñas y contextos distintos al tuyo. La simulación es orientativa;
+                                    el resultado clínico lo define la valoración de tu equipo.
+                                </p>
+                            </div>
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        {steps}
+                        <p className="sci-disclaimer">
+                            Citamos cada estudio con su alcance real: muestras pequeñas y contextos distintos al tuyo. La simulación es orientativa;
+                            el resultado clínico lo define la valoración de tu equipo.
+                        </p>
+                    </>
+                )}
             </div>
         </section>
     );

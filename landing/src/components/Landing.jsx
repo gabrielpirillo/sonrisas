@@ -978,7 +978,6 @@ function CTAFooter({ onStart }) {
             Lleva <span className="ctaf-brand">Smile Fast</span><br />a tu clínica
           </h2>
           <p className="lead ctaf-lead">
-            Actívalo en tu web y convierte cada visita en una cita agendada.<br />
             <b>Implementación gratuita y sin costos extra:</b> solo pagas los créditos que usas.
           </p>
           <div className="ctaf-actions">
@@ -1215,7 +1214,7 @@ function Landing({ onStart }) {
       <UseCases />
       <Metrics />
       <ClinicFunnel />
-      <Science className="sci-landing" />
+      <Science className="sci-landing" collapsible />
       <Testimonios onStart={onStart} />
       <FAQ />
       <CTAFooter onStart={onStart} />
