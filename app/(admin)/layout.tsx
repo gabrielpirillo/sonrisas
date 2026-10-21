@@ -5,7 +5,7 @@ import "./qoves-admin.css";
 import Link from "next/link";
 import {
     LayoutGrid, Users, SlidersHorizontal, LogOut, Menu, X, ArrowLeft,
-    Coins, Building2, ShieldCheck, CircleUser, ChevronRight, Palette,
+    Coins, Building2, ShieldCheck, CircleUser, ChevronRight, Palette, ScanFace,
 } from "lucide-react";
 import { authClient, useListOrganizations, useActiveOrganization } from "@/lib/auth/client";
 import { useRouter, usePathname } from "next/navigation";
@@ -35,6 +35,7 @@ const NAV_SECTIONS: NavSection[] = [
         title: "OPERACIÓN",
         items: [
             { href: "/administracion/dashboard", label: "Resumen", icon: LayoutGrid },
+            { href: "/administracion/simulador", label: "Simulador", icon: ScanFace },
             { href: "/administracion/leads", label: "Leads", icon: Users },
         ],
     },

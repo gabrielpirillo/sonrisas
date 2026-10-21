@@ -723,6 +723,16 @@ function FAQ() {
 
 }
 
+/* Cifra con conteo ascendente (Brandboost) */
+function BbCounter({ n, label, start }) {
+  const v = useCountUp(n, start, 1100);
+  return (
+    <div className="bbx-cred-item">
+      <span className="bbx-cred-num" aria-label={"+" + n}>+{Math.round(v)}</span>
+      <span className="bbx-cred-lbl">{label}</span>
+    </div>);
+}
+
 /* ---------------- Testimonios (dueños de clínicas) ---------------- */
 function Testimonios({ onStart }) {
   const [ref, inview] = useInview(0.12);
@@ -744,7 +754,7 @@ function Testimonios({ onStart }) {
   const Avatar = ({ t }) => t.avatar ?
     <img src={t.avatar} alt="" loading="lazy" decoding="async" style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: "1px solid var(--line)" }} /> :
     <span style={{ width: 44, height: 44, borderRadius: "50%", flexShrink: 0, display: "grid", placeItems: "center", fontSize: 15, fontWeight: 600, letterSpacing: "-0.01em", background: "var(--blue-soft)", color: "var(--blue-deep)", border: "1px solid var(--blue-line)" }} aria-hidden="true">{t.initials}</span>;
-  const metrics = [["+15", "empresas activas"], ["+6", "países"]];
+  const metrics = [[15, "empresas activas"], [6, "países"]];
   const seals = [
     { label: "Datos cifrados", icon: <><rect x="4" y="10" width="16" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></> },
     { label: "Privacidad del paciente", icon: <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3z" /> },
@@ -754,63 +764,76 @@ function Testimonios({ onStart }) {
     <section id="testimonios" ref={ref} className="bb-section accent-blue" style={{ position: "relative", padding: "112px 0", background: "var(--blue-tint)", borderTop: "1px solid var(--line)", overflow: "hidden" }}>
       <span className="bb-dots" aria-hidden="true"></span>
       <div className="wrap" style={{ position: "relative", zIndex: 1 }}>
-        <div className="bb-intro" style={{ display: "grid", gridTemplateColumns: "1.05fr 0.95fr", gap: 52, alignItems: "center" }}>
-          <div>
-            <span className="mono" style={{ fontSize: 12, letterSpacing: "0.2em", color: "var(--blue-deep)", textTransform: "uppercase" }}>La agencia detrás de Smile Fast</span>
-            <h2 className="display" style={{ fontSize: "clamp(32px, 4vw, 52px)", margin: "16px 0 0", lineHeight: 1.05 }}>
-              Detrás de Smile Fast <span className="dim">está Brandboost</span>
+        <div className={"bbx" + (inview ? " bbx-on" : "")}>
+          <div className="bbx-copy">
+            <span className="mono bbx-eyebrow"><span className="bbx-eyebrow-dot" />La agencia detrás de Smile Fast</span>
+            <h2 className="display bbx-title">
+              Detrás de Smile Fast <span className="bbx-grad">está Brandboost</span>
             </h2>
-            <p style={{ fontSize: 16.5, lineHeight: 1.6, color: "var(--ink-2)", maxWidth: "48ch", margin: "18px 0 26px" }}>
+            <p className="bbx-lead">
               Smile Fast es un producto de <b>Brandboost</b>, la agencia que diseña agentes, integraciones y sistemas inteligentes para empresas.
             </p>
-            <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-              <span style={{ width: 52, height: 52, flex: "0 0 auto", display: "grid", placeItems: "center", borderRadius: 14, background: "#fff", border: "1px solid var(--line)" }}>
-                <img src={RES.r25_brandboost_mark_png} alt="Brandboost AI" style={{ width: 34, height: 34, objectFit: "contain" }} />
-              </span>
-              <div>
-                <div style={{ fontSize: 18, fontWeight: 600, letterSpacing: "-0.01em", color: "var(--ink)" }}>Brandboost AI</div>
-                <div className="mono" style={{ fontSize: 10.5, letterSpacing: "0.16em", color: "var(--ink-3)", textTransform: "uppercase", marginTop: 3 }}>Agencia de IA</div>
+
+            {/* Bloque de credibilidad: cifras ya publicadas + hechos */}
+            <div className="bbx-cred">
+              {metrics.map((m, i) => <BbCounter key={i} n={m[0]} label={m[1]} start={inview} />)}
+              <div className="bbx-cred-item">
+                <span className="bbx-cred-num bbx-cred-txt">LATAM + España</span>
+                <span className="bbx-cred-lbl">empresas que ya confían</span>
               </div>
+            </div>
+            <ul className="bbx-facts">
+              {["Soporte real, con un equipo humano detrás", "Hablas con el mismo equipo que construye Smile Fast"].map((f, i) =>
+              <li key={i}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+                  {f}
+                </li>
+              )}
+            </ul>
+
+            <div className="bbx-ctas">
+              <a href={CONTACT_HREF} {...extLink} className="btn btn-blue bbx-cta">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.2l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.2.6a2.7 2.7 0 0 0 1.8-1.2 2.2 2.2 0 0 0 .1-1.3c0-.1-.2-.2-.4-.3Z" /></svg>
+                Hablar con Brandboost
+              </a>
+              <a href="https://brandboostia.com" {...extLink} className="bbx-site">brandboostia.com <span aria-hidden="true">↗</span></a>
             </div>
           </div>
-          {/* Tarjeta oscura premium con imagen */}
-          <div className="bb-card" style={{ position: "relative", borderRadius: "var(--r-img)", overflow: "hidden", minHeight: 340, background: "var(--navy-2)", boxShadow: "0 40px 90px -46px rgba(19,27,34,0.6)" }}>
-            <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=70&w=1200" srcSet="https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=70&w=700 700w, https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=70&w=1200 1200w" sizes="(max-width: 820px) 100vw, 600px" alt="" loading="lazy" decoding="async" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.42 }} />
-            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(160deg, rgba(27,38,48,0.35), rgba(27,38,48,0.92))" }} />
-            <div className="bb-card-in" style={{ position: "relative", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 30, color: "#fff", minHeight: 340 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                <img src={RES.r25_brandboost_mark_png} alt="" style={{ width: 30, height: 30, objectFit: "contain", filter: "brightness(1.6)", flexShrink: 0 }} />
-                <span className="mono bb-card-tag" style={{ fontSize: 10, letterSpacing: "0.2em", color: "var(--blue-light)", textTransform: "uppercase" }}>Agentes · Automatización · IA</span>
-              </div>
-              <div>
-                <p style={{ fontSize: 20, fontWeight: 300, lineHeight: 1.4, margin: "0 0 22px", maxWidth: "24ch" }}>Agentes de IA, automatizaciones e integraciones <b>a medida de cada empresa.</b></p>
-                <div style={{ display: "flex", gap: 30, flexWrap: "wrap" }}>
-                  {[["LATAM + España", "Empresas que ya confían"], ["Soporte real", "Equipo humano detrás"]].map((m, i) =>
-                  <div key={i}>
-                      <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em", color: "#fff" }}>{m[0]}</div>
-                      <div style={{ fontSize: 12, color: "rgba(255,255,255,0.6)", marginTop: 3, maxWidth: 110 }}>{m[1]}</div>
-                    </div>
-                  )}
-                </div>
-              </div>
+
+          {/* Tarjeta de marca animada: sello + pilares */}
+          <div className="bbx-card">
+            <span className="bbx-glow" aria-hidden="true" />
+            <div className="bbx-mark-wrap" aria-hidden="true">
+              <span className="bbx-ring" />
+              <span className="bbx-pulse" />
+              <span className="bbx-pulse p2" />
+              <span className="bbx-mark"><img src={RES.r25_brandboost_mark_png} alt="" /></span>
             </div>
+            <div className="bbx-card-head">
+              <div className="bbx-card-name">Brandboost AI</div>
+              <div className="mono bbx-card-tag">Agencia de IA · Agentes · Automatización</div>
+            </div>
+            <ul className="bbx-pillars">
+              {[
+                { t: "Branding", d: "Identidad y marca con criterio propio.", ic: <><path d="M12 3l2.6 5.6 6.1.6-4.6 4.1 1.3 6L12 16.3 6.6 19.3l1.3-6-4.6-4.1 6.1-.6z" /></> },
+                { t: "Growth marketing", d: "Campañas y embudos para generar demanda.", ic: <><path d="M3 17l6-6 4 4 8-8" /><path d="M15 7h6v6" /></> },
+                { t: "Herramientas de IA", d: "Agentes, automatizaciones e integraciones a medida.", ic: <><rect x="5" y="7" width="14" height="12" rx="3" /><path d="M12 3v4M9 12h.01M15 12h.01M9.5 15.5h5" /></> }].map((p, i) =>
+              <li key={i} className="bbx-pillar" style={{ "--i": i }}>
+                  <span className="bbx-pillar-ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{p.ic}</svg></span>
+                  <span>
+                    <span className="bbx-pillar-t">{p.t}</span>
+                    <span className="bbx-pillar-d">{p.d}</span>
+                  </span>
+                </li>
+              )}
+            </ul>
+            <div className="bbx-card-foot mono"><span className="bbx-live" />Smile Fast · un producto Brandboost</div>
           </div>
         </div>
 
         {/* Muro de logos */}
         <div style={{ marginTop: 64 }}>
           <div className="mono" style={{ fontSize: 12, letterSpacing: "0.2em", color: "var(--ink-3)", textTransform: "uppercase", marginBottom: 20 }}>Empresas que ya trabajan con Brandboost</div>
-          <div className={"bb-metrics" + (inview ? " in" : "")} style={{ display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "10px 26px", marginBottom: 30 }}>
-            {metrics.map((m, i) =>
-            <React.Fragment key={i}>
-                {i > 0 && <span style={{ color: "var(--line-strong)", fontSize: 20 }}>·</span>}
-                <span style={{ display: "inline-flex", alignItems: "baseline", gap: 9 }}>
-                  <span style={{ fontSize: 30, fontWeight: 700, letterSpacing: "-0.03em", color: "var(--ink)" }}>{m[0]}</span>
-                  <span style={{ fontSize: 13.5, color: "var(--ink-3)" }}>{m[1]}</span>
-                </span>
-              </React.Fragment>
-            )}
-          </div>
           <div className="bb-logos">
             {clients.map((c, i) =>
             <div key={i} className={"bb-logo-tile" + (c.dark ? " dark" : "")}>
@@ -1067,6 +1090,114 @@ function VideoFeature({ onStart }) {
 
 }
 
+/* ---------------- Contador animado (respeta reduced-motion) ---------------- */
+function useCountUp(target, start, duration = 1200) {
+  const [val, setVal] = useState(0);
+  React.useEffect(() => {
+    if (!start) return;
+    const reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduced) { setVal(target); return; }
+    let raf;
+    const t0 = performance.now();
+    const tick = (now) => {
+      const p = Math.min(1, (now - t0) / duration);
+      setVal(target * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [start, target, duration]);
+  return val;
+}
+
+/* ---------------- Coste por simulación (tras "Cómo funciona") ---------------- */
+/* Paquetes reales: 50 cr · 39 US$ / 200 cr · 99 US$ / 600 cr · 249 US$. 1 simulación = 1 crédito. */
+const CS_PACKS = [
+  { credits: 50, price: 39, unit: "0,78" },
+  { credits: 200, price: 99, unit: "0,50" },
+  { credits: 600, price: 249, unit: "0,42", best: true }];
+
+function CostPerSim({ onStart }) {
+  const [ref, inview] = useInview(0.3);
+  const price = useCountUp(0.42, inview, 1400);
+  return (
+    <section id="precio" ref={ref} className={"cs" + (inview ? " cs-on" : "")} aria-labelledby="cs-title">
+      <div className="wrap">
+        <div className="cs-card">
+          <div className="cs-copy">
+            <span className="mono cs-eyebrow"><span className="cs-eyebrow-dot" />Precio por simulación</span>
+            <h2 id="cs-title" className="display cs-title">
+              Una simulación cuesta <span className="dim">menos que un café.</span>
+            </h2>
+            <p className="cs-lead">
+              Cada simulación consume 1 crédito. Según el paquete, te sale <b>{"desde ≈0,42\u00a0US$"}</b>. Sin cuotas mensuales ni permanencia.
+            </p>
+            <p className="cs-contrast">
+              <span className="cs-contrast-bar" aria-hidden="true" />
+              <span>Un paciente nuevo de estética dental vale <b>cientos de veces más.</b></span>
+            </p>
+            <div className="cs-ctas">
+              <button type="button" className="btn btn-white cs-cta" onClick={onStart}>Quiero probarlo</button>
+              <a href={SIGNUP_HREF} className="cs-link">Crear cuenta <span aria-hidden="true">→</span></a>
+            </div>
+            <p className="cs-note mono">Créditos de regalo al crear tu cuenta · No caducan</p>
+          </div>
+
+          <div className="cs-visual">
+            <div className="cs-vs">
+              <div className="cs-tile cs-coffee">
+                <svg className="cs-cup" viewBox="0 0 64 64" aria-hidden="true">
+                  <path className="cs-steam s1" d="M24 20c-3-4 3-6 0-10" />
+                  <path className="cs-steam s2" d="M32 20c-3-4 3-6 0-10" />
+                  <path className="cs-steam s3" d="M40 20c-3-4 3-6 0-10" />
+                  <path d="M14 26h34v12a14 14 0 0 1-14 14h-6a14 14 0 0 1-14-14V26z" fill="currentColor" opacity="0.14" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                  <path d="M48 30h3a6 6 0 0 1 0 12h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <path d="M10 56h44" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                <span className="cs-tile-lbl">1 café</span>
+              </div>
+              <span className="cs-gt" aria-hidden="true">&gt;</span>
+              <div className="cs-tile cs-sim">
+                <svg className="cs-tooth" viewBox="0 0 64 64" aria-hidden="true">
+                  <path d="M20 10c-6 0-10 5-10 12 0 6 3 9 4 15 1 7 2 17 7 17 4 0 4-10 6-14 1-3 3-3 5 0 2 4 2 14 6 14 5 0 6-10 7-17 1-6 4-9 4-15 0-7-4-12-10-12-5 0-7 3-12 3s-7-3-12-3z" fill="currentColor" opacity="0.14" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                  <path className="cs-spark" d="M48 8v8M44 12h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+                <span className="cs-price" aria-label="desde 0,42 US$">
+                  <span className="cs-price-from">desde</span>
+                  <span className="cs-price-num">{price.toFixed(2).replace(".", ",")}</span>
+                  <span className="cs-price-cur">US$</span>
+                </span>
+                <span className="cs-tile-lbl">1 simulación</span>
+              </div>
+            </div>
+
+            <div className="cs-bars" aria-hidden="true">
+              <div className="cs-bar-row">
+                <span className="cs-bar-lbl">Lo que inviertes</span>
+                <span className="cs-bar"><span className="cs-bar-fill cs-bar-sm" /></span>
+              </div>
+              <div className="cs-bar-row">
+                <span className="cs-bar-lbl">Lo que vale un paciente nuevo</span>
+                <span className="cs-bar"><span className="cs-bar-fill cs-bar-lg" /></span>
+              </div>
+            </div>
+
+            <ul className="cs-packs" aria-label="Paquetes de créditos">
+              {CS_PACKS.map((p, i) =>
+              <li key={p.credits} className={"cs-pack" + (p.best ? " cs-pack-best" : "")} style={{ "--i": i }}>
+                  <span className="cs-pack-cr">{p.credits} créditos</span>
+                  <span className="cs-pack-price">{p.price} US$</span>
+                  <span className="cs-pack-unit mono">≈{p.unit} / sim.</span>
+                </li>
+              )}
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>);
+
+}
+
 function Landing({ onStart }) {
   return (
     <div>
@@ -1076,6 +1207,7 @@ function Landing({ onStart }) {
       <Transformations />
       <LeadAsset onStart={onStart} />
       <HowItWorks />
+      <CostPerSim onStart={onStart} />
       <PatientPreview onStart={onStart} />
       <AppJourney />
       <VideoFeature onStart={onStart} />

@@ -1,0 +1,453 @@
+/* ============================================================
+   Simulador (Operación › Simulador)
+   Hero navy con saldo, guía de 3 pasos, escenario con el widget
+   real (iframe) y modo presentación a pantalla completa.
+   Todo bajo .qoves-admin (tokens en app/globals.css).
+   ============================================================ */
+
+.qoves-admin .admin-page.sim-page { width: min(1240px, 100%); }
+
+/* ---------- Hero ---------- */
+.qoves-admin .sim-hero {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 32px;
+  padding: 38px 40px;
+  border-radius: 24px;
+  color: #fff;
+  background:
+    radial-gradient(70% 120% at 100% 0%, rgba(150, 190, 215, 0.24), transparent 60%),
+    linear-gradient(155deg, var(--navy-1) 0%, var(--navy-2) 55%, var(--navy-3) 100%);
+  box-shadow: 0 36px 72px -44px rgba(19, 27, 34, 0.95);
+}
+.qoves-admin .sim-hero-orb {
+  position: absolute; z-index: -1;
+  width: 460px; height: 460px; right: -140px; bottom: -260px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(185, 207, 221, 0.3), transparent 65%);
+  animation: sim-drift 14s ease-in-out infinite alternate;
+}
+.qoves-admin .sim-hero-orb-2 {
+  width: 340px; height: 340px; left: -120px; top: -200px; right: auto; bottom: auto;
+  background: radial-gradient(circle, rgba(125, 151, 170, 0.32), transparent 65%);
+  animation-duration: 18s; animation-direction: alternate-reverse;
+}
+.qoves-admin .sim-hero-grid {
+  position: absolute; inset: 0; z-index: -1; opacity: 0.4;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 34px 34px;
+  mask-image: radial-gradient(80% 90% at 0% 0%, #000, transparent 70%);
+  -webkit-mask-image: radial-gradient(80% 90% at 0% 0%, #000, transparent 70%);
+}
+@keyframes sim-drift { from { transform: translate(0, 0) scale(1); } to { transform: translate(-60px, -30px) scale(1.12); } }
+
+.qoves-admin .sim-hero-main { display: flex; flex-direction: column; gap: 18px; min-width: 0; justify-content: center; }
+.qoves-admin .sim-hero-tags { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-width: 0; }
+.qoves-admin .sim-hero-eyebrow { font-size: 9.5px; color: rgba(255, 255, 255, 0.58); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.qoves-admin .sim-online {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 5px 11px 5px 9px; border-radius: 99px;
+  font-size: 12px; font-weight: 600; letter-spacing: -0.005em;
+  color: #dff3e6; background: rgba(95, 178, 128, 0.16); border: 1px solid rgba(140, 214, 170, 0.3);
+}
+.qoves-admin .sim-online i { width: 7px; height: 7px; border-radius: 50%; background: #7fd6a2; animation: sim-ping-green 2s ease-out infinite; }
+@keyframes sim-ping-green { 0% { box-shadow: 0 0 0 0 rgba(127, 214, 162, 0.6); } 70%, 100% { box-shadow: 0 0 0 8px rgba(127, 214, 162, 0); } }
+
+.qoves-admin .sim-hero-title {
+  margin: 0;
+  font-size: clamp(32px, 4.2vw, 52px);
+  font-weight: 600;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+  color: #fff;
+  text-wrap: balance;
+}
+/* Texto con brillo que recorre el acento */
+.qoves-admin .sim-shine {
+  background: linear-gradient(100deg, var(--blue-light) 0%, var(--blue-light) 38%, #fff 50%, var(--blue-light) 62%, var(--blue-light) 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: sim-shine 4.8s var(--ease) infinite;
+}
+@keyframes sim-shine { 0% { background-position: 100% 0; } 60%, 100% { background-position: 0% 0; } }
+
+.qoves-admin .sim-hero-lead { margin: 0; max-width: 54ch; font-size: 15.5px; line-height: 1.55; color: rgba(255, 255, 255, 0.7); }
+.qoves-admin .sim-hero-actions { display: flex; align-items: center; gap: 10px 18px; flex-wrap: wrap; margin-top: 4px; }
+.qoves-admin .sim-hero-cta { min-height: 48px; padding: 14px 24px; box-shadow: 0 14px 30px -16px rgba(0, 0, 0, 0.7); }
+.qoves-admin .sim-hero-link {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px;
+  font-size: 14.5px; font-weight: 500; color: rgba(255, 255, 255, 0.82); text-decoration: none;
+  transition: color 0.2s var(--ease);
+}
+.qoves-admin .sim-hero-link svg { transition: transform 0.25s var(--ease-out); }
+.qoves-admin .sim-hero-link:hover { color: #fff; }
+.qoves-admin .sim-hero-link:hover svg { transform: translateX(3px); }
+.qoves-admin .sim-hero a:focus-visible,
+.qoves-admin .sim-hero button:focus-visible { outline: 2px solid var(--blue-light); outline-offset: 3px; }
+
+.qoves-admin .sim-hero-side { display: flex; flex-direction: column; align-items: stretch; justify-content: center; gap: 14px; min-width: 0; }
+
+/* Orbe de escaneo */
+.qoves-admin .sim-orb { position: relative; width: 128px; height: 128px; align-self: center; display: grid; place-items: center; margin-bottom: 4px; }
+.qoves-admin .sim-orb-ring {
+  position: absolute; inset: 0; border-radius: 50%;
+  background: conic-gradient(from 0deg, transparent 0 60%, rgba(185, 207, 221, 0.85) 82%, transparent 100%);
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1px));
+  animation: sim-spin 4.5s linear infinite;
+}
+.qoves-admin .sim-orb-ring-2 { inset: 14px; opacity: 0.55; animation-duration: 7s; animation-direction: reverse; }
+.qoves-admin .sim-orb-core {
+  position: relative; overflow: hidden;
+  width: 76px; height: 76px; border-radius: 24px;
+  display: grid; place-items: center;
+  color: #fff;
+  background: linear-gradient(160deg, rgba(185, 207, 221, 0.26), rgba(185, 207, 221, 0.08));
+  border: 1px solid rgba(185, 207, 221, 0.35);
+  box-shadow: 0 0 40px -6px rgba(150, 190, 215, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.qoves-admin .sim-orb-scan {
+  position: absolute; left: 10%; right: 10%; height: 2px; top: 18%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, transparent, #e6f1f8, transparent);
+  box-shadow: 0 0 12px 2px rgba(185, 207, 221, 0.8);
+  animation: sim-scan 2.4s var(--ease) infinite alternate;
+}
+.qoves-admin .sim-orb-spark { position: absolute; top: 12px; right: 14px; color: var(--blue-light); animation: sim-twinkle 2.2s ease-in-out infinite; }
+@keyframes sim-spin { to { transform: rotate(360deg); } }
+@keyframes sim-scan { from { top: 18%; } to { top: 80%; } }
+@keyframes sim-twinkle { 0%, 100% { opacity: 0.35; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1.1); } }
+
+/* Saldo */
+.qoves-admin .sim-credit {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 18px; border-radius: 18px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+}
+.qoves-admin .sim-credit-ic { width: 40px; height: 40px; flex-shrink: 0; border-radius: 13px; display: grid; place-items: center; background: rgba(185, 207, 221, 0.16); color: var(--blue-light); }
+.qoves-admin .sim-credit-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.qoves-admin .sim-credit-body .mono { font-size: 9px; color: rgba(255, 255, 255, 0.5); }
+.qoves-admin .sim-credit-body strong { font-size: 24px; font-weight: 600; letter-spacing: -0.03em; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.qoves-admin .sim-credit-sub { font-size: 12.5px; color: rgba(255, 255, 255, 0.6); }
+
+.qoves-admin .sim-low {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px;
+  padding: 9px 12px 9px 14px; border-radius: 14px;
+  font-size: 13px; line-height: 1.4;
+  color: #f8e3df; background: rgba(181, 103, 94, 0.2); border: 1px solid rgba(241, 201, 195, 0.32);
+}
+.qoves-admin .sim-low > span:nth-child(2) { flex: 1 1 160px; min-width: 0; }
+.qoves-admin .sim-low-dot { width: 7px; height: 7px; border-radius: 50%; background: #f1c9c3; flex-shrink: 0; animation: sim-ping-warm 2s ease-out infinite; }
+@keyframes sim-ping-warm { 0% { box-shadow: 0 0 0 0 rgba(241, 201, 195, 0.55); } 70%, 100% { box-shadow: 0 0 0 8px rgba(241, 201, 195, 0); } }
+.qoves-admin .sim-low-link {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 36px;
+  color: #fff; font-weight: 600; text-decoration: none;
+  padding: 4px 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.14);
+  transition: background 0.2s var(--ease);
+}
+.qoves-admin .sim-low-link:hover { background: rgba(255, 255, 255, 0.24); }
+
+/* ---------- Guía de 3 pasos ---------- */
+.qoves-admin .sim-steps-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.qoves-admin .sim-step {
+  position: relative;
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 18px 18px 18px 16px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid var(--blue-line);
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.35s var(--ease), box-shadow 0.35s var(--ease), background 0.35s var(--ease);
+  min-width: 0;
+}
+.qoves-admin .sim-step.is-on { background: #fff; border-color: var(--blue-light); box-shadow: var(--shadow-lift); }
+.qoves-admin .sim-step-ic {
+  position: relative; flex-shrink: 0;
+  width: 44px; height: 44px; border-radius: 14px;
+  display: grid; place-items: center;
+  background: var(--blue-soft); color: var(--blue-deep);
+  transition: background 0.35s var(--ease), color 0.35s var(--ease);
+}
+.qoves-admin .sim-step-ic svg { position: relative; z-index: 1; }
+.qoves-admin .sim-step.is-on .sim-step-ic { color: #fff; }
+.qoves-admin .sim-step-halo {
+  position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(150deg, var(--blue-deep), var(--navy-1));
+  box-shadow: 0 10px 22px -10px rgba(62, 87, 105, 0.9);
+}
+.qoves-admin .sim-step-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.qoves-admin .sim-step-body .mono { font-size: 9px; color: var(--blue-deep); }
+.qoves-admin .sim-step-body strong { font-size: 17px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
+.qoves-admin .sim-step-body p { margin: 2px 0 0; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
+.qoves-admin .sim-step-link {
+  position: absolute; top: 39px; right: -17px; width: 18px; height: 2px; z-index: 2;
+  background: var(--blue-line); border-radius: 2px; overflow: hidden;
+}
+.qoves-admin .sim-step-link i { display: block; width: 100%; height: 100%; background: var(--blue-accent); transform-origin: left center; }
+
+/* ---------- Escenario ---------- */
+.qoves-admin .sim-stage-card { padding: 22px; display: flex; flex-direction: column; gap: 16px; scroll-margin-top: 80px; }
+.qoves-admin .sim-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; }
+.qoves-admin .sim-toolbar-title { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.qoves-admin .sim-toolbar-title .mono { font-size: 9px; color: var(--blue-deep); }
+.qoves-admin .sim-toolbar-title h2 { margin: 0; font-size: 21px; font-weight: 600; letter-spacing: -0.025em; line-height: 1.15; color: var(--ink); scroll-margin-top: 90px; }
+.qoves-admin .sim-toolbar-title h2 span { color: var(--blue-accent); }
+.qoves-admin .sim-toolbar-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.qoves-admin .sim-present-btn { min-height: 44px; }
+
+.qoves-admin .sim-seg { display: inline-flex; gap: 2px; padding: 3px; border-radius: 99px; background: var(--blue-tint); border: 1px solid var(--blue-line); }
+.qoves-admin .sim-seg button {
+  position: relative; border: none; background: transparent; cursor: pointer;
+  min-height: 38px; padding: 8px 14px; border-radius: 99px;
+  font-family: var(--font-sans); font-size: 13px; font-weight: 500; color: var(--ink-3);
+  transition: color 0.2s var(--ease);
+}
+.qoves-admin .sim-seg button:hover { color: var(--blue-deep); }
+.qoves-admin .sim-seg button.is-on { color: var(--blue-deep); font-weight: 600; }
+.qoves-admin .sim-seg-pill { position: absolute; inset: 0; border-radius: 99px; background: #fff; box-shadow: 0 2px 8px -3px rgba(27, 38, 48, 0.25); }
+.qoves-admin .sim-seg-label { position: relative; z-index: 1; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+
+.qoves-admin .sim-imp-note,
+.qoves-admin .sim-note { display: flex; align-items: flex-start; gap: 8px; margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--ink-3); }
+.qoves-admin .sim-note svg,
+.qoves-admin .sim-imp-note svg { flex-shrink: 0; margin-top: 2px; color: var(--blue-deep); }
+.qoves-admin .sim-imp-note { padding: 10px 14px; border-radius: 12px; background: #fbf5e6; border: 1px dashed #e7d2a2; color: #7a5a1e; }
+.qoves-admin .sim-imp-note svg { color: #a7802f; }
+
+/* Un transform en un ancestro rompería el overlay fijo: se anula al presentar. */
+.qoves-admin .sim-stage-card.is-presenting { animation: none !important; }
+.qoves-admin .sim-show { position: relative; min-width: 0; }
+.qoves-admin .sim-stage {
+  position: relative; isolation: isolate; overflow: hidden;
+  display: flex; justify-content: center; align-items: flex-start;
+  padding: 32px 24px;
+  border-radius: 20px;
+  background:
+    radial-gradient(60% 50% at 50% 0%, rgba(185, 207, 221, 0.45), transparent 70%),
+    linear-gradient(180deg, #f3f7fa 0%, #e8eff4 100%);
+  border: 1px solid var(--blue-line);
+}
+.qoves-admin .sim-stage-grid {
+  position: absolute; inset: 0; z-index: -1; opacity: 0.6; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(79, 107, 127, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(79, 107, 127, 0.07) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(70% 60% at 50% 30%, #000, transparent 75%);
+  -webkit-mask-image: radial-gradient(70% 60% at 50% 30%, #000, transparent 75%);
+}
+
+/* Marco (navegador o móvil) */
+.qoves-admin .sim-frame {
+  position: relative;
+  width: 100%;
+  max-width: 1120px;
+  overflow: hidden;
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid var(--blue-line);
+  box-shadow: 0 34px 70px -40px rgba(19, 27, 34, 0.6);
+  transition: max-width 0.55s var(--ease-out), border-radius 0.45s var(--ease-out), padding 0.45s var(--ease-out), background 0.45s var(--ease);
+}
+.qoves-admin .sim-frame-mobile {
+  max-width: 412px;
+  padding: 11px;
+  border-radius: 46px;
+  border: none;
+  background: linear-gradient(160deg, #2c343b, #10151a);
+  box-shadow: 0 40px 70px -34px rgba(19, 27, 34, 0.8), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.qoves-admin .sim-notch {
+  position: absolute; z-index: 3; left: 50%; top: 20px; transform: translateX(-50%);
+  width: 92px; height: 24px; border-radius: 99px; background: #0b0f13; pointer-events: none;
+}
+.qoves-admin .sim-chrome {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 0 14px; overflow: hidden;
+  background: var(--blue-tint); border-bottom: 1px solid var(--blue-line);
+}
+.qoves-admin .sim-chrome-dots { display: inline-flex; gap: 6px; flex-shrink: 0; }
+.qoves-admin .sim-chrome-dots i { width: 9px; height: 9px; border-radius: 50%; background: var(--blue-line); }
+.qoves-admin .sim-chrome-url {
+  display: inline-flex; align-items: center; gap: 6px; flex: 0 1 300px; min-width: 0; justify-content: center;
+  height: 25px; padding: 0 12px; border-radius: 99px; background: #fff; border: 1px solid var(--blue-line);
+  font-size: 11.5px; color: var(--ink-3); white-space: nowrap; overflow: hidden;
+}
+.qoves-admin .sim-chrome-live { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; font-family: var(--font-mono); font-size: 8.5px; letter-spacing: 0.16em; color: #3d8a5c; }
+.qoves-admin .sim-chrome-live i { width: 6px; height: 6px; border-radius: 50%; background: #5fb280; animation: sim-ping-green 2s ease-out infinite; }
+
+.qoves-admin .sim-screen { position: relative; background: #fff; min-height: 480px; }
+.qoves-admin .sim-frame-mobile .sim-screen { border-radius: 36px; overflow: hidden; padding-top: 34px; }
+.qoves-admin .sim-iframe {
+  display: block; width: 100%; border: 0; background: transparent;
+  opacity: 0; transition: opacity 0.5s var(--ease), height 0.35s var(--ease-out);
+}
+.qoves-admin .sim-iframe.is-loaded { opacity: 1; }
+.qoves-admin .sim-loading {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  background: #fff;
+}
+.qoves-admin .sim-loading-ic { width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; background: var(--blue-soft); color: var(--blue-deep); animation: sf-glow 1.6s var(--ease) infinite; }
+.qoves-admin .sim-loading-bar { width: min(260px, 60%); height: 12px; border-radius: 99px; }
+.qoves-admin .sim-loading-bar.is-short { width: min(160px, 40%); }
+
+/* ---------- Modo presentación ---------- */
+.qoves-admin .sim-show.is-presenting {
+  display: flex; flex-direction: column; align-items: stretch; gap: 0;
+  width: 100%; height: 100%;
+  overflow-y: auto; overscroll-behavior: contain;
+  color: #fff;
+  background:
+    radial-gradient(60% 50% at 50% 0%, rgba(125, 151, 170, 0.35), transparent 70%),
+    radial-gradient(40% 40% at 100% 100%, rgba(150, 190, 215, 0.16), transparent 70%),
+    linear-gradient(170deg, var(--navy-1) 0%, var(--navy-2) 50%, var(--navy-3) 100%);
+}
+.qoves-admin .sim-show.is-overlay { position: fixed; inset: 0; z-index: 1000; height: 100vh; height: 100dvh; }
+.qoves-admin .sim-show:fullscreen { background-color: var(--navy-2); }
+.qoves-admin .sim-show-glow {
+  position: absolute; z-index: 0; pointer-events: none;
+  width: 700px; height: 700px; left: 50%; top: 30%; transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(185, 207, 221, 0.18), transparent 65%);
+}
+.qoves-admin .sim-show-bar {
+  position: sticky; top: 0; z-index: 5;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 16px clamp(16px, 3vw, 32px);
+  padding-top: max(16px, env(safe-area-inset-top));
+  background: linear-gradient(180deg, rgba(19, 27, 34, 0.85), rgba(19, 27, 34, 0));
+  backdrop-filter: blur(6px);
+  animation: sf-rise 0.5s var(--ease-out) both;
+}
+.qoves-admin .sim-show-brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.qoves-admin .sim-show-sep { width: 1px; height: 20px; background: rgba(255, 255, 255, 0.2); flex-shrink: 0; }
+.qoves-admin .sim-show-clinic { font-size: 14.5px; font-weight: 500; letter-spacing: -0.01em; color: rgba(255, 255, 255, 0.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qoves-admin .sim-exit {
+  display: inline-flex; align-items: center; gap: 8px; flex-shrink: 0;
+  min-height: 44px; padding: 0 16px; border-radius: 99px; cursor: pointer;
+  font-family: var(--font-sans); font-size: 14px; font-weight: 500; color: #fff;
+  background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.18);
+  transition: background 0.2s var(--ease), border-color 0.2s var(--ease);
+}
+.qoves-admin .sim-exit:hover { background: rgba(255, 255, 255, 0.18); border-color: rgba(185, 207, 221, 0.5); }
+.qoves-admin .sim-exit:focus-visible { outline: 2px solid var(--blue-light); outline-offset: 3px; }
+.qoves-admin .sim-exit kbd {
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em;
+  padding: 2px 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.12); color: rgba(255, 255, 255, 0.75);
+}
+.qoves-admin .sim-show.is-presenting .sim-stage {
+  flex: 1 0 auto; z-index: 1;
+  padding: 8px clamp(12px, 3vw, 40px) 24px;
+  background: transparent; border: none; border-radius: 0;
+  animation: sf-rise 0.6s var(--ease-out) 0.05s both;
+}
+.qoves-admin .sim-show.is-presenting .sim-stage-grid { display: none; }
+.qoves-admin .sim-frame.is-presenting.sim-frame-desktop {
+  max-width: 1080px; border: none; border-radius: 28px;
+  box-shadow: 0 50px 120px -50px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+.qoves-admin .sim-show-foot {
+  position: relative; z-index: 1; margin: 0; padding: 0 16px 22px;
+  padding-bottom: max(22px, env(safe-area-inset-bottom));
+  text-align: center; font-size: 12px; color: rgba(255, 255, 255, 0.45);
+}
+
+/* ---------- Consejos ---------- */
+.qoves-admin .sim-tips { display: flex; flex-direction: column; gap: 16px; }
+.qoves-admin .sim-tips-head { display: flex; flex-direction: column; gap: 4px; }
+.qoves-admin .sim-tips-head .mono { font-size: 9px; color: var(--blue-deep); }
+.qoves-admin .sim-tips-head h2 { margin: 0; font-size: 21px; font-weight: 600; letter-spacing: -0.025em; color: var(--ink); }
+.qoves-admin .sim-tips-head h2 span { color: var(--blue-accent); }
+.qoves-admin .sim-tips-grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+.qoves-admin .sim-tip {
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 20px 20px 22px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid var(--blue-line);
+  box-shadow: var(--shadow-card);
+  transition: box-shadow 0.3s var(--ease), border-color 0.3s var(--ease), translate 0.3s var(--ease-out);
+  min-width: 0;
+}
+.qoves-admin .sim-tip::before {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 90px; pointer-events: none;
+  background: radial-gradient(70% 100% at 0% 0%, var(--blue-tint), transparent 70%);
+}
+.qoves-admin .sim-tip > * { position: relative; }
+.qoves-admin .sim-tip:hover { box-shadow: var(--shadow-lift); border-color: var(--blue-light); translate: 0 -3px; }
+.qoves-admin .sim-tip-ic {
+  width: 44px; height: 44px; border-radius: 14px; margin-bottom: 6px;
+  display: grid; place-items: center;
+  background: linear-gradient(150deg, var(--blue-soft), #fff); border: 1px solid var(--blue-line); color: var(--blue-deep);
+  transition: transform 0.4s var(--ease-out), background 0.3s var(--ease), color 0.3s var(--ease);
+}
+.qoves-admin .sim-tip:hover .sim-tip-ic { transform: rotate(-8deg) scale(1.06); background: linear-gradient(150deg, var(--blue-deep), var(--navy-1)); color: #fff; }
+.qoves-admin .sim-tip strong { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
+.qoves-admin .sim-tip p { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ink-2); }
+.qoves-admin .sim-tip-num { position: absolute; top: 18px; right: 18px; font-size: 10px; color: var(--blue-light); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1100px) {
+  .qoves-admin .sim-tips-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 900px) {
+  .qoves-admin .sim-hero { grid-template-columns: 1fr; }
+  .qoves-admin .sim-hero-side { flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .qoves-admin .sim-orb { display: none; }
+  .qoves-admin .sim-credit { flex: 1 1 260px; }
+  .qoves-admin .sim-low { flex: 1 1 100%; }
+  .qoves-admin .sim-steps-list { grid-template-columns: 1fr; gap: 10px; }
+  .qoves-admin .sim-step-link { top: auto; bottom: -11px; right: auto; left: 37px; width: 2px; height: 12px; }
+  .qoves-admin .sim-step-link i { transform-origin: top center; }
+}
+@media (max-width: 760px) {
+  .qoves-admin .sim-hero { padding: 26px 20px; border-radius: 20px; gap: 22px; }
+  .qoves-admin .sim-hero-title { font-size: 32px; }
+  .qoves-admin .sim-hero-lead { font-size: 15px; }
+  .qoves-admin .sim-hero-cta { flex: 1 1 auto; }
+  .qoves-admin .sim-stage-card { padding: 16px; }
+  .qoves-admin .sim-toolbar-tools { width: 100%; }
+  .qoves-admin .sim-seg { flex: 1 1 auto; }
+  .qoves-admin .sim-seg button { flex: 1 1 0; min-height: 44px; }
+  .qoves-admin .sim-seg-label { justify-content: center; width: 100%; }
+  .qoves-admin .sim-present-btn { flex: 1 1 100%; }
+  .qoves-admin .sim-stage { padding: 14px 8px; border-radius: 16px; }
+  .qoves-admin .sim-frame-mobile { padding: 7px; border-radius: 36px; }
+  .qoves-admin .sim-frame-mobile .sim-screen { border-radius: 30px; }
+  .qoves-admin .sim-chrome-live { display: none; }
+  .qoves-admin .sim-tips-grid { grid-template-columns: 1fr; gap: 10px; }
+  .qoves-admin .sim-show-sep, .qoves-admin .sim-show-clinic, .qoves-admin .sim-exit kbd { display: none; }
+  .qoves-admin .sim-show.is-presenting .sim-stage { padding: 4px 0 16px; }
+  .qoves-admin .sim-frame.is-presenting.sim-frame-desktop { border-radius: 20px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qoves-admin .sim-hero-orb,
+  .qoves-admin .sim-online i,
+  .qoves-admin .sim-shine,
+  .qoves-admin .sim-orb-ring,
+  .qoves-admin .sim-orb-scan,
+  .qoves-admin .sim-orb-spark,
+  .qoves-admin .sim-low-dot,
+  .qoves-admin .sim-chrome-live i,
+  .qoves-admin .sim-loading-ic,
+  .qoves-admin .sim-show-bar,
+  .qoves-admin .sim-show.is-presenting .sim-stage { animation: none !important; }
+  .qoves-admin .sim-shine { color: var(--blue-light); background: none; }
+  .qoves-admin .sim-frame,
+  .qoves-admin .sim-iframe,
+  .qoves-admin .sim-tip,
+  .qoves-admin .sim-tip-ic { transition: none; }
+  .qoves-admin .sim-tip:hover { translate: none; }
+  .qoves-admin .sim-tip:hover .sim-tip-ic { transform: none; }
+}

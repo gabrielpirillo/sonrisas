@@ -10,6 +10,7 @@ import "./styles/transformations.css";
 import "./styles/theme-blue.css";
 import "./styles/trust.css";
 import "./styles/footer.css";
+import "./styles/extras.css";
 import "./styles/mobile.css";
 
 import "./resources";
