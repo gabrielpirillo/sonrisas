@@ -24,6 +24,7 @@ const STATUS: Record<PurchaseSummary['status'], { label: string; cls: string }> 
     expired: { label: 'Expirado', cls: 'cr-st-muted' },
     failed: { label: 'Fallido', cls: 'cr-st-failed' },
     pending: { label: 'Pendiente', cls: 'cr-st-muted' },
+    review: { label: 'En verificación', cls: 'cr-st-muted' },
 };
 
 /** Fecha en UTC al renderizar en servidor; en la zona del navegador tras hidratar. */

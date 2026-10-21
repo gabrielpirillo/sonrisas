@@ -18,9 +18,20 @@ type Props = {
     impersonating?: boolean;
     hasClinic: boolean;
     billingCountry?: string | null;
+    /** Clínica suspendida: no puede comprar. */
+    suspended?: boolean;
 };
 
-const STRIPE_CHECKOUT = 'https://checkout.stripe.com/';
+/** Solo se redirige a páginas https de Stripe (checkout.stripe.com u otro *.stripe.com). */
+function isStripeUrl(url: string | undefined): url is string {
+    if (!url) return false;
+    try {
+        const u = new URL(url);
+        return u.protocol === 'https:' && (u.hostname === 'stripe.com' || u.hostname.endsWith('.stripe.com'));
+    } catch {
+        return false;
+    }
+}
 
 /** Ahorro (%) de cada paquete frente al precio por crédito más caro de su misma moneda. */
 function savingsById(packages: PublicPackage[]): Record<string, number> {
@@ -38,7 +49,7 @@ function savingsById(packages: PublicPackage[]): Record<string, number> {
     return out;
 }
 
-export function BuyCredits({ packages, imageCost, videoCost, stripeEnabled, stripeMode, canBuy, impersonating, hasClinic, billingCountry = null }: Props) {
+export function BuyCredits({ packages, imageCost, videoCost, stripeEnabled, stripeMode, canBuy, impersonating, hasClinic, billingCountry = null, suspended = false }: Props) {
     const defaultId = (packages.find((p) => p.highlight) ?? packages[0])?.id ?? null;
     const [picked, setPicked] = useState<string | null>(null);
     const selectedId = picked && packages.some((p) => p.id === picked) ? picked : defaultId;
@@ -99,7 +110,7 @@ export function BuyCredits({ packages, imageCost, videoCost, stripeEnabled, stri
         } catch {
             res = { error: 'No pudimos conectar. Revisa tu conexión e inténtalo de nuevo.' };
         }
-        if (res.url && res.url.startsWith(STRIPE_CHECKOUT)) {
+        if (isStripeUrl(res.url)) {
             // Mantiene todo deshabilitado mientras el navegador sale hacia Stripe.
             window.location.assign(res.url);
             return;
@@ -112,7 +123,9 @@ export function BuyCredits({ packages, imageCost, videoCost, stripeEnabled, stri
         ? 'Selecciona una clínica para poder recargar.'
         : impersonating
             ? 'Estás viendo esta clínica como operador (solo lectura): la compra está desactivada.'
-            : 'Solo los administradores de la clínica pueden comprar créditos.';
+            : suspended
+                ? 'Tu clínica está suspendida. Escríbenos para reactivarla.'
+                : 'Solo los administradores de la clínica pueden comprar créditos.';
 
     return (
         <MotionConfig reducedMotion="user">

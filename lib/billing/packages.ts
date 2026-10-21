@@ -1,6 +1,7 @@
 /** Paquetes de créditos (tabla credit_packages). Solo servidor. */
 import { db } from '@/lib/db';
-import { convertFromUsd, currencyForCountry } from '@/lib/billing/fx';
+import { convertFromUsd, currencyForCountry, STRIPE_MAX_MINOR } from '@/lib/billing/fx';
+import { CURRENCIES } from '@/components/panel/credits/format';
 
 export interface CreditPackageRow {
     id: string;
@@ -38,13 +39,18 @@ export { currencyForCountry } from '@/lib/billing/fx';
 /**
  * Precio que paga una clínica según su país: el precio base en USD convertido
  * al tipo de cambio del día. Si el superadmin fijó un precio manual en esa
- * moneda (columna prices), se usa ese.
+ * moneda (columna prices), se usa ese. Un precio manual por encima del tope de
+ * Stripe (99.999.999 en unidad mínima) no se puede cobrar: se cobra en USD.
  */
 export async function resolvePrice(pkg: CreditPackageRow, country: string | null | undefined): Promise<{ priceCents: number; currency: string }> {
     const cur = currencyForCountry(country);
     if (cur === 'usd' || pkg.currency !== 'usd') return { priceCents: pkg.price_cents, currency: pkg.currency };
     const manual = pkg.prices?.[cur];
-    if (Number.isInteger(manual) && (manual as number) >= 50) return { priceCents: manual as number, currency: cur };
+    if (Number.isInteger(manual) && (manual as number) >= 50) {
+        if ((manual as number) <= STRIPE_MAX_MINOR) return { priceCents: manual as number, currency: cur };
+        console.error(`[packages] Precio manual en ${cur.toUpperCase()} de «${pkg.id}» supera el tope de Stripe; se cobra en USD`);
+        return { priceCents: pkg.price_cents, currency: 'usd' };
+    }
     return convertFromUsd(pkg.price_cents, cur);
 }
 
@@ -59,14 +65,15 @@ export async function upsertPackage(p: Partial<CreditPackageRow>): Promise<strin
     if (!name) return 'Ponle un nombre al paquete.';
     if (!Number.isInteger(credits) || credits <= 0 || credits > 100000) return 'Créditos: un entero entre 1 y 100.000.';
     if (!Number.isInteger(price) || price < 50 || price > 10_000_000) return 'Precio inválido (mínimo 0,50).';
-    if (!['usd', 'eur', 'ars', 'mxn', 'cop', 'pen', 'uyu', 'brl', 'gbp'].includes(currency)) return 'Moneda no admitida.';
+    if (!(CURRENCIES as readonly string[]).includes(currency)) return 'Moneda no admitida.';
     // Precios locales opcionales (EUR para España, ARS para Argentina).
     const prices: Record<string, number> = {};
     for (const cur of ['eur', 'ars'] as const) {
         const v = p.prices?.[cur];
         if (v === undefined || v === null || (v as unknown) === '') continue;
         const n = Number(v);
-        if (!Number.isInteger(n) || n < 50 || n > 1_000_000_000) return `Precio en ${cur.toUpperCase()} inválido.`;
+        if (!Number.isInteger(n) || n < 50) return `Precio en ${cur.toUpperCase()} inválido.`;
+        if (n > STRIPE_MAX_MINOR) return `Precio en ${cur.toUpperCase()} demasiado alto (Stripe admite hasta 999.999,99).`;
         prices[cur] = n;
     }
     await db.query(

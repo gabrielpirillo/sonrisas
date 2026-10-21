@@ -23,6 +23,20 @@ function detectCountry(): string {
     return region && /^[A-Z]{2}$/.test(region) ? region : 'US';
 }
 
+/** Destino tras el login (?next=), solo rutas relativas del mismo origen. */
+function nextDestination(): string {
+    const fallback = '/administracion/dashboard';
+    try {
+        const raw = new URLSearchParams(window.location.search).get('next');
+        if (!raw || raw.length > 1024 || !raw.startsWith('/') || raw.startsWith('//') || raw.startsWith('/\\')) return fallback;
+        const url = new URL(raw, window.location.origin);
+        if (url.origin !== window.location.origin || /^\/(acceso|login)/.test(url.pathname)) return fallback;
+        return `${url.pathname}${url.search}${url.hash}`;
+    } catch {
+        return fallback;
+    }
+}
+
 function slugify(s: string): string {
     return (
         s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -57,7 +71,7 @@ export default function AccesoPage() {
             return;
         }
         // Se mantiene "cargando" hasta que cambia la página.
-        router.push('/administracion/dashboard');
+        router.push(nextDestination());
     }
 
     async function handleSignup(e: React.FormEvent) {

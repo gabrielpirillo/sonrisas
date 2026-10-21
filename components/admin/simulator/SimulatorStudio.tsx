@@ -6,21 +6,18 @@ import { useRouter } from "next/navigation";
 import NumberFlow from "@number-flow/react";
 import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import {
-    ArrowRight, Camera, Coins, Glasses, Info, Lock, Maximize2, Monitor, RotateCw,
-    ScanFace, Smartphone, Smile, Sparkles, Sun, UserRound, X,
+    ArrowRight, Coins, Info, Lock, Maximize2, Monitor, RotateCw, Smartphone, Smile, X,
 } from "lucide-react";
 import { Wordmark } from "@/components/admin/qoves/LogoMark";
 import { useMounted } from "@/components/panel/credits/useMounted";
+import { EASE, PHONE_QUERY, RESIZE_TYPE, STEPS, TIPS, creditInfo, useMediaQuery, widgetSrc } from "./shared";
+import { PhoneHome, SimSheet } from "./PhoneSimulator";
 import "./simulator.css";
 
 type Device = "desktop" | "mobile";
 
-const RESIZE_TYPE = "smileforward-resize";
 const MIN_H = 480;
 const MAX_H = 4000;
-/** Por debajo de este número de simulaciones restantes se avisa de recargar. */
-const LOW_SIMS = 10;
-const EASE = [0.22, 1, 0.36, 1] as const;
 
 type Props = {
     widgetKey: string;
@@ -75,6 +72,11 @@ function SimulatorInner({ widgetKey, clinicName, balance, imageCost, canRecharge
     const [reloadKey, setReloadKey] = useState(0);
     const showRef = useRef<HTMLDivElement>(null);
     const exitBtnRef = useRef<HTMLButtonElement>(null);
+    // Teléfonos: portada compacta + hoja a pantalla completa con el widget.
+    // null hasta hidratar: así ningún iframe se monta en el layout equivocado.
+    const isPhone = useMediaQuery(PHONE_QUERY);
+    const [sheetOpen, setSheetOpen] = useState(false);
+    const ctaRef = useRef<HTMLButtonElement>(null);
 
     // Modo presentación = capa fija a pantalla completa dentro de la página.
     // Además se pide la pantalla completa del navegador (oculta barras), pero si
@@ -118,8 +120,29 @@ function SimulatorInner({ widgetKey, clinicName, balance, imageCost, canRecharge
         router.refresh();
     };
 
+    const openSheet = useCallback(() => setSheetOpen(true), []);
+    const closeSheet = useCallback(() => {
+        setSheetOpen(false);
+        window.setTimeout(() => ctaRef.current?.focus({ preventScroll: true }), 60);
+        router.refresh();
+    }, [router]);
+
+    // El widget de escritorio solo existe fuera del modo teléfono (o si ya se
+    // estaba presentando): nunca hay dos iframes del widget a la vez.
+    const showDesktopWidget = (isPhone === false || presenting) && !sheetOpen;
+
     return (
         <>
+            <PhoneHome
+                ref={ctaRef}
+                balance={balance}
+                imageCost={imageCost}
+                canRecharge={canRecharge}
+                impersonating={impersonating}
+                onStart={openSheet}
+            />
+            <SimSheet open={sheetOpen} widgetKey={widgetKey} clinicName={clinicName} onClose={closeSheet} />
+
             <Hero
                 balance={balance}
                 imageCost={imageCost}
@@ -178,7 +201,9 @@ function SimulatorInner({ widgetKey, clinicName, balance, imageCost, canRecharge
 
                     <div className="sim-stage">
                         <span className="sim-stage-grid" aria-hidden />
-                        <LiveWidget key={reloadKey} widgetKey={widgetKey} device={device} presenting={presenting} />
+                        {showDesktopWidget && (
+                            <LiveWidget key={reloadKey} widgetKey={widgetKey} device={device} presenting={presenting} />
+                        )}
                     </div>
 
                     {presenting && (
@@ -208,9 +233,7 @@ function Hero({
     balance, imageCost, canRecharge, onPresent,
 }: { balance: number; imageCost: number | null; canRecharge: boolean; onPresent: () => void }) {
     const mounted = useMounted();
-    const sims = imageCost ? Math.floor(Math.max(0, balance) / imageCost) : null;
-    const empty = sims !== null ? sims <= 0 : balance <= 0;
-    const low = sims !== null ? sims < LOW_SIMS : balance < LOW_SIMS;
+    const { sims, empty, low } = creditInfo(balance, imageCost);
 
     return (
         <section className={"sim-hero" + (low ? " is-low" : "")} aria-labelledby="sim-hero-title">
@@ -279,11 +302,6 @@ function Hero({
 /* ------------------------------------------------------------------ */
 /* Guía de 3 pasos                                                      */
 /* ------------------------------------------------------------------ */
-const STEPS: { icon: ReactNode; title: string; text: string }[] = [
-    { icon: <UserRound size={20} />, title: "Datos", text: "Nombre y contacto del paciente. Quedan guardados como lead." },
-    { icon: <Camera size={20} />, title: "Foto", text: "Una foto de frente sonriendo, con la cámara o desde la galería." },
-    { icon: <Sparkles size={20} />, title: "Resultado", text: "La IA muestra el antes y el después en segundos." },
-];
 
 function StepsGuide() {
     return (
@@ -344,7 +362,7 @@ function LiveWidget({ widgetKey, device, presenting }: { widgetKey: string; devi
     // El iframe se monta solo en el cliente: así el listener de altura y onLoad
     // ya existen cuando el widget carga (con SSR podía cargar antes de hidratar).
     const mounted = useMounted();
-    const src = `/widget?key=${encodeURIComponent(widgetKey)}&embed=widget`;
+    const src = widgetSrc(widgetKey);
 
     // El widget avisa su altura; solo aceptamos mensajes de NUESTRO iframe.
     useEffect(() => {
@@ -407,12 +425,6 @@ function LiveWidget({ widgetKey, device, presenting }: { widgetKey: string; devi
 /* ------------------------------------------------------------------ */
 /* Consejos para una buena foto                                         */
 /* ------------------------------------------------------------------ */
-const TIPS: { icon: ReactNode; title: string; text: string }[] = [
-    { icon: <Sun size={20} />, title: "Luz frontal", text: "Que la luz le dé de frente, mejor natural. Evita contraluces y sombras en la boca." },
-    { icon: <Smile size={20} />, title: "Sonrisa natural", text: "Sonrisa amplia y relajada, mostrando los dientes de arriba. Sin forzarla." },
-    { icon: <Glasses size={20} />, title: "Sin lentes de sol", text: "Cara despejada: sin lentes de sol, gorras ni pelo tapando el rostro." },
-    { icon: <ScanFace size={20} />, title: "De frente y cerca", text: "Cámara a la altura de los ojos, rostro centrado y enfocado." },
-];
 
 function PhotoTips() {
     return (

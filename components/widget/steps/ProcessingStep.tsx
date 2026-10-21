@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { ProcessStatus } from "../types";
 import { fileObjectUrl } from "../objectUrl";
+import { detectImageLandmarks, type ImageLandmarks } from "@/lib/mediapipe/detectImageLandmarks";
 import "./processing-step.css";
 
 interface ProcessingStepProps {
-    image: File | null;
+    /** Foto del paciente: File (flujo normal) o URL (blob:, data: o remota). */
+    image: File | string | null;
     processStatus: ProcessStatus;
     isDesktop: boolean;
 }
@@ -77,44 +79,216 @@ function useSmoothProgress(status: ProcessStatus, reduce: boolean) {
     return fillRef;
 }
 
+// ---------------------------------------------------------------------------
+// Mapeo facial sobre el rostro REAL
+// ---------------------------------------------------------------------------
+
+/** Tiempo máximo antes de pasar al escaneo neutro (sin geometría). */
+const DETECT_BUDGET_MS = 1500;
+/** Pasado este tiempo, un resultado tardío ya no se dibuja (evita apariciones al final). */
+const DETECT_MAX_MS = 6000;
+
+/** Índices de la malla de MediaPipe FaceLandmarker (478 puntos con iris). */
+const LM = {
+    irisA: 468, irisB: 473, // centros de iris (pupilas)
+    eyeA: [33, 133], eyeB: [263, 362], // comisuras de cada ojo (respaldo sin iris)
+    forehead: 10, nasion: 168, nose: 1,
+    lipTopOuter: 0, lipBottomOuter: 17, lipTop: 13, lipBottom: 14,
+    mouthA: 61, mouthB: 291,
+    chin: 152, cheekA: 234, cheekB: 454, jawA: 172, jawB: 397,
+} as const;
+
+type P = { x: number; y: number };
+type FaceStatus = "pending" | "ready" | "none";
+
+const mid = (a: P, b: P): P => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+const dist = (a: P, b: P) => Math.hypot(b.x - a.x, b.y - a.y);
+const unit = (a: P, b: P): P => {
+    const d = dist(a, b) || 1;
+    return { x: (b.x - a.x) / d, y: (b.y - a.y) / d };
+};
+const along = (p: P, u: P, k: number): P => ({ x: p.x + u.x * k, y: p.y + u.y * k });
+const r1 = (n: number) => Math.round(n * 10) / 10;
+const pt = (p: P) => `${r1(p.x)} ${r1(p.y)}`;
+
+/** Recorta el segmento a–b al rectángulo [m, w−m]×[m, h−m] (Liang–Barsky). */
+function clipSegment(a: P, b: P, w: number, h: number, m: number): [P, P] | null {
+    let t0 = 0, t1 = 1;
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const edges: [number, number][] = [[-dx, a.x - m], [dx, w - m - a.x], [-dy, a.y - m], [dy, h - m - a.y]];
+    for (const [p, q] of edges) {
+        if (p === 0) { if (q < 0) return null; continue; }
+        const r = q / p;
+        if (p < 0) { if (r > t1) return null; if (r > t0) t0 = r; }
+        else { if (r < t0) return null; if (r < t1) t1 = r; }
+    }
+    return [{ x: a.x + t0 * dx, y: a.y + t0 * dy }, { x: a.x + t1 * dx, y: a.y + t1 * dy }];
+}
+
+interface FaceGeometry {
+    midline: string; // path d
+    midLabel: P;
+    bipupilar: [P, P] | null;
+    comisural: [P, P] | null;
+    mesh: string;
+    smile: { cx: number; cy: number; rx: number; ry: number; deg: number };
+    dots: P[];
+}
+
 /**
- * Capa de mapeo facial. viewBox 3:4 (proporción típica de un selfie) con
- * "slice", igual que el object-fit: cover de la foto, para que ambos escalen
- * igual. Los elementos aparecen según la etapa (data-stage en el contenedor).
+ * Proyecta los landmarks normalizados al sistema de coordenadas del
+ * escenario (px), replicando el `object-fit: cover` centrado de la foto.
  */
-function FaceMap() {
-    const pts: [number, number][] = [
-        [112, 168], [188, 168], // pupilas
-        [150, 214], // punta nasal
-        [124, 254], [176, 254], // comisuras
-        [150, 247], [150, 266], // labios
-        [150, 318], // mentón
-        [92, 196], [208, 196], // pómulos
-        [100, 262], [200, 262], // mandíbula
-    ];
+function buildGeometry(face: ImageLandmarks, W: number, H: number): FaceGeometry | null {
+    const { width: nw, height: nh, landmarks: lm } = face;
+    if (lm.length < 468 || W < 10 || H < 10) return null;
+    const s = Math.max(W / nw, H / nh);
+    const ox = (W - nw * s) / 2;
+    const oy = (H - nh * s) / 2;
+    const at = (i: number): P => ({ x: lm[i].x * nw * s + ox, y: lm[i].y * nh * s + oy });
+    const hasIris = lm.length >= 478;
+
+    const pupilA = hasIris ? at(LM.irisA) : mid(at(LM.eyeA[0]), at(LM.eyeA[1]));
+    const pupilB = hasIris ? at(LM.irisB) : mid(at(LM.eyeB[0]), at(LM.eyeB[1]));
+    const forehead = at(LM.forehead), nasion = at(LM.nasion), nose = at(LM.nose);
+    const lipTopO = at(LM.lipTopOuter), lipBotO = at(LM.lipBottomOuter);
+    const lipTop = at(LM.lipTop), lipBot = at(LM.lipBottom);
+    const mouthA = at(LM.mouthA), mouthB = at(LM.mouthB);
+    const chin = at(LM.chin);
+    const cheekA = at(LM.cheekA), cheekB = at(LM.cheekB);
+    const jawA = at(LM.jawA), jawB = at(LM.jawB);
+
+    const fw = dist(cheekA, cheekB);
+    if (fw < 12) return null;
+
+    // Línea media: por los puntos reales (frente → nasion → nariz → labios → mentón),
+    // prolongada en los extremos siguiendo su propia dirección.
+    const top = along(forehead, unit(nasion, forehead), fw * 0.2);
+    const bottom = along(chin, unit(lipBotO, chin), fw * 0.12);
+    const clampY = (p: P): P => ({ x: p.x, y: Math.min(Math.max(p.y, 8), H - 8) });
+    const midPts = [clampY(top), forehead, nasion, nose, lipTopO, lipBotO, chin, clampY(bottom)];
+    const midline = "M" + midPts.map(pt).join(" L");
+
+    // Bipupilar y comisural: rectas por los puntos reales, prolongadas y recortadas al visor.
+    const ext = (a: P, b: P, k: number) => {
+        const u = unit(a, b);
+        return clipSegment(along(a, u, -k), along(b, u, k), W, H, 10);
+    };
+    const bipupilar = ext(pupilA, pupilB, fw * 0.4);
+    const comisural = ext(mouthA, mouthB, fw * 0.38);
+
+    const mesh = [
+        `M${pt(pupilA)} L${pt(nose)} L${pt(pupilB)}`,
+        `M${pt(mouthA)} L${pt(nose)} L${pt(mouthB)}`,
+        `M${pt(cheekA)} L${pt(pupilA)}`,
+        `M${pt(cheekB)} L${pt(pupilB)}`,
+        `M${pt(cheekA)} L${pt(jawA)} L${pt(chin)} L${pt(jawB)} L${pt(cheekB)}`,
+    ].join(" ");
+
+    // Zona de sonrisa: elipse alrededor de la boca, orientada con las comisuras.
+    const mouthW = dist(mouthA, mouthB);
+    const mouthH = dist(lipTopO, lipBotO);
+    const c = mid(mid(mouthA, mouthB), mid(lipTopO, lipBotO));
+    const rx = mouthW / 2 * 1.3 + 6;
+    const ry = Math.max(mouthH / 2 * 1.4, rx * 0.4) + 4;
+    const deg = (Math.atan2(mouthB.y - mouthA.y, mouthB.x - mouthA.x) * 180) / Math.PI;
+
+    return {
+        midline,
+        midLabel: { x: midPts[0].x + 5, y: midPts[0].y + 9 },
+        bipupilar,
+        comisural,
+        mesh,
+        smile: { cx: r1(c.x), cy: r1(c.y), rx: r1(rx), ry: r1(ry), deg: r1(deg) },
+        dots: [forehead, pupilA, pupilB, cheekA, cheekB, nose, mouthA, mouthB, lipTop, lipBot, jawA, jawB, chin],
+    };
+}
+
+/**
+ * Detecta el rostro de la foto mostrada; no bloquea el flujo de procesado.
+ * Arranca cuando termina la validación (`enabled`): la validación ya usa el
+ * mismo detector, así que aquí corre "en caliente" y sin competir con ella
+ * por el hilo principal.
+ */
+function useFaceLandmarks(url: string | null, enabled: boolean): { status: FaceStatus; face: ImageLandmarks | null } {
+    const [found, setFound] = useState<{ url: string; face: ImageLandmarks | null } | null>(null);
+    const [lateFor, setLateFor] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!url || !enabled) return;
+        let alive = true;
+        const t0 = performance.now();
+        const late = setTimeout(() => { if (alive) setLateFor(url); }, DETECT_BUDGET_MS);
+        detectImageLandmarks(url)
+            .then((face) => {
+                if (!alive) return;
+                // Muy tarde: nos quedamos con el escaneo neutro.
+                setFound({ url, face: performance.now() - t0 <= DETECT_MAX_MS ? face : null });
+            })
+            .catch(() => { if (alive) setFound({ url, face: null }); });
+        return () => { alive = false; clearTimeout(late); };
+    }, [url, enabled]);
+
+    const settled = found && found.url === url ? found : null;
+    if (settled?.face) return { status: "ready", face: settled.face };
+    if (settled || lateFor === url || !url) return { status: "none", face: null };
+    return { status: "pending", face: null };
+}
+
+/** Tamaño del escenario (px), recalculado al redimensionar. */
+function useBoxSize() {
+    const [el, setEl] = useState<HTMLDivElement | null>(null);
+    const [size, setSize] = useState<{ w: number; h: number } | null>(null);
+    useEffect(() => {
+        if (!el || typeof ResizeObserver === "undefined") return;
+        const ro = new ResizeObserver((entries) => {
+            const { width, height } = entries[0].contentRect;
+            setSize((prev) =>
+                prev && Math.abs(prev.w - width) < 0.5 && Math.abs(prev.h - height) < 0.5 ? prev : { w: width, h: height },
+            );
+        });
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, [el]);
+    return [setEl, size] as const;
+}
+
+/**
+ * Capa de mapeo facial, en píxeles del escenario y anclada a los landmarks
+ * reales de la foto. Sin rostro detectado no se dibuja nada (solo queda el
+ * barrido neutro): nunca mostramos puntos "aproximados".
+ * Los elementos aparecen según la etapa (data-stage en el contenedor).
+ */
+function FaceMap({ geo, w, h }: { geo: FaceGeometry; w: number; h: number }) {
+    const { bipupilar, comisural, smile } = geo;
+    const angle = (a: P, b: P) => r1((Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI);
     return (
-        <svg className="px-map" viewBox="0 0 300 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <svg className="px-map" width={w} height={h} viewBox={`0 0 ${r1(w)} ${r1(h)}`} aria-hidden="true">
             {/* líneas de referencia */}
             <g className="px-ref">
-                <line className="px-draw" x1="150" y1="96" x2="150" y2="336" pathLength={1} />
-                <line className="px-draw d2" x1="62" y1="168" x2="238" y2="168" pathLength={1} />
-                <line className="px-draw d3" x1="76" y1="254" x2="224" y2="254" pathLength={1} />
-                <text x="154" y="104">LÍNEA MEDIA</text>
-                <text x="64" y="163">BIPUPILAR</text>
-                <text x="78" y="249">COMISURAL</text>
+                <path className="px-draw" d={geo.midline} pathLength={1} />
+                {bipupilar && <line className="px-draw d2" x1={r1(bipupilar[0].x)} y1={r1(bipupilar[0].y)} x2={r1(bipupilar[1].x)} y2={r1(bipupilar[1].y)} pathLength={1} />}
+                {comisural && <line className="px-draw d3" x1={r1(comisural[0].x)} y1={r1(comisural[0].y)} x2={r1(comisural[1].x)} y2={r1(comisural[1].y)} pathLength={1} />}
+                <text x={r1(geo.midLabel.x)} y={r1(geo.midLabel.y)}>LÍNEA MEDIA</text>
+                {bipupilar && (
+                    <text x={r1(bipupilar[0].x + 2)} y={r1(bipupilar[0].y - 6)} transform={`rotate(${angle(bipupilar[0], bipupilar[1])} ${r1(bipupilar[0].x)} ${r1(bipupilar[0].y)})`}>BIPUPILAR</text>
+                )}
+                {comisural && (
+                    <text x={r1(comisural[0].x + 2)} y={r1(comisural[0].y - 6)} transform={`rotate(${angle(comisural[0], comisural[1])} ${r1(comisural[0].x)} ${r1(comisural[0].y)})`}>COMISURAL</text>
+                )}
             </g>
             {/* malla */}
             <g className="px-mesh">
-                <path className="px-draw" pathLength={1} d="M112 168 L150 214 L188 168 M124 254 L150 214 L176 254 M92 196 L112 168 M208 196 L188 168 M92 196 L100 262 L150 318 L200 262 L208 196" />
+                <path className="px-draw" pathLength={1} d={geo.mesh} />
             </g>
             {/* zona de sonrisa */}
             <g className="px-smile">
-                <ellipse cx="150" cy="256" rx="46" ry="24" pathLength={1} />
+                <ellipse cx={smile.cx} cy={smile.cy} rx={smile.rx} ry={smile.ry} transform={`rotate(${smile.deg} ${smile.cx} ${smile.cy})`} pathLength={1} />
             </g>
             {/* puntos */}
             <g className="px-pts">
-                {pts.map(([x, y], i) => (
-                    <circle key={i} cx={x} cy={y} r="1.9" style={{ transitionDelay: `${0.07 * i}s`, animationDelay: `${0.6 + 0.27 * i}s` }} />
+                {geo.dots.map((p, i) => (
+                    <circle key={i} cx={r1(p.x)} cy={r1(p.y)} r="2.2" style={{ transitionDelay: `${0.07 * i}s`, animationDelay: `${0.6 + 0.27 * i}s` }} />
                 ))}
             </g>
         </svg>
@@ -124,7 +298,13 @@ function FaceMap() {
 export function ProcessingStep({ image, processStatus, isDesktop }: ProcessingStepProps) {
     const reduce = useReducedMotion() ?? false;
     const fillRef = useSmoothProgress(processStatus, reduce);
-    const imgUrl = fileObjectUrl(image);
+    const imgUrl = typeof image === "string" ? image || null : fileObjectUrl(image);
+    const { status: faceStatus, face } = useFaceLandmarks(imgUrl, processStatus !== "idle" && processStatus !== "validating");
+    const [stageRef, stageSize] = useBoxSize();
+    const geo = useMemo(
+        () => (face && stageSize ? buildGeometry(face, stageSize.w, stageSize.h) : null),
+        [face, stageSize],
+    );
 
     const idx = Math.max(ORDER.indexOf(processStatus), 1); // "idle" ⇒ primera etapa
     const done = processStatus === "complete";
@@ -144,13 +324,16 @@ export function ProcessingStep({ image, processStatus, isDesktop }: ProcessingSt
     const step = Math.min(idx, STAGES.length);
 
     const body = (
-        <div className="wf-body px" data-stage={done ? 6 : idx}>
+        <div className="wf-body px" data-stage={done ? 6 : idx} data-face={geo ? "ready" : faceStatus === "ready" ? "pending" : faceStatus}>
             <div className="px-media">
-                <div className="px-stage">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    {imgUrl && <img className="px-photo" src={imgUrl} alt="" />}
-                    <span className="px-vignette" aria-hidden="true" />
-                    <FaceMap />
+                <div className="px-stage" ref={stageRef}>
+                    {/* foto + mapeo en un mismo marco: "respiran" juntos y los puntos no se desalinean */}
+                    <div className="px-frame">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        {imgUrl && <img className="px-photo" src={imgUrl} alt="" />}
+                        <span className="px-vignette" aria-hidden="true" />
+                        {geo && stageSize && <FaceMap geo={geo} w={stageSize.w} h={stageSize.h} />}
+                    </div>
                     <span className="px-sweep" aria-hidden="true" />
                     <span className="px-flash" aria-hidden="true" />
                     <span className="px-bracket tl" aria-hidden="true" />

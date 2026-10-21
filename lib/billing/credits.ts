@@ -32,7 +32,10 @@ export interface Clinic {
     slug: string;
     public_widget_key: string;
     credit_balance: number;
+    /** Legacy (sin modo); ver stripe_customer_id_live / _test. */
     stripe_customer_id: string | null;
+    stripe_customer_id_live?: string | null;
+    stripe_customer_id_test?: string | null;
     flexprice_customer_id: string | null;
     flexprice_wallet_id: string | null;
     status: 'active' | 'suspended';

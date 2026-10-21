@@ -1,0 +1,81 @@
+/* ============================================================
+   Resultado en modo demo (audience="owner", solo /demo).
+   Habla al dueño de la clínica: valor + CTAs de alta.
+   ============================================================ */
+
+.qoves-widget .ow-pill { font-size: 9px; align-self: flex-start; }
+.qoves-widget .ow-title { text-wrap: balance; }
+
+.qoves-widget .ow-info { display: flex; flex-direction: column; }
+.qoves-widget .ow-result > .ow-info { margin-top: 20px; }
+
+.qoves-widget .ow-value {
+  font-size: 15px; line-height: 1.55; color: var(--ink-2); margin: 0; letter-spacing: -0.005em;
+  text-wrap: pretty;
+}
+.qoves-widget .ow-value strong { color: var(--ink); font-weight: 600; }
+
+/* Ejemplo del lead que llega al panel */
+.qoves-widget .ow-lead {
+  display: flex; align-items: center; gap: 12px;
+  margin-top: 16px; padding: 12px 14px;
+  border: 1px solid var(--blue-line); border-radius: 16px;
+  background: linear-gradient(180deg, #fff, var(--blue-tint));
+  box-shadow: 0 14px 30px -24px rgba(27, 38, 48, 0.55);
+}
+.qoves-widget .ow-lead-av {
+  width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--blue-deep); color: #fff; font-weight: 600; font-size: 15px;
+}
+.qoves-widget .ow-lead-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.qoves-widget .ow-lead-top b {
+  display: block; font-size: 14px; font-weight: 600; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.qoves-widget .ow-lead-sub { font-size: 12.5px; color: var(--ink-3); line-height: 1.35; }
+.qoves-widget .ow-lead-wa {
+  width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%;
+  display: grid; place-items: center;
+  background: #fff; border: 1px solid var(--blue-line); color: var(--blue-deep);
+}
+
+/* Chips de tranquilidad */
+.qoves-widget .ow-chips { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.qoves-widget .ow-chips li {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 11px; border-radius: var(--r-pill);
+  background: var(--blue-tint); border: 1px solid var(--blue-line);
+  font-size: 12.5px; font-weight: 500; color: var(--blue-ink); line-height: 1.2;
+}
+.qoves-widget .ow-chips li svg { color: var(--blue-deep); flex-shrink: 0; }
+
+/* CTAs */
+.qoves-widget .ow-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+.qoves-widget .ow-actions .btn { width: 100%; padding: 16px 20px; min-height: 52px; white-space: normal; text-align: center; line-height: 1.25; }
+.qoves-widget .ow-actions .btn-ghost { background: #fff; }
+.qoves-widget .ow-retry {
+  align-self: center; display: inline-flex; align-items: center; gap: 7px;
+  min-height: 44px; padding: 8px 14px; margin-top: 2px;
+  background: none; border: 0; border-radius: var(--r-pill); cursor: pointer;
+  font: inherit; font-size: 14px; font-weight: 500; color: var(--ink-2);
+  text-decoration: underline; text-decoration-color: var(--w-line-strong); text-underline-offset: 4px;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.2s var(--ease), text-decoration-color 0.2s var(--ease);
+}
+.qoves-widget .ow-retry:hover { color: var(--blue-deep); text-decoration-color: currentColor; }
+.qoves-widget .ow-retry:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--blue-soft), 0 0 0 5px var(--blue-accent); }
+.qoves-widget .ow-retry svg { color: var(--blue-accent); }
+
+@media (min-width: 768px) {
+  .qoves-widget .ow-result { gap: 44px; }
+  .qoves-widget .ow-info .ow-title { font-size: 34px; margin-top: 16px; }
+  .qoves-widget .ow-info .ow-value { margin-top: 12px; }
+  .qoves-widget .ow-info .ow-lead,
+  .qoves-widget .ow-info .ow-actions { max-width: 400px; }
+  .qoves-widget .ow-info .ow-actions { margin-top: 22px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qoves-widget .ow-retry { transition: none; }
+}

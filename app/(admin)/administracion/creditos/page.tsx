@@ -74,6 +74,7 @@ export default async function CreditosPage({ searchParams }: { searchParams: Pro
                     canBuy={data.canBuy}
                     impersonating={impersonating}
                     hasClinic={Boolean(data.clinic)}
+                    suspended={data.clinicSuspended}
                 />
             </section>
 

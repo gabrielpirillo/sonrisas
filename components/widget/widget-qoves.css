@@ -370,16 +370,18 @@
   mask-image: radial-gradient(75% 70% at 50% 45%, #000 30%, transparent 85%);
   opacity: 0.55;
 }
+/* Luz ambiental: banda difusa SIN línea dura, detrás del contenido, para que
+   nunca "tache" el icono ni el título del selector. */
 .qoves-widget .photo-frame::after {
-  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 22%; z-index: 1; pointer-events: none;
-  background: linear-gradient(180deg, transparent, rgba(6, 182, 212, 0.1) 85%, rgba(165, 243, 252, 0.45) 99%, transparent);
-  animation: wfSweep 6s var(--ease) infinite;
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 34%; z-index: 1; pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgba(165, 243, 252, 0.07) 55%, transparent);
+  animation: wfSweep 7s var(--ease) infinite;
 }
 .qoves-widget .photo-frame.has-photo::after,
 .qoves-widget .photo-frame.is-cam::after,
 .qoves-widget .photo-frame.has-photo::before,
 .qoves-widget .photo-frame.is-cam::before { display: none; }
-@keyframes wfSweep { 0% { transform: translateY(-100%); opacity: 0; } 10% { opacity: 1; } 55% { opacity: 1; } 70%, 100% { transform: translateY(460%); opacity: 0; } }
+@keyframes wfSweep { 0% { transform: translateY(-100%); opacity: 0; } 10% { opacity: 1; } 55% { opacity: 1; } 70%, 100% { transform: translateY(300%); opacity: 0; } }
 
 .qoves-widget .photo-frame img.pf-preview {
   position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 2;
@@ -404,25 +406,32 @@
 
 .qoves-widget .pf-chooser {
   position: absolute; inset: 0; z-index: 5;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: safe center;
   gap: 8px; text-align: center; padding: 26px; color: #fff;
+  /* el selector mide lo que mide el marco: sus hijos se adaptan al alto
+     disponible (container queries) en vez de aplastarse */
+  container: pf-chooser / size;
 }
+.qoves-widget .pf-chooser > * { flex-shrink: 0; }
 .qoves-widget .pf-chooser > * { animation: sf-rise 0.6s var(--ease-out) both; }
 .qoves-widget .pf-chooser > *:nth-child(2) { animation-delay: 0.06s; }
 .qoves-widget .pf-chooser > *:nth-child(3) { animation-delay: 0.12s; }
 .qoves-widget .pf-chooser > *:nth-child(4) { animation-delay: 0.18s; }
+/* Círculo perfecto: tamaño fijo + aspect-ratio + sin encoger, nunca se ovala */
 .qoves-widget .pf-ic {
-  position: relative; width: 60px; height: 60px; border-radius: 50%;
-  background: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.4);
+  position: relative; box-sizing: border-box; flex: 0 0 auto;
+  width: 88px; height: 88px; aspect-ratio: 1; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.4);
   -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
-  display: grid; place-items: center; color: #fff; margin-bottom: 8px;
+  display: grid; place-items: center; color: #fff; margin-bottom: 10px;
 }
+.qoves-widget .pf-ic svg { width: 32px; height: 32px; }
 .qoves-widget .pf-ic::after {
   content: ""; position: absolute; inset: -1px; border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.5);
   animation: wfRing 2.6s var(--ease-out) infinite;
 }
-@keyframes wfRing { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(1.7); opacity: 0; } }
+@keyframes wfRing { 0% { transform: scale(1); opacity: 0.75; } 100% { transform: scale(1.4); opacity: 0; } }
 .qoves-widget .pf-choose-txt { font-size: 21px; font-weight: 600; letter-spacing: -0.03em; color: #fff; }
 .qoves-widget .pf-choose-sub { font-size: 13.5px; color: rgba(255, 255, 255, 0.86); margin-bottom: 14px; }
 .qoves-widget .pf-btns { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 252px; }
@@ -467,6 +476,23 @@
 
 /* cámara en vivo (SelfieCaptureFlow) dentro del panel */
 .qoves-widget .pf-camera { position: absolute; inset: 0; z-index: 6; animation: sf-fade 0.4s var(--ease) both; }
+/* Marcos bajos (p. ej. el navegador de /demo). La consulta mide el alto de
+   contenido (marco − 52px de padding). Todo más compacto; el icono sigue
+   siendo un círculo perfecto. */
+@container pf-chooser (max-height: 320px) {
+  .qoves-widget .pf-ic { width: 64px; height: 64px; margin-bottom: 4px; }
+  .qoves-widget .pf-ic svg { width: 26px; height: 26px; }
+  .qoves-widget .pf-choose-txt { font-size: 19px; }
+  .qoves-widget .pf-choose-sub { margin-bottom: 8px; }
+  .qoves-widget .pf-btn { min-height: 42px; padding: 10px 16px; }
+}
+@container pf-chooser (max-height: 236px) {
+  .qoves-widget .pf-ic { width: 48px; height: 48px; margin-bottom: 0; }
+  .qoves-widget .pf-ic svg { width: 22px; height: 22px; }
+  .qoves-widget .pf-choose-sub { margin-bottom: 4px; }
+  .qoves-widget .pf-btns { flex-direction: row; max-width: 380px; }
+  .qoves-widget .pf-btn { flex: 1; padding: 10px 14px; }
+}
 .qoves-widget .pf-camera > div { min-height: 0 !important; height: 100% !important; border-radius: 0 !important; }
 
 /* Móvil a pantalla completa (no embed): los paneles se adaptan al alto

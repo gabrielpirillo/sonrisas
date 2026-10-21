@@ -16,11 +16,16 @@
 }
 @keyframes pxIn { from { opacity: 0; transform: scale(0.985); } to { opacity: 1; transform: none; } }
 
-.qoves-widget .px-photo {
-  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
-  opacity: 0.88; filter: saturate(0.88) brightness(0.94);
+/* Foto + vignette + mapeo comparten marco: la "respiración" los escala juntos
+   y los landmarks siguen exactamente sobre el rostro. */
+.qoves-widget .px-frame {
+  position: absolute; inset: 0;
   transform-origin: 50% 45%;
   animation: pxBreath 9s var(--ease) infinite alternate;
+}
+.qoves-widget .px-photo {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%;
+  opacity: 0.88; filter: saturate(0.88) brightness(0.94);
   transition: opacity 0.8s var(--ease-out), filter 0.8s var(--ease-out);
 }
 @keyframes pxBreath { from { transform: scale(1); } to { transform: scale(1.03); } }
@@ -32,11 +37,16 @@
     linear-gradient(180deg, rgba(19, 27, 34, 0.22) 0%, transparent 26%, transparent 70%, rgba(19, 27, 34, 0.42) 100%);
 }
 
-/* ---------- Capa de mapeo (SVG) ---------- */
+/* ---------- Capa de mapeo (SVG, en px del escenario) ----------
+   Se construye con los landmarks reales (MediaPipe). Si no hay rostro o la
+   detección tarda, no se renderiza y solo queda el barrido neutro. */
 .qoves-widget .px-map {
   position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; pointer-events: none;
+  overflow: visible;
   transition: opacity 0.8s var(--ease-out);
+  animation: pxMapIn 0.6s var(--ease-out) both;
 }
+@keyframes pxMapIn { from { opacity: 0; } to { opacity: 1; } }
 .qoves-widget .px-map .px-draw {
   fill: none; stroke-linecap: round;
   stroke-dasharray: 1; stroke-dashoffset: 1;
@@ -45,16 +55,18 @@
 .qoves-widget .px-map .px-draw.d2 { transition-delay: 0.25s; }
 .qoves-widget .px-map .px-draw.d3 { transition-delay: 0.5s; }
 
-.qoves-widget .px-ref line { stroke: rgba(255, 255, 255, 0.42); stroke-width: 0.7; }
+.qoves-widget .px-ref line,
+.qoves-widget .px-ref path { stroke: rgba(255, 255, 255, 0.5); stroke-width: 0.8; stroke-linejoin: round; }
 .qoves-widget .px-ref text {
-  font-family: var(--font-mono); font-size: 7px; letter-spacing: 0.16em; font-weight: 500;
+  font-family: var(--font-mono); font-size: 8px; letter-spacing: 0.16em; font-weight: 500;
   fill: rgba(255, 255, 255, 0.72); opacity: 0;
   transition: opacity 0.6s var(--ease) 0.9s;
 }
-.qoves-widget .px-mesh path { stroke: rgba(185, 207, 221, 0.5); stroke-width: 0.6; stroke-linejoin: round; }
+.qoves-widget .px-ref text { paint-order: stroke; stroke: rgba(19, 27, 34, 0.35); stroke-width: 2px; }
+.qoves-widget .px-mesh path { stroke: rgba(185, 207, 221, 0.55); stroke-width: 0.7; stroke-linejoin: round; }
 
 .qoves-widget .px-smile ellipse {
-  fill: rgba(255, 255, 255, 0.035); stroke: rgba(255, 255, 255, 0.8); stroke-width: 0.8;
+  fill: rgba(255, 255, 255, 0.035); stroke: rgba(255, 255, 255, 0.8); stroke-width: 0.9;
   stroke-dasharray: 0.012 0.016;
   animation: pxMarch 16s linear infinite;
 }
@@ -279,7 +291,8 @@
 /* ---------- Movimiento reducido ---------- */
 @media (prefers-reduced-motion: reduce) {
   .qoves-widget .px-sweep { display: none; }
-  .qoves-widget .px-photo { animation: none; }
+  .qoves-widget .px-frame { animation: none; }
+  .qoves-widget .px-map { animation: none; }
   .qoves-widget .px-track::after { display: none; }
   .qoves-widget .px-smile ellipse { animation: none; }
 }

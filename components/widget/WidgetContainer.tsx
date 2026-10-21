@@ -9,7 +9,7 @@ import { useIsDesktop } from "./useIsDesktop";
 import { LoadingOverlay } from "./LoadingOverlay";
 import { WIcon, LogoMark } from "./WIcon";
 import type { WidgetContainerProps, Step } from "./types";
-import { WidgetConfigProvider, useWidgetConfig } from "./WidgetConfigContext";
+import { WidgetConfigProvider, useWidgetConfig, type WidgetAudience } from "./WidgetConfigContext";
 import { widgetCssVars } from "@/lib/widgetConfig";
 import "./widget-qoves.css";
 
@@ -60,16 +60,20 @@ const STEP_MOTION = {
     exit: { opacity: 0, y: -10, transition: { duration: 0.2, ease: [0.4, 0, 1, 1] as const } },
 };
 
-export default function WidgetContainer(props: WidgetContainerProps) {
+export default function WidgetContainer({ audience = "patient", ...props }: WidgetContainerProps & {
+    /** "owner" solo en la demo pública (/demo): el resultado habla al dueño de la clínica. */
+    audience?: WidgetAudience;
+}) {
     return (
-        <WidgetConfigProvider>
+        <WidgetConfigProvider audience={audience}>
             <WidgetInner {...props} />
         </WidgetConfigProvider>
     );
 }
 
 function WidgetInner(props: WidgetContainerProps) {
-    const { config, clinicName } = useWidgetConfig();
+    const { config, clinicName, audience } = useWidgetConfig();
+    const isOwner = audience === "owner";
     const state = useWidgetState(props);
     const isDesktop = useIsDesktop();
     const containerRef = useRef<HTMLDivElement>(null);
@@ -156,6 +160,14 @@ function WidgetInner(props: WidgetContainerProps) {
         setSelectedFile(null);
         setPhotoReady(false);
         setStep("LEAD_FORM");
+    };
+
+    // Demo para clínicas: probar con otra foto reutilizando los datos ya
+    // cargados (en móvil se va directo al paso de Foto).
+    const tryAnotherPhoto = () => {
+        setSelectedFile(null);
+        setPhotoReady(false);
+        setStep(isDesktop ? "LEAD_FORM" : "PHOTO");
     };
 
     // RESULT y LOCKED_RESULT comparten vista: misma clave para no re-animar.
@@ -266,8 +278,11 @@ function WidgetInner(props: WidgetContainerProps) {
                     isSubmittingVideo={isSubmittingVideo}
                     isSubmittingPhoto={isSubmittingPhoto}
                     isDesktop={isDesktop}
-                    onClinicalVideoRequest={handleClinicalVideoRequest}
-                    onSendPhotoEmail={handleSendPhotoEmail}
+                    // En la demo (dueño) no se disparan flujos de paciente (vídeo / correo).
+                    onClinicalVideoRequest={isOwner ? () => {} : handleClinicalVideoRequest}
+                    onSendPhotoEmail={isOwner ? () => {} : handleSendPhotoEmail}
+                    onTryAnother={tryAnotherPhoto}
+                    leadName={formValues.name}
                 />
             )}
 

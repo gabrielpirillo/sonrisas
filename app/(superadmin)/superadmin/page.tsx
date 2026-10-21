@@ -6,6 +6,7 @@ import { planLabel, plural } from '@/components/platform/labels';
 import { PageHead } from '@/components/admin/qoves/PageHead';
 import { StatCard } from '@/components/admin/qoves/StatCard';
 import { C, CLINIC_STATUS, SERIES } from '@/lib/brand';
+import { formatMoney, minorDigits } from '@/components/panel/credits/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,7 +43,31 @@ export default async function SuperAdminHome() {
             />
 
             <div className="kpi-grid sa-kpi-hero">
-                <StatCard label="INGRESOS (STRIPE)" value={ov.revenueCents / 100} format={{ style: 'currency', currency: 'USD' }} index={0} />
+                {ov.revenue.length <= 1 ? (
+                    <StatCard
+                        label="INGRESOS (STRIPE)"
+                        value={(ov.revenue[0]?.amountMinor ?? 0) / (ov.revenue[0] && minorDigits(ov.revenue[0].currency) === 0 ? 1 : 100)}
+                        format={{ style: 'currency', currency: (ov.revenue[0]?.currency ?? 'usd').toUpperCase() }}
+                        hint="NETO DE REEMBOLSOS"
+                        index={0}
+                    />
+                ) : (
+                    // Varias monedas: una línea por moneda, nunca sumadas entre sí.
+                    <div className="card" style={{ padding: 22, display: 'flex', flexDirection: 'column', gap: 10, minHeight: 110 }}>
+                        <span className="mono" style={{ fontSize: 9, display: 'flex', alignItems: 'center', gap: 7 }}>
+                            <span style={{ width: 6, height: 6, borderRadius: 2, background: 'var(--blue-deep)', opacity: 0.8 }} />
+                            INGRESOS (STRIPE)
+                        </span>
+                        <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 4 }}>
+                            {ov.revenue.map((r) => (
+                                <li key={r.currency} style={{ fontSize: 20, fontWeight: 600, letterSpacing: '-0.02em', lineHeight: 1.15 }}>
+                                    {formatMoney(r.amountMinor, r.currency)}
+                                </li>
+                            ))}
+                        </ul>
+                        <span className="mono" style={{ fontSize: 9 }}>POR MONEDA · NETO DE REEMBOLSOS</span>
+                    </div>
+                )}
                 <StatCard label="CLÍNICAS" value={ov.clinics} index={1} />
                 <StatCard label="USUARIOS" value={ov.users} index={2} />
                 <StatCard label="LEADS" value={ov.leads} index={3} />

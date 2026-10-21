@@ -175,9 +175,9 @@ function DemoContent() {
                             <h2>Pruébalo tal como aparece en la web de tu clínica.</h2>
                         </div>
                         <ol className="sfd-steps">
-                            <li><span><strong>Deja tus datos</strong>Nombre y correo, para enviarte el resultado.</span></li>
+                            <li><span><strong>Deja tus datos</strong>Nombre y contacto, como se los pedirá a tu paciente.</span></li>
                             <li><span><strong>Sube una selfie</strong>De frente y sonriendo, con buena luz.</span></li>
-                            <li><span><strong>Mira tu simulación</strong>Compara antes y después en la misma pantalla.</span></li>
+                            <li><span><strong>Mira la simulación</strong>El mismo antes y después que verá tu paciente.</span></li>
                         </ol>
                         <div className="sfd-browser">
                             <div className="sfd-browser-bar">
@@ -188,7 +188,8 @@ function DemoContent() {
                                 <b>Tu Clínica Dental</b>
                                 <span><span>Tratamientos</span><span>Equipo</span><span>Contacto</span></span>
                             </div>
-                            <WidgetContainer />
+                            {/* Modo demo: el resultado habla al dueño de la clínica, no al paciente. */}
+                            <WidgetContainer audience="owner" />
                         </div>
                     </div>
                 </section>

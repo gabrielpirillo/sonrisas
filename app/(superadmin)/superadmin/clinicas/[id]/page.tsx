@@ -38,7 +38,8 @@ export default async function ClinicDetailPage({ params }: { params: Promise<{ i
         ['SLUG', c.slug, true],
         ['CLAVE DEL WIDGET', c.public_widget_key, true],
         ['LEADS', String(c.leads), false],
-        ['STRIPE', c.stripe_customer_id || '—', !!c.stripe_customer_id],
+        ['STRIPE', c.stripe_customer_id_live || c.stripe_customer_id || '—', !!(c.stripe_customer_id_live || c.stripe_customer_id)],
+        ...(c.stripe_customer_id_test ? [['STRIPE (TEST)', c.stripe_customer_id_test, true] as [string, string, boolean]] : []),
         ['FLEXPRICE', c.flexprice_customer_id || '—', !!c.flexprice_customer_id],
     ];
 

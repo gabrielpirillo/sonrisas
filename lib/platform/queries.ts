@@ -21,7 +21,8 @@ export interface PlatformOverview {
     images: number;
     videos: number;
     leads: number;
-    revenueCents: number; // ingresos reales (Stripe) registrados en topups
+    /** Ingresos netos de reembolsos por moneda (unidad mínima); nunca se suman monedas distintas. */
+    revenue: Array<{ currency: string; amountMinor: number }>;
     plans: Array<{ plan: string; count: number }>;
 }
 
@@ -29,7 +30,7 @@ export async function getPlatformOverview(): Promise<PlatformOverview> {
     await requirePlatformAdmin();
     const q = async (sql: string) => (await db.queryOne<{ n: string }>(sql, []))?.n ?? '0';
 
-    const [clinics, users, circ, sold, adj, images, videos, leads, revenue] = await Promise.all([
+    const [clinics, users, circ, sold, adj, images, videos, leads] = await Promise.all([
         q('SELECT count(*)::text n FROM clinics'),
         q('SELECT count(*)::text n FROM "user"'),
         q('SELECT COALESCE(sum(credit_balance),0)::text n FROM clinics'),
@@ -38,8 +39,14 @@ export async function getPlatformOverview(): Promise<PlatformOverview> {
         q("SELECT count(*)::text n FROM generations WHERE type='image'"),
         q("SELECT count(*)::text n FROM generations WHERE type='video'"),
         q('SELECT count(*)::text n FROM leads'),
-        q("SELECT COALESCE(sum(amount_cents),0)::text n FROM credit_purchases WHERE status = 'paid'"),
     ]);
+    const revenue = await db.query<{ currency: string; amount: string }>(
+        `SELECT lower(currency) AS currency, sum(amount_cents - COALESCE(amount_refunded_cents, 0))::text AS amount
+         FROM credit_purchases WHERE status IN ('paid', 'refunded')
+         GROUP BY 1 HAVING sum(amount_cents - COALESCE(amount_refunded_cents, 0)) <> 0
+         ORDER BY sum(amount_cents - COALESCE(amount_refunded_cents, 0)) DESC`,
+        []
+    );
     const plans = await db.query<{ plan: string; count: number }>(
         'SELECT plan, count(*)::int AS count FROM clinics GROUP BY plan ORDER BY count DESC',
         []
@@ -48,7 +55,8 @@ export async function getPlatformOverview(): Promise<PlatformOverview> {
     return {
         clinics: +clinics, users: +users, creditsInCirculation: +circ,
         creditsSold: +sold, creditsAdjusted: +adj, images: +images, videos: +videos,
-        leads: +leads, revenueCents: Math.round(+revenue), plans: plans.rows,
+        leads: +leads, plans: plans.rows,
+        revenue: revenue.rows.map((r) => ({ currency: r.currency, amountMinor: Math.round(+r.amount) })),
     };
 }
 
@@ -195,6 +203,8 @@ export async function getClinicsList(): Promise<ClinicRow[]> {
 export interface ClinicDetail extends ClinicRow {
     public_widget_key: string;
     stripe_customer_id: string | null;
+    stripe_customer_id_live: string | null;
+    stripe_customer_id_test: string | null;
     flexprice_customer_id: string | null;
     membersList: Array<{ email: string; role: string; createdAt: string }>;
     ledger: Array<{ created_at: string; action: string | null; kind: string; credits_delta: number; balance_after: number }>;

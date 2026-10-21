@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { WIcon } from "../WIcon";
@@ -7,6 +8,8 @@ import { BeforeAfterSlider } from "../BeforeAfterSlider";
 import { fileObjectUrl } from "../objectUrl";
 import { useWidgetConfig } from "../WidgetConfigContext";
 import { AccentTitle } from "../AccentTitle";
+import { whatsappLink } from "@/lib/brand";
+import "./owner-result.css";
 
 interface ResultStepProps {
     image: File | null;
@@ -18,7 +21,16 @@ interface ResultStepProps {
     isDesktop: boolean;
     onClinicalVideoRequest: () => void;
     onSendPhotoEmail: () => void;
+    /** Demo (dueño): vuelve a la foto para generar otra simulación. */
+    onTryAnother?: () => void;
+    /** Nombre escrito en el formulario (demo: ilustra el lead que llega al panel). */
+    leadName?: string;
 }
+
+/* ── Demo para clínicas (audience="owner") ── */
+const OWNER_SIGNUP_HREF = "/acceso?modo=registro";
+const OWNER_WHATSAPP_HREF = whatsappLink("Hola, probé la demo de Smile Fast y quiero implementarlo en mi clínica");
+const OWNER_CHIPS = ["5 créditos de regalo", "Sin permanencia", "Listo en 1 día"];
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
@@ -32,8 +44,10 @@ export function ResultStep({
     isDesktop,
     onClinicalVideoRequest,
     onSendPhotoEmail,
+    onTryAnother,
+    leadName,
 }: ResultStepProps) {
-    const { config: { texts, features } } = useWidgetConfig();
+    const { config: { texts, features }, audience } = useWidgetConfig();
     const fileUrl = fileObjectUrl(image);
 
     const beforeSrc = fileUrl || demoBeforeImage || "";
@@ -57,6 +71,10 @@ export function ResultStep({
             )}
         </motion.div>
     );
+
+    if (audience === "owner") {
+        return <OwnerResult slider={slider} isDesktop={isDesktop} onTryAnother={onTryAnother} leadName={leadName} />;
+    }
 
     const actions = (
         <>
@@ -117,6 +135,109 @@ export function ResultStep({
             <div className="wf-result">{slider}</div>
             <div className="wf-result-actions wf-stagger">{actions}</div>
             <p className="mono wf-foot">SIMULACIÓN ORIENTATIVA · SEGÚN TU CASO CLÍNICO</p>
+        </div>
+    );
+}
+
+/** Resultado de la demo: el antes/después + por qué le conviene a la clínica. */
+function OwnerResult({
+    slider,
+    isDesktop,
+    onTryAnother,
+    leadName,
+}: {
+    slider: React.ReactNode;
+    isDesktop: boolean;
+    onTryAnother?: () => void;
+    leadName?: string;
+}) {
+    const name = leadName?.trim().split(/\s+/)[0] || "Paciente";
+
+    const pill = (
+        <span className="mono mono-pill ow-pill">
+            <span className="pill-dot" />ASÍ LO VERÁN TUS PACIENTES
+        </span>
+    );
+    const title = (
+        <h2 className="wf-h2 ow-title">
+            <AccentTitle text="Esto es lo que verá cada paciente" accent="en tu web" />
+        </h2>
+    );
+    const value = (
+        <p className="ow-value">
+            Cada simulación llega a tu panel como un <strong>lead con su foto y su WhatsApp</strong>, listo para agendar.
+            Implementación gratuita y sin costos extra.
+        </p>
+    );
+    const lead = (
+        <div className="ow-lead" aria-label="Ejemplo de lead en tu panel">
+            <span className="ow-lead-av" aria-hidden="true">{name.charAt(0).toUpperCase()}</span>
+            <span className="ow-lead-txt">
+                <span className="ow-lead-top">
+                    <b>Nuevo lead · {name}</b>
+                </span>
+                <span className="ow-lead-sub">Foto, contacto y simulación en tu panel</span>
+            </span>
+            <span className="ow-lead-wa" aria-hidden="true"><WIcon name="wa" size={16} /></span>
+        </div>
+    );
+    const chips = (
+        <ul className="ow-chips" aria-label="Condiciones">
+            {OWNER_CHIPS.map((c) => (
+                <li key={c}><WIcon name="check" size={13} />{c}</li>
+            ))}
+        </ul>
+    );
+    const actions = (
+        <div className="ow-actions">
+            <Link href={OWNER_SIGNUP_HREF} className="btn btn-primary">
+                Crear mi cuenta gratis
+                <WIcon name="arrow" size={17} className="btn-arrow" />
+            </Link>
+            <a href={OWNER_WHATSAPP_HREF} target="_blank" rel="noopener noreferrer" className="btn btn-ghost">
+                <WIcon name="wa" size={17} />
+                Hablar por WhatsApp
+            </a>
+            {onTryAnother && (
+                <button type="button" className="ow-retry" onClick={onTryAnother}>
+                    <WIcon name="refresh" size={15} />
+                    Probar con otra foto
+                </button>
+            )}
+        </div>
+    );
+
+    if (isDesktop) {
+        return (
+            <div className="dk-result ow-result">
+                <div className="dk-result-media">{slider}</div>
+                <div className="dk-result-info ow-info wf-stagger">
+                    {pill}
+                    {title}
+                    {value}
+                    {lead}
+                    {chips}
+                    {actions}
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="wf-body ow-result">
+            <div className="wf-intro wf-stagger">
+                <div style={{ marginBottom: 12 }}>{pill}</div>
+                {title}
+                <p className="wf-sub">Desliza para comparar el antes y el después.</p>
+            </div>
+            <div className="wf-result">{slider}</div>
+            <div className="ow-info wf-stagger">
+                {value}
+                {lead}
+                {chips}
+                {actions}
+            </div>
+            <p className="mono wf-foot">DEMO · SIMULACIÓN ORIENTATIVA</p>
         </div>
     );
 }

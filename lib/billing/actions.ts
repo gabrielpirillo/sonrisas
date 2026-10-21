@@ -2,16 +2,18 @@
 
 /**
  * Server actions de créditos para el panel (Better Auth → clínica activa).
- * Comprar: solo owner/admin, nunca durante una impersonación.
+ * Comprar: solo owner/admin, nunca durante una impersonación ni con la clínica suspendida.
  */
+import { headers } from 'next/headers';
+import type Stripe from 'stripe';
 import { db } from '@/lib/db';
-import { getAuthContext } from '@/lib/auth/context';
+import { getAuthContext, hasOrgRole, type AuthContext } from '@/lib/auth/context';
 import { getPlatformAdmin } from '@/lib/auth/platform';
 import { rateLimit } from '@/lib/security';
-import { appBaseUrl, getStripe, stripeEnabled, stripeMode } from '@/lib/billing/stripe';
+import { checkoutBaseUrl, getStripe, isStripeHostedUrl, stripeEnabled, stripeMode } from '@/lib/billing/stripe';
 import { currencyForCountry, getActivePackage, listPackages, resolvePrice, upsertPackage, type CreditPackageRow } from '@/lib/billing/packages';
 import type { BillingCurrency } from '@/lib/billing/fx';
-import { fulfillCheckoutSession, type PurchaseRow } from '@/lib/billing/purchases';
+import { ensureStripeCustomer, fulfillCheckoutSession, type PurchaseRow } from '@/lib/billing/purchases';
 
 export interface PublicPackage {
     id: string;
@@ -43,10 +45,18 @@ export interface BillingOverview {
     stripeEnabled: boolean;
     stripeMode: 'live' | 'test' | null;
     canBuy: boolean;
+    /** La clínica está suspendida: no puede comprar. */
+    clinicSuspended: boolean;
     /** País de facturación (ISO-2) y moneda resultante. */
     billingCountry: string | null;
     billingCurrency: BillingCurrency;
 }
+
+/** Solo owner/admin de la clínica activa (admite roles múltiples "owner,admin"). */
+const isManager = (ctx: AuthContext | null) => hasOrgRole(ctx?.role, ['owner', 'admin']);
+
+/** Las compras pendientes con sesión de Stripe se muestran unos días (pagos asíncronos). */
+const PENDING_VISIBLE = "3 days";
 
 const toPublic = async (p: CreditPackageRow, country: string | null): Promise<PublicPackage> => {
     const { priceCents, currency } = await resolvePrice(p, country);
@@ -74,15 +84,17 @@ export async function getBillingOverview(): Promise<BillingOverview> {
     if (clinic) {
         const [ledger, buys] = await Promise.all([
             db.query(`SELECT created_at, action, kind, credits_delta, balance_after FROM credit_ledger
-                      WHERE clinic_id = $1 ORDER BY created_at DESC LIMIT 25`, [clinic.id]),
-            db.query<PurchaseRow>(`SELECT * FROM credit_purchases WHERE clinic_id = $1 AND status <> 'pending'
+                      WHERE clinic_id = $1 AND credits_delta <> 0 ORDER BY created_at DESC LIMIT 25`, [clinic.id]),
+            db.query<PurchaseRow>(`SELECT * FROM credit_purchases WHERE clinic_id = $1
+                      AND (status <> 'pending' OR (stripe_session_id IS NOT NULL AND created_at > now() - interval '${PENDING_VISIBLE}'))
                       ORDER BY created_at DESC LIMIT 20`, [clinic.id]),
         ]);
         recentLedger = ledger.rows as BillingOverview['recentLedger'];
         purchases = buys.rows.map(toSummary);
     }
 
-    const canBuy = Boolean(clinic && !ctx?.impersonatedBy && (!ctx?.role || ['owner', 'admin'].includes(ctx.role)));
+    const clinicSuspended = Boolean(clinic && clinic.status !== 'active');
+    const canBuy = Boolean(clinic && !ctx?.impersonatedBy && isManager(ctx) && !clinicSuspended);
     return {
         clinic: clinic ? { id: clinic.id, name: clinic.name, credit_balance: clinic.credit_balance } : null,
         costs: costs.rows,
@@ -92,6 +104,7 @@ export async function getBillingOverview(): Promise<BillingOverview> {
         stripeEnabled: stripeEnabled(),
         stripeMode: stripeMode(),
         canBuy,
+        clinicSuspended,
         billingCountry: clinic?.billing_country ?? null,
         billingCurrency: currencyForCountry(clinic?.billing_country ?? null),
     };
@@ -102,7 +115,7 @@ export async function setBillingCountryAction(country: string): Promise<{ ok: tr
     const ctx = await getAuthContext();
     if (!ctx?.clinic) return { ok: false, error: 'Selecciona una clínica primero.' };
     if (ctx.impersonatedBy) return { ok: false, error: 'No disponible durante una impersonación.' };
-    if (ctx.role && !['owner', 'admin'].includes(ctx.role)) return { ok: false, error: 'Solo los administradores pueden cambiarlo.' };
+    if (!isManager(ctx)) return { ok: false, error: 'Solo los administradores pueden cambiarlo.' };
     const c = String(country || '').toUpperCase();
     if (!SUPPORTED_COUNTRIES.test(c)) return { ok: false, error: 'País inválido.' };
     await db.query('UPDATE clinics SET billing_country = $1 WHERE id = $2', [c, ctx.clinic.id]);
@@ -113,20 +126,27 @@ export async function setBillingCountryAction(country: string): Promise<{ ok: tr
 export async function initBillingCountryAction(country: string): Promise<void> {
     const ctx = await getAuthContext();
     const c = String(country || '').toUpperCase();
-    if (!ctx?.clinic || !SUPPORTED_COUNTRIES.test(c)) return;
+    if (!ctx?.clinic || ctx.impersonatedBy || !isManager(ctx) || !SUPPORTED_COUNTRIES.test(c)) return;
     await db.query('UPDATE clinics SET billing_country = $1 WHERE id = $2 AND billing_country IS NULL', [c, ctx.clinic.id]);
+}
+
+/** Error de Stripe por un customer que no existe (borrado o de otro modo live/test). */
+function isMissingCustomer(e: unknown, customerId: string): boolean {
+    const err = e as { code?: string; param?: string; message?: string } | null;
+    return err?.code === 'resource_missing' && (err.param === 'customer' || Boolean(err.message?.includes(customerId)));
 }
 
 /**
  * Crea la compra en la base de datos y una sesión de Stripe Checkout con el
- * importe calculado aquí. Devuelve la URL de pago (dominio checkout.stripe.com).
+ * importe calculado aquí. Devuelve la URL de pago (dominio *.stripe.com).
  */
 export async function createCheckoutSession(packageId: string): Promise<{ url?: string; error?: string }> {
     const ctx = await getAuthContext();
     if (!ctx) return { error: 'Tu sesión expiró. Vuelve a entrar.' };
     if (!ctx.clinic) return { error: 'Selecciona una clínica primero.' };
     if (ctx.impersonatedBy) return { error: 'No disponible durante una impersonación (solo lectura).' };
-    if (ctx.role && !['owner', 'admin'].includes(ctx.role)) return { error: 'Solo los administradores de la clínica pueden comprar créditos.' };
+    if (!isManager(ctx)) return { error: 'Solo los administradores de la clínica pueden comprar créditos.' };
+    if (ctx.clinic.status !== 'active') return { error: 'Tu clínica está suspendida. Escríbenos para reactivarla.' };
     if (!stripeEnabled()) return { error: 'Los pagos aún no están activados.' };
     if (!rateLimit(`checkout:${ctx.clinic.id}`, 8, 60 * 60_000)) {
         return { error: 'Demasiados intentos de compra. Espera unos minutos.' };
@@ -136,59 +156,76 @@ export async function createCheckoutSession(packageId: string): Promise<{ url?: 
     if (!pkg) return { error: 'Ese paquete ya no está disponible.' };
     // Importe en la moneda del país de facturación (calculado aquí, nunca en el navegador).
     const { priceCents, currency } = await resolvePrice(pkg, ctx.clinic.billing_country ?? null);
-    const base = appBaseUrl();
+    // Vuelta al mismo dominio desde el que se compró si es de confianza; si no, APP_URL.
+    const base = checkoutBaseUrl((await headers()).get('origin'));
     if (!/^https:\/\//.test(base) && process.env.NODE_ENV === 'production') {
         return { error: 'Configuración de URL incompleta.' };
     }
 
+    const clinic = ctx.clinic;
+    let purchaseId: string | null = null;
     try {
         const purchase = await db.queryOne<PurchaseRow>(
             `INSERT INTO credit_purchases (clinic_id, user_id, package_id, package_name, credits, amount_cents, currency)
              VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-            [ctx.clinic.id, ctx.userId ?? null, pkg.id, pkg.name, pkg.credits, priceCents, currency]
+            [clinic.id, ctx.userId ?? null, pkg.id, pkg.name, pkg.credits, priceCents, currency]
         );
         if (!purchase) return { error: 'No se pudo iniciar la compra.' };
+        purchaseId = purchase.id;
 
         const stripe = getStripe();
-        let customerId = ctx.clinic.stripe_customer_id;
-        if (!customerId) {
-            const customer = await stripe.customers.create(
-                { name: ctx.clinic.name, email: ctx.email || undefined, metadata: { clinic_id: ctx.clinic.id } },
-                { idempotencyKey: `customer:${ctx.clinic.id}` }
-            );
-            customerId = customer.id;
-            await db.query('UPDATE clinics SET stripe_customer_id = $1 WHERE id = $2 AND stripe_customer_id IS NULL', [customerId, ctx.clinic.id]);
+        const description = `${pkg.credits} créditos para simulaciones de sonrisa`;
+        const sessionParams = (customer: string): Stripe.Checkout.SessionCreateParams => ({
+            mode: 'payment',
+            customer,
+            client_reference_id: purchase.id,
+            locale: 'es',
+            line_items: [{
+                quantity: 1,
+                price_data: {
+                    currency,
+                    unit_amount: priceCents,
+                    product_data: { name: `Smile Fast · Paquete ${pkg.name}`, description },
+                },
+            }],
+            metadata: { purchase_id: purchase.id, clinic_id: clinic.id, package_id: pkg.id },
+            payment_intent_data: {
+                description,
+                metadata: { purchase_id: purchase.id, clinic_id: clinic.id },
+                ...(ctx.email ? { receipt_email: ctx.email } : {}),
+            },
+            // Se cobra exactamente el importe y la moneda registrados (sin conversión de Stripe).
+            adaptive_pricing: { enabled: false },
+            success_url: `${base}/administracion/creditos?compra=${purchase.id}&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${base}/administracion/creditos?compra=${purchase.id}&estado=cancelada`,
+            // Mínimo de Stripe: 30 min; 31 para no rozar el límite.
+            expires_at: Math.floor(Date.now() / 1000) + 31 * 60,
+        });
+
+        let customerId = await ensureStripeCustomer({ clinicId: clinic.id, name: clinic.name, email: ctx.email });
+        let session: Stripe.Checkout.Session;
+        try {
+            session = await stripe.checkout.sessions.create(sessionParams(customerId), { idempotencyKey: `checkout:${purchase.id}` });
+        } catch (e) {
+            if (!isMissingCustomer(e, customerId)) throw e;
+            // El customer guardado no existe en este modo: se descarta y se crea otro (una vez).
+            console.warn(`[billing] Customer ${customerId} no existe en Stripe (${stripeMode()}); se recrea`);
+            customerId = await ensureStripeCustomer({ clinicId: clinic.id, name: clinic.name, email: ctx.email, replace: customerId });
+            session = await stripe.checkout.sessions.create(sessionParams(customerId), { idempotencyKey: `checkout:${purchase.id}:${customerId}` });
         }
 
-        const description = `${pkg.credits} créditos para simulaciones de sonrisa`;
-        const session = await stripe.checkout.sessions.create(
-            {
-                mode: 'payment',
-                customer: customerId,
-                client_reference_id: purchase.id,
-                locale: 'es',
-                line_items: [{
-                    quantity: 1,
-                    price_data: {
-                        currency,
-                        unit_amount: priceCents,
-                        product_data: { name: `Smile Fast · Paquete ${pkg.name}`, description },
-                    },
-                }],
-                metadata: { purchase_id: purchase.id, clinic_id: ctx.clinic.id, package_id: pkg.id },
-                payment_intent_data: { description, metadata: { purchase_id: purchase.id, clinic_id: ctx.clinic.id } },
-                success_url: `${base}/administracion/creditos?compra=${purchase.id}&session_id={CHECKOUT_SESSION_ID}`,
-                cancel_url: `${base}/administracion/creditos?compra=${purchase.id}&estado=cancelada`,
-                expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
-            },
-            { idempotencyKey: `checkout:${purchase.id}` }
-        );
-
         await db.query('UPDATE credit_purchases SET stripe_session_id = $1, updated_at = now() WHERE id = $2', [session.id, purchase.id]);
-        if (!session.url?.startsWith('https://checkout.stripe.com/')) return { error: 'No se pudo abrir el pago.' };
+        if (!isStripeHostedUrl(session.url)) return { error: 'No se pudo abrir el pago.' };
         return { url: session.url };
     } catch (e) {
         console.error('[billing] createCheckoutSession failed:', e);
+        if (purchaseId) {
+            const reason = String((e as { code?: string; message?: string } | null)?.code || (e as Error)?.message || 'error').slice(0, 200);
+            await db.query(
+                "UPDATE credit_purchases SET status = 'failed', status_reason = $2, updated_at = now() WHERE id = $1 AND status = 'pending'",
+                [purchaseId, `checkout_create_failed: ${reason}`]
+            ).catch((err) => console.error('[billing] No se pudo marcar la compra como fallida:', err));
+        }
         return { error: 'No se pudo abrir el pago. Inténtalo de nuevo en unos minutos.' };
     }
 }

@@ -5,7 +5,7 @@ import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { AlertTriangle, Loader2, Plus, RotateCcw, Save, Star, Trash2 } from 'lucide-react';
 import { savePackageAction } from '@/lib/billing/actions';
-import { CURRENCIES, formatMoney, formatUnitPrice, fromMinor, minorDigits, toMinor } from '@/components/panel/credits/format';
+import { CURRENCIES, STRIPE_MAX_MINOR, formatMoney, formatUnitPrice, fromMinor, minorDigits, toMinor } from '@/components/panel/credits/format';
 import '@/components/panel/credits/credits.css';
 
 /** Mismo formato que devuelve listAllPackagesAction (CreditPackageRow). */
@@ -72,13 +72,14 @@ function validate(d: Draft): string | null {
     const credits = Number(d.credits);
     if (!Number.isInteger(credits) || credits <= 0 || credits > 100000) return 'Créditos: un entero entre 1 y 100.000.';
     const cents = toMinor(d.price, d.currency);
-    if (!Number.isFinite(cents)) return 'Precio inválido.';
+    if (!Number.isFinite(cents)) return 'Precio inválido. Usa coma para decimales (39,90) y punto solo para miles (39.900).';
     if (cents < 50) return minorDigits(d.currency) === 0 ? 'Precio mínimo: 50.' : 'Precio mínimo: 0,50.';
     if (cents > 10_000_000) return 'Precio demasiado alto.';
     for (const [label, v, cur] of [['EUR', d.priceEur, 'eur'], ['ARS', d.priceArs, 'ars']] as const) {
         if (!v.trim()) continue;
         const c = toMinor(v, cur);
         if (!Number.isFinite(c) || c < 50) return `Precio en ${label} inválido.`;
+        if (c > STRIPE_MAX_MINOR) return `Precio en ${label} demasiado alto (Stripe admite hasta 999.999,99).`;
     }
     if (d.sort.trim() && !/^-?\d+$/.test(d.sort.trim())) return 'Orden: un número entero.';
     return null;
@@ -189,6 +190,8 @@ export function PackagesEditor({ initial, loadError }: { initial: PackageRow[]; 
                 <p className="lead" style={{ fontSize: 13.5 }}>
                     Lo que ven y pagan las clínicas. El importe se cobra siempre desde aquí (servidor). Los paquetes inactivos no se muestran.
                     El precio base es en USD y cada país paga su equivalente al tipo de cambio del día. Los precios fijos de España y Argentina son opcionales: déjalos vacíos para usar el tipo de cambio.
+                    <br />
+                    <span className="cr-dim">Importes: coma para decimales (39,90) y punto solo como separador de miles (39.900 = treinta y nueve mil). Revisa el total calculado de cada paquete antes de guardar.</span>
                 </p>
                 <button type="button" className="btn btn-primary btn-sm" onClick={addNew}>
                     <Plus size={15} aria-hidden /> Nuevo paquete

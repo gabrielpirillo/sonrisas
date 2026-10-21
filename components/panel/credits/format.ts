@@ -4,7 +4,11 @@
  * casi todas las monedas, pero el peso chileno (CLP) no tiene decimales.
  */
 
-export const CURRENCIES = ['usd', 'eur', 'ars', 'mxn', 'cop', 'pen', 'uyu', 'brl', 'gbp', 'clp', 'pyg'] as const;
+/** Monedas admitidas como precio base de un paquete (las mismas que valida el servidor). */
+export const CURRENCIES = ['usd', 'eur', 'ars', 'mxn', 'cop', 'pen', 'uyu', 'brl', 'gbp'] as const;
+
+/** Tope de Stripe: 8 dígitos en la unidad mínima. */
+export const STRIPE_MAX_MINOR = 99_999_999;
 
 const ZERO_DECIMAL = new Set(['clp', 'pyg']);
 
@@ -18,10 +22,22 @@ export function fromMinor(amount: number, currency: string): number {
     return amount / 10 ** minorDigits(currency);
 }
 
-/** Importe en la moneda → unidad mínima (p. ej. "99,90" usd → 9990). NaN si no es válido. */
+/**
+ * Importe en la moneda → unidad mínima. NaN si no es válido.
+ * - Coma = decimales: "39,90" → 3990.
+ * - Un punto con 1–2 decimales también es decimal: "39.90" → 3990.
+ * - Puntos en grupos de 3 son separador de miles: "39.900" → 39900 (unidades),
+ *   "1.500.000" → 1500000, "1.500,50" → 1500,50.
+ */
 export function toMinor(value: string, currency: string): number {
-    const clean = value.trim().replace(/\s/g, '').replace(',', '.');
-    if (!/^\d+(\.\d+)?$/.test(clean)) return NaN;
+    const s = value.trim().replace(/\s/g, '');
+    let clean: string;
+    if (/^\d+$/.test(s)) clean = s;
+    else if (/^\d+,\d+$/.test(s)) clean = s.replace(',', '.');
+    else if (/^\d{1,3}(\.\d{3})+$/.test(s)) clean = s.replace(/\./g, '');
+    else if (/^\d{1,3}(\.\d{3})+,\d+$/.test(s)) clean = s.replace(/\./g, '').replace(',', '.');
+    else if (/^\d+\.\d{1,2}$/.test(s)) clean = s;
+    else return NaN;
     return Math.round(Number(clean) * 10 ** minorDigits(currency));
 }
 

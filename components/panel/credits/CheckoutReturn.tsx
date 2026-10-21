@@ -14,6 +14,7 @@ type Phase =
     | { kind: 'checking' }
     | { kind: 'success'; credits: number; balance: number }
     | { kind: 'timeout' }
+    | { kind: 'review' }
     | { kind: 'error'; title: string; message: string };
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -76,6 +77,7 @@ export function CheckoutReturn({ compra, sessionId, estado }: Props) {
                 if (cancelled) return;
                 if (r.ok) {
                     if (r.status === 'paid') return finish({ kind: 'success', credits: r.credits, balance: r.balance });
+                    if (r.status === 'review') return finish({ kind: 'review' });
                     if (r.status === 'failed') return finish({ kind: 'error', title: 'El pago no se completó', message: 'Tu banco rechazó el cobro o hubo un problema con la tarjeta. No se acreditaron créditos; puedes intentarlo de nuevo.' });
                     if (r.status === 'expired') return finish({ kind: 'error', title: 'La sesión de pago caducó', message: 'El pago no llegó a completarse a tiempo y no se te cobró nada. Puedes iniciar una nueva compra.' });
                     if (r.status === 'refunded') return finish({ kind: 'error', title: 'Esta compra fue reembolsada', message: 'El importe se devolvió a tu tarjeta y los créditos asociados se descontaron.' });
@@ -203,7 +205,20 @@ function PhaseView({ phase, onDone }: { phase: Phase; onDone: () => void }) {
                 <div className="cr-ov-icon cr-ov-icon-wait" aria-hidden><Clock size={26} /></div>
                 <Dialog.Title className="cr-ov-title">Tu pago se está procesando</Dialog.Title>
                 <Dialog.Description id="cr-ov-desc" className="cr-ov-text">
-                    Lo verás reflejado en tu saldo en unos minutos. No hace falta que vuelvas a pagar; te llegará el recibo por email.
+                    Algunos medios de pago tardan más en confirmarse. Los créditos se sumarán a tu saldo en cuanto Stripe lo confirme;
+                    mientras tanto verás la compra como «Pendiente» en tu historial. No hace falta que vuelvas a pagar.
+                </Dialog.Description>
+                <button type="button" className="btn btn-primary btn-sm cr-ov-cta" onClick={onDone}>Entendido</button>
+            </>
+        );
+    }
+    if (phase.kind === 'review') {
+        return (
+            <>
+                <div className="cr-ov-icon cr-ov-icon-wait" aria-hidden><Clock size={26} /></div>
+                <Dialog.Title className="cr-ov-title">Estamos verificando tu pago</Dialog.Title>
+                <Dialog.Description id="cr-ov-desc" className="cr-ov-text">
+                    Recibimos tu pago y lo estamos verificando; si no se acredita en unos minutos escríbenos.
                 </Dialog.Description>
                 <button type="button" className="btn btn-primary btn-sm cr-ov-cta" onClick={onDone}>Entendido</button>
             </>
@@ -253,7 +268,7 @@ function SuccessView({ credits, balance, onDone }: { credits: number; balance: n
             </div>
             <Dialog.Description id="cr-ov-desc" className="cr-ov-text">
                 <span className="sr-only">Se añadieron {fmtInt(credits)} créditos. </span>
-                Tu nuevo saldo es de <strong>{fmtInt(balance)} créditos</strong>. Te enviamos el recibo por email.
+                Tu nuevo saldo es de <strong>{fmtInt(balance)} créditos</strong>. Tienes el recibo en tu historial de compras.
             </Dialog.Description>
             <button type="button" className="btn btn-primary btn-sm cr-ov-cta" onClick={onDone}>Empezar a usarlos</button>
         </>

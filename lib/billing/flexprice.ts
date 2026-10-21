@@ -48,6 +48,8 @@ async function flexFetch<T = any>(
                 ...(init.headers || {}),
             },
             body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
+            // Best-effort: nunca debe bloquear la compra ni la generación.
+            signal: AbortSignal.timeout(5000),
         });
 
         if (!res.ok) {

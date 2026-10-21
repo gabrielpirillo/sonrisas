@@ -1,0 +1,296 @@
+/* ============================================================
+   Simulador en teléfonos (< 768 px, o teléfono en horizontal)
+   Portada compacta (.sim-m, dentro de .qoves-admin) y hoja a
+   pantalla completa con el widget (.sim-sheet*, en un portal a
+   <body>, por eso sus reglas no llevan el prefijo .qoves-admin).
+   ============================================================ */
+
+.qoves-admin .sim-m { display: none; }
+
+@media (max-width: 767px), (pointer: coarse) and (max-height: 500px) {
+  .qoves-admin .sim-m {
+    display: flex; flex-direction: column; gap: 26px;
+    width: 100%; max-width: 600px; align-self: center;
+  }
+  /* El escritorio queda oculto (salvo un modo presentación ya abierto). */
+  /* (Especificidad extra: simulator.css puede cargarse después.) */
+  .qoves-admin .admin-page .sim-hero,
+  .qoves-admin .admin-page .sim-steps,
+  .qoves-admin .admin-page .sim-tips,
+  .qoves-admin .admin-page .sim-stage-card:not(.is-presenting) { display: none; }
+}
+
+/* ---------- Cabecera ---------- */
+.qoves-admin .sim-m-hero {
+  position: relative; overflow: hidden; isolation: isolate;
+  display: flex; flex-direction: column;
+  padding: 18px 18px 16px;
+  border-radius: 24px;
+  color: #fff;
+  background:
+    radial-gradient(90% 70% at 100% 0%, rgba(150, 190, 215, 0.26), transparent 62%),
+    linear-gradient(160deg, var(--navy-1) 0%, var(--navy-2) 55%, var(--navy-3) 100%);
+  box-shadow: 0 30px 60px -38px rgba(19, 27, 34, 0.95);
+}
+.qoves-admin .sim-m-orb {
+  position: absolute; z-index: -1; pointer-events: none;
+  width: 320px; height: 320px; right: -150px; bottom: -170px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(185, 207, 221, 0.28), transparent 65%);
+  animation: sim-drift 14s ease-in-out infinite alternate;
+}
+.qoves-admin .sim-m-grid {
+  position: absolute; inset: 0; z-index: -1; opacity: 0.45; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(90% 70% at 0% 0%, #000, transparent 70%);
+  -webkit-mask-image: radial-gradient(90% 70% at 0% 0%, #000, transparent 70%);
+}
+
+.qoves-admin .sim-m-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.qoves-admin .sim-m-live {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase;
+  color: #cfeedd;
+}
+.qoves-admin .sim-m-live i { width: 7px; height: 7px; border-radius: 50%; background: #7fd6a2; animation: sim-ping-green 2s ease-out infinite; }
+.qoves-admin .sim-m-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  min-height: 32px; padding: 0 12px 0 10px; border-radius: 999px;
+  font-size: 13px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: #fff; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+}
+.qoves-admin .sim-m-chip svg { color: var(--blue-light); flex-shrink: 0; }
+.qoves-admin .sim-m-hero.is-low .sim-m-chip { background: rgba(181, 103, 94, 0.24); border-color: rgba(241, 201, 195, 0.4); }
+.qoves-admin .sim-m-hero.is-low .sim-m-chip svg { color: #f1c9c3; }
+
+.qoves-admin .sim-m-title {
+  margin: 22px 0 0;
+  font-size: clamp(26px, 8vw, 34px); font-weight: 600; line-height: 1.04; letter-spacing: -0.04em;
+  color: #fff; text-wrap: balance;
+}
+.qoves-admin .sim-m-lead { margin: 10px 0 0; font-size: 15px; line-height: 1.5; color: rgba(255, 255, 255, 0.72); text-wrap: pretty; }
+
+.qoves-admin .sim-m-low {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px;
+  margin-top: 16px; padding: 8px 8px 8px 12px; border-radius: 14px;
+  font-size: 13.5px; line-height: 1.4;
+  color: #f8e3df; background: rgba(181, 103, 94, 0.2); border: 1px solid rgba(241, 201, 195, 0.32);
+}
+.qoves-admin .sim-m-low-dot { width: 7px; height: 7px; border-radius: 50%; background: #f1c9c3; flex-shrink: 0; animation: sim-ping-warm 2s ease-out infinite; }
+.qoves-admin .sim-m-low-text { flex: 1 1 150px; min-width: 0; }
+.qoves-admin .sim-m-low-link {
+  display: inline-flex; align-items: center; gap: 5px; min-height: 44px; margin-left: auto;
+  padding: 0 14px; border-radius: 999px;
+  color: #fff; font-weight: 600; text-decoration: none;
+  background: rgba(255, 255, 255, 0.16);
+  -webkit-tap-highlight-color: transparent;
+}
+.qoves-admin .sim-m-low-link:active { background: rgba(255, 255, 255, 0.26); }
+
+/* CTA principal */
+.qoves-admin .sim-m-cta {
+  position: relative; overflow: hidden;
+  display: flex; align-items: center; gap: 12px;
+  width: 100%; min-height: 60px; margin-top: 20px; padding: 10px 18px 10px 10px;
+  border: none; border-radius: 18px; cursor: pointer;
+  font-family: var(--font-sans); font-size: 17px; font-weight: 600; letter-spacing: -0.015em; text-align: left;
+  color: var(--navy-2); background: #fff;
+  box-shadow: 0 18px 34px -18px rgba(0, 0, 0, 0.85), inset 0 -2px 0 rgba(27, 38, 48, 0.08);
+  transition: transform 0.18s var(--ease), box-shadow 0.2s var(--ease);
+  -webkit-tap-highlight-color: transparent;
+}
+.qoves-admin .sim-m-cta::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 35%, rgba(185, 207, 221, 0.55) 50%, transparent 65%);
+  transform: translateX(-100%);
+  animation: sim-m-sweep 4.5s var(--ease) 1.2s infinite;
+}
+@keyframes sim-m-sweep { 0% { transform: translateX(-100%); } 38%, 100% { transform: translateX(100%); } }
+.qoves-admin .sim-m-cta:active { transform: scale(0.98); }
+.qoves-admin .sim-m-cta:focus-visible { outline: 2px solid var(--blue-light); outline-offset: 3px; }
+.qoves-admin .sim-m-cta-ic {
+  width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0;
+  display: grid; place-items: center;
+  color: var(--blue-light); background: linear-gradient(150deg, var(--navy-1), var(--navy-3));
+}
+.qoves-admin .sim-m-cta-label { flex: 1; min-width: 0; }
+.qoves-admin .sim-m-cta-arrow { flex-shrink: 0; color: var(--blue-deep); }
+.qoves-admin .sim-m-cost { margin: 10px 0 0; text-align: center; font-size: 12.5px; line-height: 1.4; color: rgba(255, 255, 255, 0.55); }
+
+/* ---------- Encabezados de sección ---------- */
+.qoves-admin .sim-m-head { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.qoves-admin .sim-m-head .mono { font-size: 9.5px; color: var(--blue-deep); }
+.qoves-admin .sim-m-head h2 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.025em; line-height: 1.15; color: var(--ink); }
+.qoves-admin .sim-m-head h2 span { color: var(--blue-accent); }
+
+/* ---------- Pasos (lista vertical, estática) ---------- */
+.qoves-admin .sim-m-steps-list {
+  list-style: none; margin: 0; padding: 4px 16px;
+  border-radius: 20px; background: #fff; border: 1px solid var(--blue-line); box-shadow: var(--shadow-card);
+}
+.qoves-admin .sim-m-step { position: relative; display: flex; align-items: flex-start; gap: 14px; padding: 14px 0; }
+.qoves-admin .sim-m-step:not(:last-child)::after {
+  content: ""; position: absolute; left: 19px; top: 58px; bottom: -10px; width: 2px; border-radius: 2px;
+  background: linear-gradient(180deg, var(--blue-light), var(--blue-line));
+}
+.qoves-admin .sim-m-step-ic {
+  width: 40px; height: 40px; border-radius: 13px; flex-shrink: 0;
+  display: grid; place-items: center;
+  color: var(--blue-deep); background: var(--blue-soft);
+}
+.qoves-admin .sim-m-step:last-child .sim-m-step-ic { color: #fff; background: linear-gradient(150deg, var(--blue-deep), var(--navy-1)); }
+.qoves-admin .sim-m-step-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding-top: 1px; }
+.qoves-admin .sim-m-step-body .mono { font-size: 9px; color: var(--blue-accent); }
+.qoves-admin .sim-m-step-body strong { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
+.qoves-admin .sim-m-step-body p { margin: 2px 0 0; font-size: 14px; line-height: 1.45; color: var(--ink-2); }
+
+/* ---------- Consejos (carrusel con scroll-snap) ---------- */
+.qoves-admin .sim-m-tips { min-width: 0; }
+.qoves-admin .sim-m-tips-list {
+  --bleed: max(16px, env(safe-area-inset-left));
+  list-style: none; margin: 0 calc(-1 * var(--bleed)); padding: 4px var(--bleed) 14px;
+  display: flex; gap: 12px;
+  overflow-x: auto; overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory; scroll-padding-inline: var(--bleed);
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.qoves-admin .sim-m-tips-list::-webkit-scrollbar { display: none; }
+.qoves-admin .sim-m-tips-list:focus-visible { outline: 2px solid var(--blue-accent); outline-offset: -2px; border-radius: 20px; }
+.qoves-admin .sim-m-tip {
+  position: relative; overflow: hidden;
+  flex: 0 0 min(76%, 300px); scroll-snap-align: start;
+  display: flex; flex-direction: column; gap: 6px;
+  padding: 16px 16px 18px; border-radius: 20px;
+  background: #fff; border: 1px solid var(--blue-line); box-shadow: var(--shadow-card);
+}
+.qoves-admin .sim-m-tip::before {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 80px; pointer-events: none;
+  background: radial-gradient(70% 100% at 0% 0%, var(--blue-tint), transparent 70%);
+}
+.qoves-admin .sim-m-tip > * { position: relative; }
+.qoves-admin .sim-m-tip-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; }
+.qoves-admin .sim-m-tip-ic {
+  width: 40px; height: 40px; border-radius: 13px;
+  display: grid; place-items: center;
+  color: var(--blue-deep); background: linear-gradient(150deg, var(--blue-soft), #fff); border: 1px solid var(--blue-line);
+}
+.qoves-admin .sim-m-tip-num { font-size: 10px; color: var(--blue-accent); }
+.qoves-admin .sim-m-tip strong { font-size: 16px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); }
+.qoves-admin .sim-m-tip p { margin: 0; font-size: 14px; line-height: 1.45; color: var(--ink-2); }
+.qoves-admin .sim-m-dots { display: flex; justify-content: center; gap: 6px; margin-top: 2px; }
+.qoves-admin .sim-m-dots i {
+  width: 6px; height: 6px; border-radius: 99px; background: var(--blue-line);
+  transition: width 0.3s var(--ease-out), background 0.3s var(--ease);
+}
+.qoves-admin .sim-m-dots i.is-on { width: 20px; background: var(--blue-deep); }
+
+@media (max-width: 359px) {
+  .qoves-admin .sim-m-hero { padding: 16px 14px 14px; border-radius: 20px; }
+  .qoves-admin .sim-m-cta { font-size: 16px; gap: 10px; }
+  .qoves-admin .sim-m-tip { flex-basis: 84%; }
+}
+
+/* ============================================================
+   Hoja del simulador (portal en <body>)
+   ============================================================ */
+.sim-sheet-root {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  height: 100vh; height: 100dvh;
+  background: rgba(13, 19, 24, 0.6);
+}
+.sim-sheet {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  overflow: hidden; overscroll-behavior: contain;
+  font-family: var(--font-general-sans), "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  color: #fff; background: var(--navy-2);
+  box-shadow: 0 -20px 60px -20px rgba(0, 0, 0, 0.6);
+}
+.sim-sheet-bar {
+  position: relative; z-index: 2; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 10px max(12px, env(safe-area-inset-right)) 10px max(14px, env(safe-area-inset-left));
+  padding-top: max(10px, env(safe-area-inset-top));
+  background:
+    radial-gradient(60% 140% at 100% 0%, rgba(150, 190, 215, 0.2), transparent 70%),
+    linear-gradient(90deg, var(--navy-1), var(--navy-2));
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06), 0 10px 24px -14px rgba(0, 0, 0, 0.7);
+}
+.sim-sheet-brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.sim-sheet-names { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.sim-sheet-names strong {
+  font-size: 15px; font-weight: 600; letter-spacing: -0.015em; line-height: 1.25;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sim-sheet-names span {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; color: rgba(255, 255, 255, 0.62); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.sim-sheet-names span i { width: 6px; height: 6px; border-radius: 50%; background: #7fd6a2; flex-shrink: 0; animation: sim-ping-green 2s ease-out infinite; }
+.sim-sheet-tools { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.sim-sheet-icon,
+.sim-sheet-close {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  height: 44px; cursor: pointer;
+  font-family: inherit; font-size: 15px; font-weight: 600; letter-spacing: -0.01em;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.2s var(--ease), transform 0.15s var(--ease);
+}
+.sim-sheet-icon {
+  width: 44px; border-radius: 13px;
+  color: rgba(255, 255, 255, 0.9); background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.14);
+}
+.sim-sheet-close { padding: 0 16px 0 12px; border-radius: 999px; border: none; color: var(--navy-2); background: #fff; }
+.sim-sheet-icon:active,
+.sim-sheet-close:active { transform: scale(0.95); }
+.sim-sheet-icon:focus-visible,
+.sim-sheet-close:focus-visible { outline: 2px solid var(--blue-light); outline-offset: 2px; }
+@media (hover: hover) {
+  .sim-sheet-icon:hover { background: rgba(255, 255, 255, 0.16); }
+  .sim-sheet-close:hover { background: var(--blue-light); }
+}
+
+/* El iframe mide justo el alto disponible: el widget hace scroll por dentro. */
+.sim-sheet-body {
+  position: relative; flex: 1 1 auto; min-height: 0;
+  background: #fff;
+  padding: 0 env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+.sim-sheet-iframe {
+  display: block; width: 100%; height: 100%; border: 0; background: #fff;
+  opacity: 0; transition: opacity 0.45s var(--ease);
+}
+.sim-sheet-iframe.is-loaded { opacity: 1; }
+.sim-sheet-loading {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+  background: #fff;
+}
+.sim-sheet-loading-ic {
+  width: 56px; height: 56px; border-radius: 18px; display: grid; place-items: center;
+  color: var(--blue-deep); background: var(--blue-soft); animation: sf-glow 1.6s var(--ease) infinite;
+}
+.sim-sheet-loading-bar { width: min(240px, 62%); height: 12px; border-radius: 99px; }
+.sim-sheet-loading-bar.is-short { width: min(150px, 40%); }
+
+@media (max-width: 349px) {
+  .sim-sheet-brand .sf-logo-mark { display: none !important; }
+  .sim-sheet-close { padding: 0 14px 0 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .qoves-admin .sim-m-orb,
+  .qoves-admin .sim-m-live i,
+  .qoves-admin .sim-m-low-dot,
+  .qoves-admin .sim-m-cta::after,
+  .sim-sheet-names span i,
+  .sim-sheet-loading-ic { animation: none !important; }
+  .qoves-admin .sim-m-cta::after { display: none; }
+  .qoves-admin .sim-m-tips-list { scroll-behavior: auto; }
+  .qoves-admin .sim-m-dots i,
+  .sim-sheet-iframe { transition: none; }
+}
