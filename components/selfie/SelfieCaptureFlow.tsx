@@ -110,7 +110,7 @@ export function SelfieCaptureFlow({ onCapture, onCancel }: SelfieCaptureFlowProp
                             type="button"
                             onClick={confirmPhoto}
                             aria-label="Usar esta foto"
-                            className="grid h-14 w-14 place-items-center rounded-full bg-blue-deep text-white shadow-[0_14px_30px_-12px_rgba(79,107,127,0.8)] transition-transform hover:scale-105 active:scale-95"
+                            className="grid h-14 w-14 place-items-center rounded-full bg-blue-deep text-white shadow-[0_14px_30px_-12px_color-mix(in_srgb,var(--blue-deep)_80%,transparent)] transition-transform hover:scale-105 active:scale-95"
                         >
                             <Check className="h-7 w-7" />
                         </button>
@@ -158,7 +158,7 @@ export function SelfieCaptureFlow({ onCapture, onCancel }: SelfieCaptureFlowProp
                             aria-label={isAligned ? "Tomar foto" : "Tomar foto (alinea tu cara y sonríe)"}
                             className={`grid h-16 w-16 place-items-center rounded-full border-4 p-0 transition-all duration-500 ${
                                 isAligned
-                                    ? "scale-105 cursor-pointer border-scan bg-white shadow-[0_0_0_8px_rgba(6,182,212,0.18),0_0_34px_rgba(6,182,212,0.55)]"
+                                    ? "scale-105 cursor-pointer border-scan bg-white shadow-[0_0_0_8px_color-mix(in_srgb,var(--scan)_18%,transparent),0_0_34px_color-mix(in_srgb,var(--scan)_55%,transparent)]"
                                     : "cursor-not-allowed border-white/40 bg-white/10 opacity-70"
                             }`}
                         >

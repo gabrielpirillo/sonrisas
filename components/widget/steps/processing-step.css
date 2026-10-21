@@ -11,7 +11,7 @@
   position: relative; width: 100%; height: 360px;
   border-radius: var(--r-card); overflow: hidden; isolation: isolate;
   background: var(--w-stage);
-  box-shadow: 0 32px 64px -36px rgba(19, 27, 34, 0.7), 0 0 0 1px rgba(27, 38, 48, 0.06);
+  box-shadow: 0 32px 64px -36px color-mix(in srgb, var(--w-shade-deep) 70%, transparent), 0 0 0 1px color-mix(in srgb, var(--w-shade) 6%, transparent);
   animation: pxIn 0.7s var(--ease-out) both;
 }
 @keyframes pxIn { from { opacity: 0; transform: scale(0.985); } to { opacity: 1; transform: none; } }
@@ -33,8 +33,8 @@
 .qoves-widget .px-vignette {
   position: absolute; inset: 0; z-index: 1; pointer-events: none;
   background:
-    radial-gradient(115% 85% at 50% 44%, transparent 52%, rgba(19, 27, 34, 0.5) 100%),
-    linear-gradient(180deg, rgba(19, 27, 34, 0.22) 0%, transparent 26%, transparent 70%, rgba(19, 27, 34, 0.42) 100%);
+    radial-gradient(115% 85% at 50% 44%, transparent 52%, color-mix(in srgb, var(--w-shade-deep) 50%, transparent) 100%),
+    linear-gradient(180deg, color-mix(in srgb, var(--w-shade-deep) 22%, transparent) 0%, transparent 26%, transparent 70%, color-mix(in srgb, var(--w-shade-deep) 42%, transparent) 100%);
 }
 
 /* ---------- Capa de mapeo (SVG, en px del escenario) ----------
@@ -62,8 +62,8 @@
   fill: rgba(255, 255, 255, 0.72); opacity: 0;
   transition: opacity 0.6s var(--ease) 0.9s;
 }
-.qoves-widget .px-ref text { paint-order: stroke; stroke: rgba(19, 27, 34, 0.35); stroke-width: 2px; }
-.qoves-widget .px-mesh path { stroke: rgba(185, 207, 221, 0.55); stroke-width: 0.7; stroke-linejoin: round; }
+.qoves-widget .px-ref text { paint-order: stroke; stroke: color-mix(in srgb, var(--w-shade-deep) 35%, transparent); stroke-width: 2px; }
+.qoves-widget .px-mesh path { stroke: color-mix(in srgb, var(--w-glow) 55%, transparent); stroke-width: 0.7; stroke-linejoin: round; }
 
 .qoves-widget .px-smile ellipse {
   fill: rgba(255, 255, 255, 0.035); stroke: rgba(255, 255, 255, 0.8); stroke-width: 0.9;
@@ -73,11 +73,11 @@
 .qoves-widget .px-smile {
   opacity: 0; transform-box: fill-box; transform-origin: center; transform: scale(1.18);
   transition: opacity 0.7s var(--ease-out), transform 0.9s var(--ease-out);
-  filter: drop-shadow(0 0 6px rgba(6, 182, 212, 0.55));
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--scan) 55%, transparent));
 }
 @keyframes pxMarch { to { stroke-dashoffset: -1; } }
 
-.qoves-widget .px-pts { filter: drop-shadow(0 0 3px rgba(6, 182, 212, 0.9)); }
+.qoves-widget .px-pts { filter: drop-shadow(0 0 3px color-mix(in srgb, var(--scan) 90%, transparent)); }
 .qoves-widget .px-pts circle {
   fill: #fff; transform-box: fill-box; transform-origin: center; transform: scale(0);
   transition: transform 0.5s var(--ease-out);
@@ -99,12 +99,12 @@
 .qoves-widget .px[data-stage="5"] .px-smile { opacity: 1; transform: none; }
 .qoves-widget .px[data-stage="4"] .px-smile ellipse { animation: pxMarch 16s linear infinite, pxGlow 2.6s var(--ease) infinite; }
 @keyframes pxTwinkle { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
-@keyframes pxGlow { 0%, 100% { fill: rgba(255, 255, 255, 0.03); } 50% { fill: rgba(185, 207, 221, 0.09); } }
+@keyframes pxGlow { 0%, 100% { fill: rgba(255, 255, 255, 0.03); } 50% { fill: color-mix(in srgb, var(--w-glow) 9%, transparent); } }
 
 /* ---------- Barrido de escaneo ---------- */
 .qoves-widget .px-sweep {
   position: absolute; left: 0; right: 0; top: 0; height: 36%; z-index: 4; pointer-events: none;
-  background: linear-gradient(180deg, transparent 0%, rgba(185, 207, 221, 0.04) 55%, rgba(185, 207, 221, 0.2) 100%);
+  background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--w-glow) 4%, transparent) 55%, color-mix(in srgb, var(--w-glow) 20%, transparent) 100%);
   mix-blend-mode: screen;
   transform: translateY(-100%);
   animation: pxSweep 3.8s cubic-bezier(0.45, 0, 0.25, 1) infinite;
@@ -112,7 +112,7 @@
 .qoves-widget .px-sweep::after {
   content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9) 30%, #fff 50%, rgba(255, 255, 255, 0.9) 70%, transparent);
-  box-shadow: 0 0 14px 2px rgba(6, 182, 212, 0.55);
+  box-shadow: 0 0 14px 2px color-mix(in srgb, var(--scan) 55%, transparent);
 }
 @keyframes pxSweep {
   0% { transform: translateY(-100%); opacity: 0; }
@@ -139,7 +139,7 @@
   padding: 7px 13px 7px 11px; border-radius: 99px;
   font-family: var(--font-mono); font-size: 9.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase;
   color: rgba(255, 255, 255, 0.92);
-  background: rgba(19, 27, 34, 0.42);
+  background: color-mix(in srgb, var(--w-shade-deep) 42%, transparent);
   -webkit-backdrop-filter: blur(10px) saturate(1.2); backdrop-filter: blur(10px) saturate(1.2);
   border: 1px solid rgba(255, 255, 255, 0.16);
   animation: pxChip 0.6s var(--ease-out) 0.35s both;

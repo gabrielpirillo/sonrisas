@@ -36,8 +36,10 @@
 
 /* Transformaciones: íconos en azul */
 .tf .tf-ic { background: var(--blue-soft); color: var(--blue-deep); }
-.tf .tf-item:hover .tf-ic { background: var(--blue-deep); color: #fff; }
-.tf .tf-item:hover { border-color: var(--blue-line); }
+@media (hover: hover) and (pointer: fine) {
+  .tf .tf-item:hover .tf-ic { background: var(--blue-deep); color: #fff; }
+  .tf .tf-item:hover { border-color: var(--blue-line); }
+}
 
 /* Lead asset (fondo azul): checks y CTA en azul */
 .tone-blue .la-check-ic { background: var(--blue); }

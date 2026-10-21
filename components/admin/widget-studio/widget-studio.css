@@ -241,6 +241,24 @@
 .qoves-admin .ws-tones span { width: 22px; height: 22px; border-radius: 7px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06); transition: background 0.3s var(--ease); }
 
 /* ---------- Esquinas ---------- */
+/* ---------- Tamaño del logo ---------- */
+.qoves-admin .ws-logo-size { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.qoves-admin .ws-logo-size-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.qoves-admin .ws-logo-size-label { font-size: 13.5px; font-weight: 600; color: var(--ink); }
+.qoves-admin .ws-logo-size-value { font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.qoves-admin .ws-logo-size-row { display: flex; align-items: center; gap: 14px; }
+.qoves-admin .ws-logo-size-presets { display: inline-flex; padding: 3px; gap: 2px; border-radius: 12px; background: var(--bg-soft, #f5f6f6); border: 1px solid var(--line); flex-shrink: 0; }
+.qoves-admin .ws-logo-size-opt {
+  min-width: 36px; height: 30px; padding: 0 8px; border: 0; border-radius: 9px; background: transparent;
+  font: inherit; font-size: 12.5px; font-weight: 600; color: var(--ink-2); cursor: pointer;
+  transition: background 0.2s var(--ease), color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+.qoves-admin .ws-logo-size-opt:hover:not(:disabled) { color: var(--ink); }
+.qoves-admin .ws-logo-size-opt.is-on { background: #fff; color: var(--blue-deep); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 0 0 1px var(--line); }
+.qoves-admin .ws-logo-size-opt:focus-visible { outline: 2px solid var(--blue-accent); outline-offset: 1px; }
+.qoves-admin .ws-logo-size-range { flex: 1; min-width: 0; accent-color: var(--blue-deep); height: 28px; cursor: pointer; }
+.qoves-admin .ws-logo-size-range:disabled, .qoves-admin .ws-logo-size-opt:disabled { cursor: not-allowed; opacity: 0.5; }
+
 .qoves-admin .ws-radius { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .qoves-admin .ws-radius-opt {
   position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 3px;

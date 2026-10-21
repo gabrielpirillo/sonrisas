@@ -82,15 +82,18 @@ function BrowserFrame({ children, url = "tuclinica.com" }) {
 }
 
 /* ---------------- Hero (full-bleed, vídeo a la derecha) ---------------- */
-/* El mismo vídeo de Cloudinary sirve al hero y a la sección de vídeo. En
-   pantallas angostas pedimos una versión de 720 px de ancho (≈0,7 MB en vez
-   de ≈3 MB): se ve igual de nítida en un móvil y arranca antes. */
+/* El mismo vídeo de Cloudinary sirve al hero y a la sección de vídeo.
+   El original es 2160×2880 a 60 fps con poco bitrate (se ve "lavado"). Pedimos
+   una versión al tamaño real en pantalla, a 30 fps, sin audio y con la máxima
+   calidad de compresión: más nítida y más liviana que el original
+   (escritorio 1440 px ≈2,6 MB; móvil 960 px ≈1,4 MB, nítido en pantallas retina). */
 const VIDEO_BASE = "https://res.cloudinary.com/dhzmkxbek/video/upload/";
 const VIDEO_FILE = "v1781638188/0614_2_upxmh1.mp4";
 const isNarrow = () => typeof window !== "undefined" && !!window.matchMedia && window.matchMedia("(max-width: 860px)").matches;
-const videoSrc = () => VIDEO_BASE + (isNarrow() ? "q_auto,w_720/" : "") + VIDEO_FILE;
+const VIDEO_TX = (w) => `q_auto:best,w_${w},fps_30,ac_none,vc_h264/`;
+const videoSrc = () => VIDEO_BASE + VIDEO_TX(isNarrow() ? 960 : 1440) + VIDEO_FILE;
 // primer fotograma como póster: algo que ver mientras el vídeo carga en móvil
-const videoPoster = () => VIDEO_BASE + "so_0,q_auto,w_" + (isNarrow() ? 720 : 1080) + "/" + VIDEO_FILE.replace(/\.mp4$/, ".jpg");
+const videoPoster = () => VIDEO_BASE + "so_0,q_auto:best,w_" + (isNarrow() ? 960 : 1440) + "/" + VIDEO_FILE.replace(/\.mp4$/, ".jpg");
 
 function Hero({ onStart }) {
   const videoRef = React.useRef(null);

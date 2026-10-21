@@ -13,17 +13,29 @@
   --w-line: var(--line, #e8eae8);
   --w-line-strong: var(--line-strong, #d6d9d6);
 
-  /* Panel de foto en azul acero (como los paneles de foto de la landing) */
+  /* Tonos derivados del acento. Estos valores son los del acento por defecto
+     (azul acero); con otro acento, widgetCssVars() los sobrescribe en línea.
+     Ningún estilo del widget usa colores de marca fijos: todo pasa por aquí
+     o por --blue-* / --navy-* / --scan. */
+  --w-photo-mid: #6f899c;   /* paso medio del panel de foto */
+  --w-glow: #b9cfdd;        /* halo claro sobre paneles oscuros */
+  --w-shade: #1b2630;       /* sombras y velos oscuros */
+  --w-shade-deep: #131b22;
+  --w-veil: #f2f6f9;        /* velo claro del overlay */
+  --w-scan-light: #a5f3fc;  /* barrido de luz del panel */
+  --w-logo-h: 36px;
+
+  /* Panel de foto: claro → acento → oscuro (como los paneles de la landing) */
   --w-photo:
-    radial-gradient(110% 80% at 20% 0%, rgba(185, 207, 221, 0.4), transparent 60%),
-    linear-gradient(165deg, var(--blue, #8ea4b4) 0%, #6f899c 34%, var(--blue-ink, #3e5769) 72%, var(--navy-1, #2a3a47) 100%);
+    radial-gradient(110% 80% at 20% 0%, color-mix(in srgb, var(--w-glow) 40%, transparent), transparent 60%),
+    linear-gradient(165deg, var(--blue) 0%, var(--w-photo-mid) 34%, var(--blue-ink) 72%, var(--navy-1) 100%);
   /* Escenario oscuro (análisis) */
   --w-stage:
-    radial-gradient(90% 120% at 12% 0%, var(--navy-1, #2a3a47) 0%, var(--navy-2, #1b2630) 58%, var(--navy-3, #131b22) 100%);
+    radial-gradient(90% 120% at 12% 0%, var(--navy-1) 0%, var(--navy-2) 58%, var(--navy-3) 100%);
 
-  --w-shadow-btn: 0 16px 34px -16px rgba(79, 107, 127, 0.75);
-  --w-shadow-lift: 0 30px 70px -34px rgba(27, 38, 48, 0.45);
-  --w-ring: 0 0 0 4px var(--blue-soft, #e7eef3);
+  --w-shadow-btn: 0 16px 34px -16px color-mix(in srgb, var(--blue-deep) 75%, transparent);
+  --w-shadow-lift: 0 30px 70px -34px color-mix(in srgb, var(--w-shade) 45%, transparent);
+  --w-ring: 0 0 0 4px var(--blue-soft);
 
   --font-sans: var(--font-general-sans), "Helvetica Neue", Arial, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, "SF Mono", Menlo, monospace;
@@ -49,6 +61,12 @@
 .qoves-widget *::after { box-sizing: border-box; }
 .qoves-widget ::selection { background: var(--blue-soft); color: var(--ink); }
 
+/* Halo pulsante en el color de acento (la versión global sf-ping usa el azul fijo) */
+@keyframes wf-ping {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--blue-deep) 45%, transparent); }
+  70%, 100% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--blue-deep) 0%, transparent); }
+}
+
 /* ---------- Mono technical label ---------- */
 .qoves-widget .mono {
   font-family: var(--font-mono);
@@ -72,7 +90,7 @@
 .qoves-widget .mono-pill .pill-dot {
   width: 6px; height: 6px; border-radius: 50%;
   background: var(--blue-deep);
-  animation: sf-ping 2.2s var(--ease-out) infinite;
+  animation: wf-ping 2.2s var(--ease-out) infinite;
 }
 .qoves-widget .dim { color: var(--blue-accent); }
 
@@ -101,6 +119,9 @@
 }
 .qoves-widget .btn:focus-visible { outline: none; box-shadow: 0 0 0 4px var(--blue-soft), 0 0 0 5px var(--blue-accent); }
 .qoves-widget .btn:disabled { opacity: 0.38; cursor: not-allowed; box-shadow: none; }
+/* Principal desactivado: con acento propio usa un tono opaco legible
+   (--w-off-*); con el acento por defecto queda como siempre (opacidad). */
+.qoves-widget .btn-primary:disabled { opacity: var(--w-off-opacity, 1); background: var(--w-off-bg, #c3d0da); color: var(--w-off-fg, #2a3a47); }
 .qoves-widget .btn-primary { background: var(--blue-deep); color: #fff; padding: 16px 30px; }
 .qoves-widget .btn-primary:not(:disabled):hover { background: var(--blue-ink); transform: translateY(-2px); box-shadow: var(--w-shadow-btn); }
 .qoves-widget .btn-primary:not(:disabled):active { transform: translateY(0) scale(0.985); box-shadow: none; }
@@ -201,7 +222,14 @@
 .qoves-widget .wf-header-left { display: flex; align-items: center; gap: 10px; min-width: 0; flex: 0 1 auto; }
 .qoves-widget .wf-brand { display: inline-flex; align-items: center; min-width: 0; }
 .qoves-widget .wf-brand img { height: 17px; width: auto; display: block; }
-.qoves-widget .wf-brand img.wf-brand-logo { height: 32px; max-width: min(180px, 100%); object-fit: contain; object-position: left center; }
+/* Logo de la clínica: alto configurable (--w-logo-h, px de escritorio); en
+   móvil se reduce en proporción. El ancho se limita para que un logo
+   horizontal nunca empuje el indicador «En línea» ni se deforme. */
+.qoves-widget .wf-brand img.wf-brand-logo {
+  height: clamp(22px, calc(var(--w-logo-h) * 0.89), 56px); width: auto;
+  max-width: min(calc(var(--w-logo-h) * 5), 200px, 100%);
+  object-fit: contain; object-position: left center;
+}
 .qoves-widget .wf-brand-name { font-size: 17px; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; min-width: 0; }
 .qoves-widget .wf-header > .wf-online { flex-shrink: 0; }
 .qoves-widget .wf-back {
@@ -225,7 +253,7 @@
 }
 .qoves-widget .wf-online-dot {
   width: 6px; height: 6px; border-radius: 50%; background: var(--blue-deep);
-  animation: sf-ping 2.2s var(--ease-out) infinite;
+  animation: wf-ping 2.2s var(--ease-out) infinite;
 }
 
 /* ---------- Stepper ---------- */
@@ -259,7 +287,7 @@
 }
 .qoves-widget .stepper-node.active .stepper-dot::after {
   content: ""; position: absolute; inset: -1px; border-radius: 50%;
-  animation: sf-ping 2.4s var(--ease-out) infinite;
+  animation: wf-ping 2.4s var(--ease-out) infinite;
 }
 .qoves-widget .stepper-node.active .stepper-lbl,
 .qoves-widget .stepper-node.done .stepper-lbl { color: var(--ink); font-weight: 500; }
@@ -311,7 +339,11 @@
 .qoves-widget .btn[aria-disabled="true"] { opacity: 0.42; box-shadow: none; transform: none; }
 .qoves-widget .btn[aria-disabled="true"]::after { display: none; }
 .qoves-widget .btn[aria-disabled="true"] .btn-arrow { transform: none; }
-.qoves-widget .btn-primary[aria-disabled="true"]:hover { background: var(--blue-deep); transform: none; box-shadow: none; }
+.qoves-widget .btn-primary[aria-disabled="true"],
+.qoves-widget .btn-primary[aria-disabled="true"]:hover {
+  opacity: var(--w-off-opacity, 1); background: var(--w-off-bg, #c3d0da); color: var(--w-off-fg, #2a3a47);
+  transform: none; box-shadow: none;
+}
 /* Barra del CTA principal: en móvil queda fija abajo mientras el formulario
    no cabe en pantalla (en modo embed el iframe no tiene scroll propio, así
    que simplemente queda en su sitio). */
@@ -357,7 +389,7 @@
   position: relative; width: 100%; height: 400px;
   border-radius: var(--r-card); overflow: hidden;
   background: var(--w-photo);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 24px 50px -32px rgba(27, 38, 48, 0.6);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 24px 50px -32px color-mix(in srgb, var(--w-shade) 60%, transparent);
   isolation: isolate;
   animation: sf-pop 0.6s var(--ease-out) both;
 }
@@ -374,7 +406,7 @@
    nunca "tache" el icono ni el título del selector. */
 .qoves-widget .photo-frame::after {
   content: ""; position: absolute; left: 0; right: 0; top: 0; height: 34%; z-index: 1; pointer-events: none;
-  background: linear-gradient(180deg, transparent, rgba(165, 243, 252, 0.07) 55%, transparent);
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--w-scan-light) 7%, transparent) 55%, transparent);
   animation: wfSweep 7s var(--ease) infinite;
 }
 .qoves-widget .photo-frame.has-photo::after,
@@ -388,7 +420,7 @@
   animation: wfReveal 0.7s var(--ease-out) both;
 }
 @keyframes wfReveal { from { opacity: 0; transform: scale(1.06); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
-.qoves-widget .pf-shade { position: absolute; inset: auto 0 0 0; height: 45%; z-index: 3; pointer-events: none; background: linear-gradient(180deg, transparent, rgba(19, 27, 34, 0.55)); }
+.qoves-widget .pf-shade { position: absolute; inset: auto 0 0 0; height: 45%; z-index: 3; pointer-events: none; background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--w-shade-deep) 55%, transparent)); }
 
 /* esquinas tipo visor (cian, como el análisis de la landing) */
 .qoves-widget .cam-tick {
@@ -396,7 +428,7 @@
   border: 0 solid rgba(255, 255, 255, 0.85);
   animation: sf-glow 3s var(--ease) infinite;
 }
-.qoves-widget .photo-frame.has-photo .cam-tick { border-color: rgba(6, 182, 212, 0.9); }
+.qoves-widget .photo-frame.has-photo .cam-tick { border-color: color-mix(in srgb, var(--scan) 90%, transparent); }
 .qoves-widget .photo-frame.has-photo .cam-tick[data-c="2"],
 .qoves-widget .photo-frame.has-photo .cam-tick[data-c="3"] { display: none; }
 .qoves-widget .cam-tick[data-c="0"] { top: 16px; left: 16px; border-top-width: 2px; border-left-width: 2px; border-top-left-radius: 7px; }
@@ -448,7 +480,7 @@
 .qoves-widget .pf-btn:active { transform: scale(0.98); }
 .qoves-widget .pf-btn:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.45); }
 .qoves-widget .pf-btn-primary { background: #fff; color: var(--navy-2); border-color: #fff; }
-.qoves-widget .pf-btn-primary:hover { background: #fff; box-shadow: 0 16px 30px -14px rgba(19, 27, 34, 0.65); }
+.qoves-widget .pf-btn-primary:hover { background: #fff; box-shadow: 0 16px 30px -14px color-mix(in srgb, var(--w-shade-deep) 65%, transparent); }
 
 .qoves-widget .pf-actions {
   position: absolute; bottom: 16px; left: 16px; right: 16px; z-index: 8;
@@ -467,7 +499,7 @@
 .qoves-widget .pf-actions .btn { flex: 1; }
 .qoves-widget .dk-shot-ok {
   display: inline-flex; align-items: center; gap: 9px; padding: 11px 18px; border-radius: 99px;
-  background: rgba(19, 27, 34, 0.72); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  background: color-mix(in srgb, var(--w-shade-deep) 72%, transparent); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.16);
   color: #fff; font-size: 13px; font-weight: 500;
 }
@@ -521,7 +553,7 @@
 .qoves-widget .st-item.done { color: var(--blue-ink); border-color: var(--blue-line); background: var(--blue-tint); }
 .qoves-widget .st-item.done .st-dot { background: var(--blue-deep); border-color: var(--blue-deep); }
 .qoves-widget .st-item.done .st-dot svg { animation: sf-pop 0.35s var(--ease-out) both; }
-.qoves-widget .st-item.active { color: var(--ink); border-color: rgba(6, 182, 212, 0.45); background: #fff; box-shadow: 0 8px 20px -14px rgba(6, 182, 212, 0.8); }
+.qoves-widget .st-item.active { color: var(--ink); border-color: color-mix(in srgb, var(--scan) 45%, transparent); background: #fff; box-shadow: 0 8px 20px -14px color-mix(in srgb, var(--scan) 80%, transparent); }
 .qoves-widget .st-item.active .st-dot { border-color: var(--scan); }
 .qoves-widget .st-item.active .st-dot::after { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--scan); animation: sf-glow 1s var(--ease) infinite; }
 .qoves-widget .st-item.active .st-dot::before {
@@ -540,7 +572,7 @@
 .qoves-widget .wf-result-frame {
   position: relative; width: 100%; height: 100%; border-radius: var(--r-card); overflow: hidden;
   background: var(--w-stage);
-  box-shadow: 0 34px 70px -38px rgba(19, 27, 34, 0.75), 0 0 0 1px rgba(27, 38, 48, 0.06);
+  box-shadow: 0 34px 70px -38px color-mix(in srgb, var(--w-shade-deep) 75%, transparent), 0 0 0 1px color-mix(in srgb, var(--w-shade) 6%, transparent);
 }
 .qoves-widget .wf-result-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
 .qoves-widget .wf-result-actions .btn,
@@ -555,22 +587,22 @@
   position: absolute; top: 14px; z-index: 10; pointer-events: none;
   font-family: var(--font-mono); font-size: 9.5px; font-weight: 500; letter-spacing: 0.18em; text-transform: uppercase;
   color: #fff; padding: 6px 11px; border-radius: 99px;
-  background: rgba(19, 27, 34, 0.5); border: 1px solid rgba(255, 255, 255, 0.25);
+  background: color-mix(in srgb, var(--w-shade-deep) 50%, transparent); border: 1px solid rgba(255, 255, 255, 0.25);
   -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   transition: opacity 0.3s var(--ease);
 }
 .qoves-widget .ba-pill.before { left: 14px; }
-.qoves-widget .ba-pill.after { right: 14px; background: rgba(79, 107, 127, 0.62); border-color: rgba(185, 207, 221, 0.55); }
+.qoves-widget .ba-pill.after { right: 14px; background: color-mix(in srgb, var(--blue-deep) 62%, transparent); border-color: color-mix(in srgb, var(--w-glow) 55%, transparent); }
 .qoves-widget .ba-seam {
   position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.2), #fff 30%, #fff 70%, rgba(255, 255, 255, 0.2));
-  box-shadow: 0 0 14px 1px rgba(6, 182, 212, 0.55);
+  box-shadow: 0 0 14px 1px color-mix(in srgb, var(--scan) 55%, transparent);
 }
 .qoves-widget .ba-handle {
   position: absolute; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%;
   display: grid; place-items: center; color: var(--navy-2);
   background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.2), 0 10px 26px -8px rgba(19, 27, 34, 0.6), 0 0 26px rgba(6, 182, 212, 0.45);
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.2), 0 10px 26px -8px color-mix(in srgb, var(--w-shade-deep) 60%, transparent), 0 0 26px color-mix(in srgb, var(--scan) 45%, transparent);
   transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease);
 }
 .qoves-widget .ba-handle::after {
@@ -579,14 +611,14 @@
   animation: wfRing 2.4s var(--ease-out) infinite;
 }
 .qoves-widget .ba-wrap:hover .ba-handle { transform: scale(1.08); }
-.qoves-widget .ba-wrap.dragging .ba-handle { transform: scale(0.94); box-shadow: 0 0 0 8px rgba(6, 182, 212, 0.25), 0 0 32px rgba(6, 182, 212, 0.65); }
+.qoves-widget .ba-wrap.dragging .ba-handle { transform: scale(0.94); box-shadow: 0 0 0 8px color-mix(in srgb, var(--scan) 25%, transparent), 0 0 32px color-mix(in srgb, var(--scan) 65%, transparent); }
 .qoves-widget .ba-wrap.dragging .ba-handle::after { animation: none; opacity: 0; }
 .qoves-widget .ba-wrap { touch-action: pan-y; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
 .qoves-widget .ba-wrap:focus-visible { outline: none; box-shadow: inset 0 0 0 3px var(--blue-light); }
 .qoves-widget .ba-hint {
   position: absolute; left: 50%; bottom: 52px; transform: translateX(-50%); z-index: 10; pointer-events: none;
   font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; white-space: nowrap;
-  color: #fff; padding: 6px 12px; border-radius: 99px; background: rgba(19, 27, 34, 0.45);
+  color: #fff; padding: 6px 12px; border-radius: 99px; background: color-mix(in srgb, var(--w-shade-deep) 45%, transparent);
   -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
   transition: opacity 0.4s var(--ease);
 }
@@ -599,7 +631,7 @@
   position: relative; width: 76px; height: 76px; border-radius: 50%;
   background: radial-gradient(circle at 30% 25%, var(--blue-accent), var(--blue-deep) 60%, var(--navy-1));
   display: grid; place-items: center; color: #fff; margin-bottom: 6px;
-  box-shadow: 0 20px 40px -18px rgba(79, 107, 127, 0.8);
+  box-shadow: 0 20px 40px -18px color-mix(in srgb, var(--blue-deep) 80%, transparent);
   animation: wfCheckPop 0.6s var(--ease-out) both;
 }
 .qoves-widget .wf-success-mark::before,
@@ -628,7 +660,7 @@
   position: absolute; inset: 0; z-index: 50;
   overscroll-behavior: contain;
   display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center;
-  background: rgba(242, 246, 249, 0.72);
+  background: color-mix(in srgb, var(--w-veil) 72%, transparent);
   -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
 }
 /* A pantalla completa la tarjeta queda a la vista aunque el widget sea más
@@ -658,7 +690,7 @@
 @media (min-width: 768px) {
   .qoves-widget .wf-header { padding: 16px 30px; border-bottom: 1px solid var(--w-line); }
   .qoves-widget .wf-brand img { height: 19px; }
-  .qoves-widget .wf-brand img.wf-brand-logo { height: 36px; }
+  .qoves-widget .wf-brand img.wf-brand-logo { height: var(--w-logo-h); max-width: min(calc(var(--w-logo-h) * 6), 280px, 100%); }
 
   .qoves-widget .stepper-desktop { display: flex; flex: 0 1 460px; padding: 0; }
   .qoves-widget .stepper-desktop .stepper-node { flex: 1; }

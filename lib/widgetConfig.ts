@@ -49,6 +49,8 @@ export interface WidgetConfig {
         radius: WidgetRadius;
         /** Mostrar el indicador "En línea" en la cabecera. */
         showOnline: boolean;
+        /** Alto del logo en la cabecera (px, escritorio). En móvil se reduce en proporción. */
+        logoSize: number;
     };
     texts: {
         headline: string;
@@ -85,6 +87,7 @@ export const DEFAULT_WIDGET_CONFIG: WidgetConfig = {
         displayName: "",
         radius: "rounded",
         showOnline: true,
+        logoSize: 36,
     },
     texts: {
         headline: "Comienza tu",
@@ -122,6 +125,10 @@ export const ACCENT_PRESETS: { name: string; hex: string }[] = [
     { name: "Arena", hex: "#9a7b4f" },
     { name: "Grafito", hex: "#2d3238" },
 ];
+
+/** Límites del alto del logo (px). */
+export const LOGO_SIZE_MIN = 24;
+export const LOGO_SIZE_MAX = 72;
 
 // ── Validación ────────────────────────────────────────────────────────────
 const HEX_RE = /^#[0-9a-f]{6}$/i;
@@ -245,6 +252,9 @@ export function normalizeWidgetConfig(raw: unknown): WidgetConfig {
             displayName: typeof b.displayName === "string" ? b.displayName.trim().slice(0, 60) : "",
             radius: ["soft", "rounded", "square"].includes(b.radius) ? b.radius : d.brand.radius,
             showOnline: bool(b.showOnline, d.brand.showOnline),
+            logoSize: typeof b.logoSize === "number" && Number.isFinite(b.logoSize)
+                ? Math.round(Math.min(LOGO_SIZE_MAX, Math.max(LOGO_SIZE_MIN, b.logoSize)))
+                : d.brand.logoSize,
         },
         texts: {
             headline: str(t.headline, d.texts.headline, 40),
@@ -273,27 +283,103 @@ export function normalizeWidgetConfig(raw: unknown): WidgetConfig {
 }
 
 // ── Paleta derivada del color de acento ───────────────────────────────────
-function hexToRgb(hex: string): [number, number, number] {
+type RGB = [number, number, number];
+
+function hexToRgb(hex: string): RGB {
     const n = parseInt(hex.slice(1), 16);
     return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
-function mix(hex: string, target: [number, number, number], amount: number): string {
+function rgbToHex([r, g, b]: RGB): string {
+    return `#${[r, g, b].map((x) => Math.round(Math.min(255, Math.max(0, x))).toString(16).padStart(2, "0")).join("")}`;
+}
+/** Mezcla lineal en sRGB (la que usa el widget desde el principio para tintes). */
+function mix(hex: string, target: RGB, amount: number): string {
     const [r, g, b] = hexToRgb(hex);
     const m = (a: number, t: number) => Math.round(a + (t - a) * amount);
-    return `#${[m(r, target[0]), m(g, target[1]), m(b, target[2])].map((x) => x.toString(16).padStart(2, "0")).join("")}`;
+    return rgbToHex([m(r, target[0]), m(g, target[1]), m(b, target[2])]);
 }
-const WHITE: [number, number, number] = [255, 255, 255];
-const INK: [number, number, number] = [12, 16, 20];
+const WHITE: RGB = [255, 255, 255];
+const INK: RGB = [12, 16, 20];
+
+// OKLCH (perceptual): permite tonos claros/oscuros que conservan el matiz.
+const toLin = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+const fromLin = (c: number) => (c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055);
+
+function hexToOklch(hex: string): { l: number; c: number; h: number } {
+    const [r, g, b] = hexToRgb(hex).map((x) => toLin(x / 255));
+    const l_ = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+    const m_ = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+    const s_ = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+    const L = 0.2104542553 * l_ + 0.793617785 * m_ - 0.0040720468 * s_;
+    const A = 1.9779984951 * l_ - 2.428592205 * m_ + 0.4505937099 * s_;
+    const B = 0.0259040371 * l_ + 0.7827717662 * m_ - 0.808675766 * s_;
+    return { l: L, c: Math.hypot(A, B), h: Math.atan2(B, A) };
+}
+function oklchToLinear(l: number, c: number, h: number): RGB {
+    const A = c * Math.cos(h), B = c * Math.sin(h);
+    const l_ = (l + 0.3963377774 * A + 0.2158037573 * B) ** 3;
+    const m_ = (l - 0.1055613458 * A - 0.0638541728 * B) ** 3;
+    const s_ = (l - 0.0894841775 * A - 1.291485548 * B) ** 3;
+    return [
+        4.0767416621 * l_ - 3.3077115913 * m_ + 0.2309699292 * s_,
+        -1.2684380046 * l_ + 2.6097574011 * m_ - 0.3413193965 * s_,
+        -0.0041960863 * l_ - 0.7034186147 * m_ + 1.707614701 * s_,
+    ];
+}
+/** Color OKLCH → hex, reduciendo croma hasta que quepa en sRGB. */
+function oklchHex(l: number, c: number, h: number): string {
+    const inGamut = (rgb: RGB) => rgb.every((v) => v >= -0.0005 && v <= 1.0005);
+    let lo = 0, hi = c, rgb = oklchToLinear(l, c, h);
+    if (!inGamut(rgb)) {
+        for (let i = 0; i < 18; i++) {
+            const mid = (lo + hi) / 2;
+            if (inGamut(oklchToLinear(l, mid, h))) lo = mid; else hi = mid;
+        }
+        rgb = oklchToLinear(l, lo, h);
+    }
+    return rgbToHex(rgb.map((v) => fromLin(Math.min(1, Math.max(0, v))) * 255) as RGB);
+}
+function luminance(hex: string): number {
+    const [r, g, b] = hexToRgb(hex).map((x) => toLin(x / 255));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+function contrast(a: string, b: string): number {
+    const [x, y] = [luminance(a), luminance(b)].sort((p, q) => q - p);
+    return (x + 0.05) / (y + 0.05);
+}
+
+/** Escalones de la escala tonal: claridad OKLCH objetivo y peso del croma del acento. */
+const SCALE: [step: number, l: number, chroma: number][] = [
+    [50, 0.975, 0.16], [100, 0.95, 0.28], [200, 0.9, 0.45], [300, 0.82, 0.65], [400, 0.72, 0.85],
+    [500, 0.62, 1], [600, 0.52, 0.95], [700, 0.42, 0.8], [800, 0.32, 0.6], [900, 0.24, 0.45], [950, 0.18, 0.35],
+];
+
+/**
+ * Escala tonal 50…950 con el matiz del acento (OKLCH). Los tonos extremos
+ * pierden croma para que claros y oscuros se vean limpios, no chillones.
+ */
+export function accentScale(accent: string): Record<number, string> {
+    const { c, h } = hexToOklch(HEX_RE.test(accent) ? accent : DEFAULT_WIDGET_CONFIG.brand.accent);
+    const out: Record<number, string> = {};
+    for (const [step, l, k] of SCALE) out[step] = oklchHex(l, Math.min(c * k, 0.16), h);
+    return out;
+}
 
 /**
  * Variables CSS que el widget usa (las mismas del sistema de marca), derivadas
  * de un único color. Se aplican como style en la raíz .qoves-widget.
+ *
+ * Con el acento por defecto solo se emiten los tokens de siempre: el resto
+ * (panel de foto, escenario oscuro, cian de escaneo, botón desactivado…) toma
+ * los valores originales definidos en widget-qoves.css, así el widget por
+ * defecto se ve exactamente igual que antes. Con cualquier otro acento esos
+ * tokens se calculan aquí para que todo el widget siga al color elegido.
  */
 export function widgetCssVars(cfg: WidgetConfig): Record<string, string> {
-    const a = cfg.brand.accent;
+    const a = HEX_RE.test(cfg.brand.accent) ? cfg.brand.accent.toLowerCase() : DEFAULT_WIDGET_CONFIG.brand.accent;
     const radius = cfg.brand.radius === "square" ? "10px" : cfg.brand.radius === "soft" ? "16px" : "999px";
     const cardRadius = cfg.brand.radius === "square" ? "12px" : cfg.brand.radius === "soft" ? "18px" : "24px";
-    return {
+    const vars: Record<string, string> = {
         "--blue-deep": a,
         "--blue-ink": mix(a, INK, 0.22),
         "--blue-accent": mix(a, WHITE, 0.2),
@@ -307,7 +393,41 @@ export function widgetCssVars(cfg: WidgetConfig): Record<string, string> {
         "--navy-3": mix(a, INK, 0.78),
         "--r-pill": radius,
         "--r-card": cardRadius,
+        "--w-logo-h": `${cfg.brand.logoSize}px`,
     };
+    if (a === DEFAULT_WIDGET_CONFIG.brand.accent) return vars;
+
+    const { l, c, h } = hexToOklch(a);
+    const scale = accentScale(a);
+    for (const [step] of SCALE) vars[`--w-a-${step}`] = scale[step];
+
+    // Escenarios oscuros: versión profunda y apagada del acento (nunca más
+    // clara que el propio acento, para que los acentos oscuros sigan siéndolo).
+    const deep = (target: number, ratio: number, k: number, cap: number) => oklchHex(Math.min(target, l * ratio), Math.min(c * k, cap), h);
+    const navy1 = deep(0.34, 0.74, 0.42, 0.042);
+    const navy2 = deep(0.26, 0.57, 0.34, 0.032);
+    const navy3 = deep(0.2, 0.45, 0.28, 0.025);
+    vars["--navy-1"] = navy1;
+    vars["--navy-2"] = navy2;
+    vars["--navy-3"] = navy3;
+    vars["--w-shade"] = navy2;
+    vars["--w-shade-deep"] = navy3;
+
+    // Panel de foto: claro → acento → oscuro, todo del mismo matiz.
+    vars["--w-photo-mid"] = mix(a, WHITE, 0.18);
+    vars["--w-glow"] = oklchHex(0.86, Math.min(c * 0.7, 0.08), h);
+    vars["--w-veil"] = vars["--blue-tint"];
+    // Luz de escaneo (antes cian fijo): tono vivo y claro del acento.
+    vars["--scan"] = oklchHex(Math.max(0.74, Math.min(0.8, l + 0.2)), Math.min(Math.max(c * 1.25, 0.02), 0.17), h);
+    vars["--w-scan-light"] = oklchHex(0.93, Math.min(c * 0.6, 0.07), h);
+
+    // Botón principal desactivado: acento suavizado y opaco; el texto pasa a
+    // tono oscuro del acento si el blanco no se lee bien sobre él.
+    const offBg = mix(a, WHITE, 0.42);
+    vars["--w-off-bg"] = offBg;
+    vars["--w-off-fg"] = contrast("#ffffff", offBg) >= 3 ? "#ffffff" : mix(a, INK, 0.62);
+    vars["--w-off-opacity"] = "1";
+    return vars;
 }
 
 /** Enlace de WhatsApp con el mensaje de la clínica. */

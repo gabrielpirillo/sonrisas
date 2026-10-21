@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import {
-    ACCENT_PRESETS, DEFAULT_WIDGET_CONFIG, normalizeWidgetConfig, widgetWhatsappHref,
+    ACCENT_PRESETS, DEFAULT_WIDGET_CONFIG, LOGO_SIZE_MAX, LOGO_SIZE_MIN, accentScale, normalizeWidgetConfig, widgetWhatsappHref,
     type WidgetConfig, type WidgetRadius,
 } from "@/lib/widgetConfig";
 import { uploadWidgetLogoAction } from "@/app/(admin)/administracion/widget/actions";
@@ -54,6 +54,7 @@ export function BrandSection({ draft, patch, clinicName, readOnly }: { draft: Wi
         <>
             <Block title="Logo" description="Aparece en la cabecera del widget. PNG, JPG, WEBP o SVG de hasta 2 MB; mejor con fondo transparente.">
                 <LogoDrop logoUrl={b.logoUrl} onChange={(url) => patch("brand", { logoUrl: url })} readOnly={readOnly} />
+                {b.logoUrl && <LogoSizeControl value={b.logoSize} onChange={(v) => patch("brand", { logoSize: v })} readOnly={readOnly} />}
             </Block>
 
             <Block title="Nombre de la clínica" description="Se muestra en la cabecera cuando no hay logo.">
@@ -138,9 +139,10 @@ export function BrandSection({ draft, patch, clinicName, readOnly }: { draft: Wi
                         />
                     </div>
                     <div className="ws-tones" aria-hidden>
-                        {[0.88, 0.55, 0, -0.5].map((t) => (
-                            <span key={t} style={{ background: t >= 0 ? `color-mix(in srgb, ${b.accent}, white ${t * 100}%)` : `color-mix(in srgb, ${b.accent}, #0c1014 ${-t * 100}%)` }} />
-                        ))}
+                        {(() => {
+                            const tones = accentScale(b.accent);
+                            return [100, 300, 500, 700, 900].map((step) => <span key={step} style={{ background: tones[step] }} />);
+                        })()}
                     </div>
                 </div>
                 <p className={hexInvalid ? "ws-error" : "ws-hint"} id="ws-hex-hint">
@@ -188,6 +190,55 @@ export function BrandSection({ draft, patch, clinicName, readOnly }: { draft: Wi
                 {null}
             </Block>
         </>
+    );
+}
+
+const LOGO_SIZES: { label: string; px: number }[] = [
+    { label: "S", px: 28 },
+    { label: "M", px: 36 },
+    { label: "L", px: 48 },
+    { label: "XL", px: 60 },
+];
+
+/** Alto del logo en la cabecera: tamaños rápidos + ajuste fino. */
+function LogoSizeControl({ value, onChange, readOnly }: { value: number; onChange: (v: number) => void; readOnly?: boolean }) {
+    return (
+        <div className="ws-logo-size">
+            <div className="ws-logo-size-head">
+                <label htmlFor="ws-logo-size" className="ws-logo-size-label">Tamaño del logo</label>
+                <span className="ws-logo-size-value mono" aria-hidden>{value} px</span>
+            </div>
+            <div className="ws-logo-size-row">
+                <div className="ws-logo-size-presets" role="group" aria-label="Tamaños rápidos">
+                    {LOGO_SIZES.map((o) => (
+                        <button
+                            key={o.label}
+                            type="button"
+                            className={"ws-logo-size-opt" + (value === o.px ? " is-on" : "")}
+                            aria-pressed={value === o.px}
+                            title={`${o.px} px`}
+                            disabled={readOnly}
+                            onClick={() => onChange(o.px)}
+                        >
+                            {o.label}
+                        </button>
+                    ))}
+                </div>
+                <input
+                    id="ws-logo-size"
+                    type="range"
+                    className="ws-logo-size-range"
+                    min={LOGO_SIZE_MIN}
+                    max={LOGO_SIZE_MAX}
+                    step={1}
+                    value={value}
+                    disabled={readOnly}
+                    aria-valuetext={`${value} píxeles de alto`}
+                    onChange={(e) => onChange(Number(e.target.value))}
+                />
+            </div>
+            <p className="ws-hint">Alto en ordenador; en móvil se reduce un poco. Los logos muy anchos se limitan para no tapar la cabecera.</p>
+        </div>
     );
 }
 

@@ -32,11 +32,14 @@ export const FaceOverlay: React.FC<FaceOverlayProps> = ({
     isCorrectSize,
 }) => {
     const reduceMotion = useReducedMotion();
-    // Paleta de marca: neutro (sin cara) · ámbar (ajuste) · rosado (error) · cian (listo)
+    // Paleta: neutro (sin cara) · ámbar (ajuste) · rosado (error) · luz de escaneo
+    // de la marca (listo). --scan sigue al acento del widget; fuera del widget es cian.
     const NEUTRAL = "rgba(255, 255, 255, 0.8)";
     const WARN = "#f2c879";
     const ERR = "#e8a59c";
-    const OK = "#06b6d4";
+    const OK = "var(--scan, #06b6d4)";
+    const okA = (pct: number) => `color-mix(in srgb, ${OK} ${pct}%, transparent)`;
+    const SHADE = "var(--w-shade-deep, #131b22)";
 
     let strokeColor = NEUTRAL;
     let feedbackText = "Ubica tu cara en el óvalo";
@@ -79,7 +82,7 @@ export const FaceOverlay: React.FC<FaceOverlayProps> = ({
                     height: "min(54cqh, 76cqw)",
                     aspectRatio: "3 / 4",
                     border: `${isAligned ? 3 : 2}px ${isAligned ? "solid" : "dashed"} ${strokeColor}`,
-                    boxShadow: `0 0 0 100vmax rgba(19, 27, 34, 0.6)${isAligned ? `, 0 0 28px ${OK}, inset 0 0 22px rgba(6,182,212,0.35)` : ""}`,
+                    boxShadow: `0 0 0 100vmax color-mix(in srgb, ${SHADE} 60%, transparent)${isAligned ? `, 0 0 28px ${OK}, inset 0 0 22px ${okA(35)}` : ""}`,
                     transition: "border-color 0.3s ease, box-shadow 0.3s ease",
                 }}
                 animate={reduceMotion ? { scale: 1 } : { scale: isAligned ? 1.02 : [1, 1.025, 1] }}
@@ -99,9 +102,9 @@ export const FaceOverlay: React.FC<FaceOverlayProps> = ({
                     transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                     className="m-0 inline-flex max-w-full items-center gap-2 rounded-full px-3.5 py-2 text-[14px] font-medium leading-tight tracking-[-0.01em] text-white backdrop-blur-md"
                     style={{
-                        background: isAligned ? "rgba(6,182,212,0.3)" : "rgba(19,27,34,0.62)",
-                        border: `1px solid ${isAligned ? "rgba(6,182,212,0.7)" : "rgba(255,255,255,0.22)"}`,
-                        boxShadow: isAligned ? "0 0 24px rgba(6,182,212,0.45)" : "none",
+                        background: isAligned ? okA(30) : `color-mix(in srgb, ${SHADE} 62%, transparent)`,
+                        border: `1px solid ${isAligned ? okA(70) : "rgba(255,255,255,0.22)"}`,
+                        boxShadow: isAligned ? `0 0 24px ${okA(45)}` : "none",
                     }}
                 >
                     <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: strokeColor, boxShadow: `0 0 8px ${strokeColor}` }} />
