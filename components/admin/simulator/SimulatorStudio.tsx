@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import NumberFlow from "@number-flow/react";
-import { AnimatePresence, MotionConfig, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, MotionConfig, motion } from "framer-motion";
 import {
     ArrowRight, Camera, Coins, Glasses, Info, Lock, Maximize2, Monitor, RotateCw,
     ScanFace, Smartphone, Smile, Sparkles, Sun, UserRound, X,
@@ -76,10 +76,13 @@ function SimulatorInner({ widgetKey, clinicName, balance, imageCost, canRecharge
     const showRef = useRef<HTMLDivElement>(null);
     const exitBtnRef = useRef<HTMLButtonElement>(null);
 
+    // Modo presentación = capa fija a pantalla completa dentro de la página.
+    // Además se pide la pantalla completa del navegador (oculta barras), pero si
+    // el navegador la cierra (p. ej. al abrir el selector de fotos) la capa sigue
+    // y el paciente no pierde nada: solo se sale con "Salir" o Esc.
     const startPresenting = useCallback(async () => {
         setPresenting(true);
-        const el = showRef.current;
-        const ok = el ? await enterFullscreen(el) : false;
+        const ok = await enterFullscreen(document.documentElement);
         setNativeFs(ok);
     }, []);
 
@@ -91,12 +94,10 @@ function SimulatorInner({ widgetKey, clinicName, balance, imageCost, canRecharge
         router.refresh();
     }, [router]);
 
-    // Salir con Esc: el navegador cierra la pantalla completa (fullscreenchange);
-    // en el modo de respaldo (overlay fijo) lo escuchamos nosotros.
     useEffect(() => {
         if (!presenting) return;
-        const onFs = () => { if (!fullscreenElement()) { setPresenting(false); setNativeFs(false); router.refresh(); } };
-        const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") stopPresenting(); };
+        const onFs = () => setNativeFs(Boolean(fullscreenElement()));
+        const onKey = (e: KeyboardEvent) => { if (e.key === "Escape" && !fullscreenElement()) stopPresenting(); };
         document.addEventListener("fullscreenchange", onFs);
         document.addEventListener("webkitfullscreenchange", onFs);
         window.addEventListener("keydown", onKey);
@@ -110,7 +111,7 @@ function SimulatorInner({ widgetKey, clinicName, balance, imageCost, canRecharge
             document.body.style.overflow = prevOverflow;
             window.clearTimeout(t);
         };
-    }, [presenting, stopPresenting, router]);
+    }, [presenting, stopPresenting]);
 
     const restart = () => {
         setReloadKey((k) => k + 1);
@@ -120,7 +121,6 @@ function SimulatorInner({ widgetKey, clinicName, balance, imageCost, canRecharge
     return (
         <>
             <Hero
-                clinicName={clinicName}
                 balance={balance}
                 imageCost={imageCost}
                 canRecharge={canRecharge}
@@ -157,7 +157,7 @@ function SimulatorInner({ widgetKey, clinicName, balance, imageCost, canRecharge
                     nunca se desmonta, así la sesión del paciente no se pierde. */}
                 <div
                     ref={showRef}
-                    className={"sim-show" + (presenting ? " is-presenting" : "") + (presenting && !nativeFs ? " is-overlay" : "")}
+                    className={"sim-show" + (presenting ? " is-presenting is-overlay" : "") + (nativeFs ? " is-native" : "")}
                     role={presenting ? "dialog" : undefined}
                     aria-modal={presenting ? true : undefined}
                     aria-label={presenting ? "Modo presentación del simulador" : undefined}
@@ -205,8 +205,8 @@ function SimulatorInner({ widgetKey, clinicName, balance, imageCost, canRecharge
 /* Hero                                                                 */
 /* ------------------------------------------------------------------ */
 function Hero({
-    clinicName, balance, imageCost, canRecharge, onPresent,
-}: { clinicName: string; balance: number; imageCost: number | null; canRecharge: boolean; onPresent: () => void }) {
+    balance, imageCost, canRecharge, onPresent,
+}: { balance: number; imageCost: number | null; canRecharge: boolean; onPresent: () => void }) {
     const mounted = useMounted();
     const sims = imageCost ? Math.floor(Math.max(0, balance) / imageCost) : null;
     const empty = sims !== null ? sims <= 0 : balance <= 0;
@@ -219,10 +219,6 @@ function Hero({
             <span className="sim-hero-grid" aria-hidden />
 
             <div className="sim-hero-main">
-                <div className="sim-hero-tags">
-                    <span className="sim-online"><i aria-hidden /> En línea</span>
-                    <span className="mono sim-hero-eyebrow">SIMULADOR · {clinicName}</span>
-                </div>
                 <h1 id="sim-hero-title" className="sim-hero-title">
                     Enséñale su nueva sonrisa <span className="sim-shine">antes de empezar</span>
                 </h1>
@@ -241,7 +237,6 @@ function Hero({
             </div>
 
             <div className="sim-hero-side">
-                <ScanOrb />
                 <div className="sim-credit" role="group" aria-label="Saldo de créditos">
                     <span className="sim-credit-ic" aria-hidden><Coins size={17} /></span>
                     <div className="sim-credit-body">
@@ -281,21 +276,6 @@ function Hero({
     );
 }
 
-/** Icono con anillo giratorio y línea de escaneo: el "efecto IA" del hero. */
-function ScanOrb() {
-    return (
-        <div className="sim-orb" aria-hidden>
-            <span className="sim-orb-ring" />
-            <span className="sim-orb-ring sim-orb-ring-2" />
-            <span className="sim-orb-core">
-                <ScanFace size={34} strokeWidth={1.4} />
-                <span className="sim-orb-scan" />
-            </span>
-            <Sparkles className="sim-orb-spark" size={14} />
-        </div>
-    );
-}
-
 /* ------------------------------------------------------------------ */
 /* Guía de 3 pasos                                                      */
 /* ------------------------------------------------------------------ */
@@ -306,40 +286,13 @@ const STEPS: { icon: ReactNode; title: string; text: string }[] = [
 ];
 
 function StepsGuide() {
-    const reduce = useReducedMotion();
-    const [active, setActive] = useState(0);
-
-    // Resalta los pasos en bucle (se detiene con movimiento reducido).
-    useEffect(() => {
-        if (reduce) return;
-        const id = window.setInterval(() => setActive((a) => (a + 1) % STEPS.length), 2600);
-        return () => window.clearInterval(id);
-    }, [reduce]);
-
     return (
         <section className="sim-steps" aria-label="Cómo funciona">
             <ol className="sim-steps-list">
                 {STEPS.map((s, i) => {
-                    const on = !reduce && i === active;
                     return (
-                        <motion.li
-                            key={s.title}
-                            className={"sim-step" + (on ? " is-on" : "")}
-                            initial={{ opacity: 0, y: 16 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true, margin: "-40px" }}
-                            transition={{ duration: 0.55, ease: EASE, delay: 0.08 * i }}
-                        >
-                            <span className="sim-step-ic" aria-hidden>
-                                {s.icon}
-                                {on && (
-                                    <motion.span
-                                        className="sim-step-halo"
-                                        layoutId="sim-step-halo"
-                                        transition={{ type: "spring", stiffness: 260, damping: 30 }}
-                                    />
-                                )}
-                            </span>
+                        <li key={s.title} className="sim-step">
+                            <span className="sim-step-ic" aria-hidden>{s.icon}</span>
                             <div className="sim-step-body">
                                 <span className="mono">PASO {i + 1}</span>
                                 <strong>{s.title}</strong>
@@ -347,15 +300,10 @@ function StepsGuide() {
                             </div>
                             {i < STEPS.length - 1 && (
                                 <span className="sim-step-link" aria-hidden>
-                                    <motion.i
-                                        initial={{ scaleX: 0 }}
-                                        whileInView={{ scaleX: 1 }}
-                                        viewport={{ once: true }}
-                                        transition={{ duration: 0.9, ease: EASE, delay: 0.3 + 0.2 * i }}
-                                    />
+                                    <i style={{ transform: "none" }} />
                                 </span>
                             )}
-                        </motion.li>
+                        </li>
                     );
                 })}
             </ol>
@@ -428,7 +376,6 @@ function LiveWidget({ widgetKey, device, presenting }: { widgetKey: string; devi
                     >
                         <span className="sim-chrome-dots"><i /><i /><i /></span>
                         <span className="sim-chrome-url"><Lock size={10} /> tu-clinica.com/simulador</span>
-                        <span className="sim-chrome-live"><i /> EN VIVO</span>
                     </motion.div>
                 )}
             </AnimatePresence>

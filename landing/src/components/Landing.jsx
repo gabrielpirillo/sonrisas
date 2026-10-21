@@ -1109,87 +1109,58 @@ function useCountUp(target, start, duration = 1200) {
   return val;
 }
 
-/* ---------------- Coste por simulación (tras "Cómo funciona") ---------------- */
-/* Paquetes reales: 50 cr · 39 US$ / 200 cr · 99 US$ / 600 cr · 249 US$. 1 simulación = 1 crédito. */
-const CS_PACKS = [
-  { credits: 50, price: 39, unit: "0,78" },
-  { credits: 200, price: 99, unit: "0,50" },
-  { credits: 600, price: 249, unit: "0,42", best: true }];
+/* ---------------- "Una simulación cuesta menos que un café" (tras "Cómo funciona") ---------------- */
+/* Solo titular + visual (sin cifras): taza con vapor junto a una mini simulación de sonrisa. */
+function CsSmile() {
+  return (
+    <svg className="cs-smile-svg" viewBox="0 0 120 64" aria-hidden="true">
+      <path d="M8 22c16-10 34-12 52-6 18-6 36-4 52 6-14 26-36 36-52 36S22 48 8 22z" fill="#c98c86" />
+      <path d="M18 24c12-4 28-5 42-1 14-4 30-3 42 1-10 15-26 22-42 22S28 39 18 24z" className="cs-teeth" />
+      <path d="M40 24.5v15M52 23.5v18M68 23.5v18M80 24.5v15M30 25.5v10M90 25.5v10" stroke="rgba(42,58,71,0.16)" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M22 26c12 4 26 5 38 5s26-1 38-5" fill="none" stroke="rgba(42,58,71,0.14)" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>);
+}
 
 function CostPerSim({ onStart }) {
   const [ref, inview] = useInview(0.3);
-  const price = useCountUp(0.42, inview, 1400);
   return (
     <section id="precio" ref={ref} className={"cs" + (inview ? " cs-on" : "")} aria-labelledby="cs-title">
       <div className="wrap">
         <div className="cs-card">
           <div className="cs-copy">
-            <span className="mono cs-eyebrow"><span className="cs-eyebrow-dot" />Precio por simulación</span>
             <h2 id="cs-title" className="display cs-title">
-              Una simulación cuesta <span className="dim">menos que un café.</span>
+              Una simulación cuesta{" "}
+              <span className="cs-accent">
+                menos que un café.
+                <svg className="cs-swash" viewBox="0 0 300 14" preserveAspectRatio="none" aria-hidden="true">
+                  <path d="M3 10C60 3 130 2 190 5s80 4 107-1" />
+                </svg>
+              </span>
             </h2>
-            <p className="cs-lead">
-              Cada simulación consume 1 crédito. Según el paquete, te sale <b>{"desde ≈0,42\u00a0US$"}</b>. Sin cuotas mensuales ni permanencia.
-            </p>
-            <p className="cs-contrast">
-              <span className="cs-contrast-bar" aria-hidden="true" />
-              <span>Un paciente nuevo de estética dental vale <b>cientos de veces más.</b></span>
-            </p>
-            <div className="cs-ctas">
-              <button type="button" className="btn btn-white cs-cta" onClick={onStart}>Quiero probarlo</button>
-              <a href={SIGNUP_HREF} className="cs-link">Crear cuenta <span aria-hidden="true">→</span></a>
-            </div>
-            <p className="cs-note mono">Créditos de regalo al crear tu cuenta · No caducan</p>
+            <button type="button" className="cs-link" onClick={onStart}>
+              Quiero probarlo <span aria-hidden="true">→</span>
+            </button>
           </div>
 
-          <div className="cs-visual">
-            <div className="cs-vs">
-              <div className="cs-tile cs-coffee">
-                <svg className="cs-cup" viewBox="0 0 64 64" aria-hidden="true">
-                  <path className="cs-steam s1" d="M24 20c-3-4 3-6 0-10" />
-                  <path className="cs-steam s2" d="M32 20c-3-4 3-6 0-10" />
-                  <path className="cs-steam s3" d="M40 20c-3-4 3-6 0-10" />
-                  <path d="M14 26h34v12a14 14 0 0 1-14 14h-6a14 14 0 0 1-14-14V26z" fill="currentColor" opacity="0.14" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-                  <path d="M48 30h3a6 6 0 0 1 0 12h-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                  <path d="M10 56h44" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-                <span className="cs-tile-lbl">1 café</span>
+          <div className="cs-visual" aria-hidden="true">
+            <div className="cs-sim">
+              <span className="cs-sim-top"><i /><i /><i /></span>
+              <div className="cs-sim-stage">
+                <div className="cs-sim-layer cs-before"><CsSmile /></div>
+                <div className="cs-sim-layer cs-after"><CsSmile /></div>
+                <span className="cs-sim-line" />
               </div>
-              <span className="cs-gt" aria-hidden="true">&gt;</span>
-              <div className="cs-tile cs-sim">
-                <svg className="cs-tooth" viewBox="0 0 64 64" aria-hidden="true">
-                  <path d="M20 10c-6 0-10 5-10 12 0 6 3 9 4 15 1 7 2 17 7 17 4 0 4-10 6-14 1-3 3-3 5 0 2 4 2 14 6 14 5 0 6-10 7-17 1-6 4-9 4-15 0-7-4-12-10-12-5 0-7 3-12 3s-7-3-12-3z" fill="currentColor" opacity="0.14" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-                  <path className="cs-spark" d="M48 8v8M44 12h8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-                <span className="cs-price" aria-label="desde 0,42 US$">
-                  <span className="cs-price-from">desde</span>
-                  <span className="cs-price-num">{price.toFixed(2).replace(".", ",")}</span>
-                  <span className="cs-price-cur">US$</span>
-                </span>
-                <span className="cs-tile-lbl">1 simulación</span>
-              </div>
+              <span className="cs-sim-foot"><span className="cs-sim-dot" /><i /><i /></span>
+              <svg className="cs-spark" viewBox="0 0 24 24"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z" /></svg>
             </div>
-
-            <div className="cs-bars" aria-hidden="true">
-              <div className="cs-bar-row">
-                <span className="cs-bar-lbl">Lo que inviertes</span>
-                <span className="cs-bar"><span className="cs-bar-fill cs-bar-sm" /></span>
-              </div>
-              <div className="cs-bar-row">
-                <span className="cs-bar-lbl">Lo que vale un paciente nuevo</span>
-                <span className="cs-bar"><span className="cs-bar-fill cs-bar-lg" /></span>
-              </div>
-            </div>
-
-            <ul className="cs-packs" aria-label="Paquetes de créditos">
-              {CS_PACKS.map((p, i) =>
-              <li key={p.credits} className={"cs-pack" + (p.best ? " cs-pack-best" : "")} style={{ "--i": i }}>
-                  <span className="cs-pack-cr">{p.credits} créditos</span>
-                  <span className="cs-pack-price">{p.price} US$</span>
-                  <span className="cs-pack-unit mono">≈{p.unit} / sim.</span>
-                </li>
-              )}
-            </ul>
+            <svg className="cs-cup" viewBox="0 0 64 72">
+              <path className="cs-steam s1" d="M24 22c-4-5 4-8 0-14" />
+              <path className="cs-steam s2" d="M32 22c-4-5 4-8 0-14" />
+              <path className="cs-steam s3" d="M40 22c-4-5 4-8 0-14" />
+              <path d="M12 30h38v13a16 16 0 0 1-16 16h-6a16 16 0 0 1-16-16V30z" className="cs-cup-body" />
+              <path d="M50 34h3a7 7 0 0 1 0 14h-4" className="cs-cup-handle" />
+              <path d="M8 64h46" className="cs-cup-plate" />
+            </svg>
           </div>
         </div>
       </div>
