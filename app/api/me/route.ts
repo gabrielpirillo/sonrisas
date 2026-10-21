@@ -11,6 +11,8 @@ export async function GET() {
             email: ctx.email,
             role,
             clinic: ctx.clinic?.name ?? null,
+            // Saldo ya cargado por getAuthContext (sin consulta extra): chip de la barra móvil.
+            credits: ctx.clinic ? ctx.clinic.credit_balance : null,
             isPlatformAdmin: isPlatformAdminEmail(ctx.email),
             impersonating: Boolean(ctx.impersonatedBy),
         },

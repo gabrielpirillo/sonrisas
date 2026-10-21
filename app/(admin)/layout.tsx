@@ -4,13 +4,13 @@ import "./qoves-admin.css";
 
 import Link from "next/link";
 import {
-    LayoutGrid, Users, SlidersHorizontal, LogOut, Menu, X, ArrowLeft,
+    LayoutGrid, Users, SlidersHorizontal, LogOut, X, ArrowLeft,
     Coins, Building2, ShieldCheck, CircleUser, ChevronRight, Palette, ScanFace,
 } from "lucide-react";
 import { authClient, useListOrganizations, useActiveOrganization } from "@/lib/auth/client";
 import { useRouter, usePathname } from "next/navigation";
 import { toast } from "sonner";
-import { Sheet, SheetClose, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { MobileTopBar, DrawerClose } from "@/components/admin/shell/MobileTopBar";
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -56,6 +56,25 @@ const NAV_SECTIONS: NavSection[] = [
     },
 ];
 
+// Rutas fuera del menú que también necesitan título en la barra móvil.
+const EXTRA_TITLES: Record<string, string> = {
+    "/administracion/miembros": "Equipo",
+    "/administracion/update-password": "Contraseña",
+};
+
+/** Título de la sección actual para la barra móvil (también en subrutas, p. ej. /leads/123). */
+function sectionTitle(pathname: string): string {
+    const routes: [string, string][] = [
+        ...NAV_SECTIONS.flatMap((s) => s.items.map((i): [string, string] => [i.href, i.label])),
+        ...Object.entries(EXTRA_TITLES),
+    ];
+    let best: [string, string] | null = null;
+    for (const r of routes) {
+        if ((pathname === r[0] || pathname.startsWith(r[0] + "/")) && (!best || r[0].length > best[0].length)) best = r;
+    }
+    return best ? best[1] : "Resumen";
+}
+
 function initialsOf(email: string) {
     if (!email) return "SF";
     return email.split(/[\s@.]+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
@@ -69,26 +88,37 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const [email, setEmail] = useState("");
     const [isPlatform, setIsPlatform] = useState(false);
     const [impersonating, setImpersonating] = useState(false);
+    const [credits, setCredits] = useState<number | null>(null);
     // Los menús Radix (Select/Sheet) solo se montan en el cliente: así el
     // servidor y el navegador no generan IDs distintos (error de hidratación).
     const mounted = useMounted();
     const { data: orgs } = useListOrganizations();
     const { data: activeOrg } = useActiveOrganization();
 
+    // Se vuelve a pedir al cambiar de clínica o de sección para que el saldo
+    // de créditos de la barra móvil no quede desfasado (es una consulta ligera).
+    const activeOrgId = activeOrg?.id ?? null;
     useEffect(() => {
+        let cancelled = false;
         (async () => {
             try {
-                const res = await fetch("/api/me");
+                const res = await fetch("/api/me", { cache: "no-store" });
                 const data = await res.json();
+                if (cancelled) return;
                 if (data?.user?.role) setRole(data.user.role as Role);
                 if (data?.user?.email) setEmail(data.user.email);
                 setIsPlatform(Boolean(data?.user?.isPlatformAdmin));
                 setImpersonating(Boolean(data?.user?.impersonating));
+                const c = Number(data?.user?.credits);
+                setCredits(data?.user?.credits == null || !Number.isFinite(c) ? null : c);
             } catch (err) {
                 console.error("Error fetching role:", err);
             }
         })();
-    }, []);
+        return () => {
+            cancelled = true;
+        };
+    }, [activeOrgId, pathname]);
 
     async function stopImpersonating() {
         await authClient.admin.stopImpersonating();
@@ -129,9 +159,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="side-brand">
                 <Wordmark tone="light" height={22} />
                 {inSheet ? (
-                    <SheetClose className="side-close" aria-label="Cerrar menú">
+                    <DrawerClose className="side-close" aria-label="Cerrar menú">
                         <X size={20} strokeWidth={1.8} />
-                    </SheetClose>
+                    </DrawerClose>
                 ) : (
                     <span className="mono" style={{ fontSize: 8, marginLeft: "auto", padding: "4px 8px", border: "1px solid rgba(255,255,255,0.14)", borderRadius: 99 }}>PANEL</span>
                 )}
@@ -257,33 +287,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="sf-shell-col">
                 {impersonationBanner}
 
-                {/* Cabecera móvil (navy, fija arriba al hacer scroll) */}
-                <header className="qoves-mobile-header sf-mobile-header">
-                    <Link href="/administracion/dashboard" className="sf-mobile-brand" aria-label="Smile Fast · Ir al resumen">
-                        <Wordmark tone="light" height={20} />
-                    </Link>
-                    {mounted ? (
-                        <Sheet open={open} onOpenChange={setOpen}>
-                            <SheetTrigger asChild>
-                                <button type="button" className="sf-menu-btn" aria-label="Abrir menú">
-                                    <Menu size={22} strokeWidth={1.8} />
-                                </button>
-                            </SheetTrigger>
-                            <SheetContent
-                                side="left"
-                                className="sf-sheet p-0 gap-0 border-r-0 [&>button:last-child]:hidden"
-                                aria-describedby={undefined}
-                            >
-                                <SheetTitle className="sr-only">Navegación</SheetTitle>
-                                <div className="qoves-admin sf-touch" style={{ height: "100%" }}>
-                                    {renderSidebar(true)}
-                                </div>
-                            </SheetContent>
-                        </Sheet>
-                    ) : (
-                        <span className="sf-menu-btn" aria-hidden="true"><Menu size={22} strokeWidth={1.8} /></span>
-                    )}
-                </header>
+                {/* Barra móvil (< 1024 px): cristal navy fijo arriba + menú lateral */}
+                <MobileTopBar
+                    title={sectionTitle(pathname)}
+                    credits={credits}
+                    creditsHref={role === "admin" ? "/administracion/creditos" : null}
+                    email={email}
+                    roleLabel={role === "admin" ? "Administrador" : role === "basic" ? "Equipo" : "Panel"}
+                    initials={initialsOf(email)}
+                    orgs={orgs ?? []}
+                    activeOrgId={activeOrg?.id ?? null}
+                    activeOrgName={activeOrg?.name ?? null}
+                    onSwitchOrg={switchOrg}
+                    onLogout={handleLogout}
+                    open={open}
+                    onOpenChange={setOpen}
+                    drawer={renderSidebar(true)}
+                    mounted={mounted}
+                />
 
                 <div className="sf-shell-body">
                     <div className="qoves-desktop-sidebar">
