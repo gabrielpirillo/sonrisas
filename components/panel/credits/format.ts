@@ -4,9 +4,9 @@
  * casi todas las monedas, pero el peso chileno (CLP) no tiene decimales.
  */
 
-export const CURRENCIES = ['usd', 'eur', 'ars', 'mxn', 'cop', 'pen', 'uyu', 'brl', 'gbp'] as const;
+export const CURRENCIES = ['usd', 'eur', 'ars', 'mxn', 'cop', 'pen', 'uyu', 'brl', 'gbp', 'clp', 'pyg'] as const;
 
-const ZERO_DECIMAL = new Set(['clp']);
+const ZERO_DECIMAL = new Set(['clp', 'pyg']);
 
 /** Dígitos de la unidad mínima (2 → centavos, 0 → sin decimales). */
 export function minorDigits(currency: string): number {
@@ -46,7 +46,9 @@ function moneyFormatter(currency: string, maxDigits?: number): Intl.NumberFormat
 
 /** Formatea un importe en unidad mínima, p. ej. 9900 usd → "99,00 US$". */
 export function formatMoney(amountMinor: number, currency: string): string {
-    return moneyFormatter(currency).format(fromMinor(amountMinor, currency));
+    const v = fromMinor(amountMinor, currency);
+    // Importes redondos sin decimales: "39 US$", "55.000 ARS".
+    return (Number.isInteger(v) ? moneyFormatter(currency, 0) : moneyFormatter(currency)).format(v);
 }
 
 /** Precio por crédito con hasta 3 decimales para que no se pierda la diferencia. */

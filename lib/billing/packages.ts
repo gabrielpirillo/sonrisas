@@ -1,5 +1,6 @@
 /** Paquetes de créditos (tabla credit_packages). Solo servidor. */
 import { db } from '@/lib/db';
+import { convertFromUsd, currencyForCountry } from '@/lib/billing/fx';
 
 export interface CreditPackageRow {
     id: string;
@@ -32,22 +33,19 @@ export async function getActivePackage(id: string): Promise<CreditPackageRow | n
 }
 
 // ── Moneda por país de facturación ──────────────────────────────────────────
-/** España → EUR, Argentina → ARS, resto del mundo → USD. */
-export function currencyForCountry(country: string | null | undefined): 'eur' | 'ars' | 'usd' {
-    if (country === 'ES') return 'eur';
-    if (country === 'AR') return 'ars';
-    return 'usd';
-}
+export { currencyForCountry } from '@/lib/billing/fx';
 
 /**
- * Precio que paga una clínica según su país. Si el paquete no tiene precio en
- * esa moneda, se cobra el precio base en USD.
+ * Precio que paga una clínica según su país: el precio base en USD convertido
+ * al tipo de cambio del día. Si el superadmin fijó un precio manual en esa
+ * moneda (columna prices), se usa ese.
  */
-export function resolvePrice(pkg: CreditPackageRow, country: string | null | undefined): { priceCents: number; currency: string } {
+export async function resolvePrice(pkg: CreditPackageRow, country: string | null | undefined): Promise<{ priceCents: number; currency: string }> {
     const cur = currencyForCountry(country);
-    const local = pkg.prices?.[cur];
-    if (cur !== 'usd' && Number.isInteger(local) && (local as number) >= 50) return { priceCents: local as number, currency: cur };
-    return { priceCents: pkg.price_cents, currency: pkg.currency };
+    if (cur === 'usd' || pkg.currency !== 'usd') return { priceCents: pkg.price_cents, currency: pkg.currency };
+    const manual = pkg.prices?.[cur];
+    if (Number.isInteger(manual) && (manual as number) >= 50) return { priceCents: manual as number, currency: cur };
+    return convertFromUsd(pkg.price_cents, cur);
 }
 
 /** Valida y guarda un paquete (superadmin). Devuelve error legible o null. */

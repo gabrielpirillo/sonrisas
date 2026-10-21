@@ -573,16 +573,21 @@
   background: linear-gradient(120deg, var(--navy-2), var(--blue-deep)); color: #fff;
   box-shadow: 0 18px 36px -26px rgba(19, 27, 34, 0.9);
 }
-.qoves-admin .cr-free-ic { width: 40px; height: 40px; border-radius: 13px; display: grid; place-items: center; flex-shrink: 0; background: rgba(255, 255, 255, 0.12); color: var(--blue-light); }
-.qoves-admin .cr-free strong { display: block; font-size: 15px; letter-spacing: -0.01em; }
-.qoves-admin .cr-free span { display: block; font-size: 13.5px; color: rgba(255, 255, 255, 0.75); margin-top: 2px; line-height: 1.45; }
+.qoves-admin .cr-free .cr-free-ic {
+  width: 42px; height: 42px; border-radius: 14px; display: grid; place-items: center; flex-shrink: 0; margin: 0;
+  background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.22); color: #ffffff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+}
+.qoves-admin .cr-free .cr-free-ic svg { display: block; }
+.qoves-admin .cr-free > div > strong { display: block; font-size: 15px; letter-spacing: -0.01em; }
+.qoves-admin .cr-free > div > span { display: block; font-size: 13.5px; color: rgba(255, 255, 255, 0.75); margin-top: 2px; line-height: 1.45; }
 
 /* ---------- Panel de la clínica en móvil (táctil) ---------- */
 @media (max-width: 760px) {
   .qoves-admin.sf-touch .cr-country { padding: 10px 12px; gap: 8px 10px; }
   .qoves-admin.sf-touch .cr-country select { flex: 1 1 150px; min-width: 0; height: 44px; }
   .qoves-admin.sf-touch .cr-country-cur { flex-basis: 100%; }
-  .qoves-admin.sf-touch .cr-free { padding: 14px; gap: 12px; align-items: flex-start; }
+  .qoves-admin.sf-touch .cr-free { padding: 14px; gap: 12px; align-items: center; }
   /* Barra de compra fija abajo mientras se eligen paquetes */
   .qoves-admin.sf-touch .cr-checkout {
     position: sticky;

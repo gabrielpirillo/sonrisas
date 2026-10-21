@@ -30,7 +30,7 @@ type Draft = {
     credits: string;
     price: string;
     currency: string;
-    /** Precio para España (EUR) y Argentina (ARS); vacío = se cobra el precio base. */
+    /** Precio para España (EUR) y Argentina (ARS); vacío = tipo de cambio automático. */
     priceEur: string;
     priceArs: string;
     badge: string;
@@ -188,7 +188,7 @@ export function PackagesEditor({ initial, loadError }: { initial: PackageRow[]; 
             <div className="pe-top">
                 <p className="lead" style={{ fontSize: 13.5 }}>
                     Lo que ven y pagan las clínicas. El importe se cobra siempre desde aquí (servidor). Los paquetes inactivos no se muestran.
-                    Los precios de España y Argentina son opcionales: si quedan vacíos se cobra el precio base.
+                    El precio base es en USD y cada país paga su equivalente al tipo de cambio del día. Los precios fijos de España y Argentina son opcionales: déjalos vacíos para usar el tipo de cambio.
                 </p>
                 <button type="button" className="btn btn-primary btn-sm" onClick={addNew}>
                     <Plus size={15} aria-hidden /> Nuevo paquete

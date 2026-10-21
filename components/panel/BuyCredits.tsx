@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { ArrowRight, BadgeCheck, Check, Clock, FlaskConical, Gift, Loader2, Lock, Mail, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, BadgeCheck, Check, Clock, FlaskConical, Gift, Loader2, Lock, ShieldCheck, Sparkles } from 'lucide-react';
 import { createCheckoutSession, type PublicPackage } from '@/lib/billing/actions';
 import { formatMoney, formatUnitPrice, fmtInt } from './credits/format';
 import { BillingCountry } from './credits/BillingCountry';
@@ -251,8 +251,6 @@ export function BuyCredits({ packages, imageCost, videoCost, stripeEnabled, stri
 
             <ul className="cr-trust" aria-label="Seguridad del pago">
                 <li><ShieldCheck size={15} aria-hidden /> Pago seguro con Stripe</li>
-                <li><Lock size={14} aria-hidden /> Tus datos de tarjeta nunca pasan por nuestros servidores</li>
-                <li><Mail size={14} aria-hidden /> Recibo por email</li>
                 <li><BadgeCheck size={14} aria-hidden /> Sin costos extra ni suscripción</li>
             </ul>
         </MotionConfig>

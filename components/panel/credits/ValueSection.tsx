@@ -11,13 +11,13 @@ type Props = {
     costPerCreditCents: number;
     currency: string;
     imageCredits: number;
-    videoCredits: number;
+    videoCredits?: number;
 };
 
 /** Ticket medio por defecto (editable): magnitud razonable para cada moneda. */
 const TICKET_DEFAULT: Record<string, number> = {
     usd: 1500, eur: 1500, gbp: 1500, ars: 1500000, clp: 1500000,
-    mxn: 25000, cop: 6000000, pen: 5000, uyu: 60000, brl: 8000,
+    mxn: 25000, cop: 6000000, pen: 5000, uyu: 60000, brl: 8000, pyg: 10000000,
 };
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -33,29 +33,22 @@ const num = (v: string) => {
     return Number.isFinite(n) && n >= 0 ? n : 0;
 };
 
-export function ValueSection({ costPerCreditCents, currency, imageCredits, videoCredits }: Props) {
+export function ValueSection({ costPerCreditCents, currency, imageCredits }: Props) {
     const cur = currency.toLowerCase();
     const ticketDefault = TICKET_DEFAULT[cur] ?? 1500;
     const reduce = useReducedMotion();
 
-    const [visits, setVisits] = useState(1000);
-    const [tryPct, setTryPct] = useState(5);
-    const [closePct, setClosePct] = useState(10);
     const [ticket, setTicket] = useState(ticketDefault);
-    const [adCost, setAdCost] = useState(0);
+    const [sims, setSims] = useState(50);
+    const [patients, setPatients] = useState(1);
 
     // Coste por simulación / vídeo en unidad mínima.
     const simMinor = costPerCreditCents * imageCredits;
-    const videoMinor = costPerCreditCents * videoCredits;
     const simMajor = fromMinor(simMinor, cur);
 
-    const leads = Math.round(visits * (tryPct / 100));
-    const patients = leads * (closePct / 100);
     const revenue = patients * ticket;
-    const investment = leads * simMajor;
+    const investment = sims * simMajor;
     const roi = investment > 0 ? revenue / investment : 0;
-    const adSpend = adCost > 0 ? leads * adCost : 0;
-    const saving = adSpend - investment;
 
     const zeroDec = minorDigits(cur) === 0;
     const moneyFmt = (v: number): Format => {
@@ -100,7 +93,7 @@ export function ValueSection({ costPerCreditCents, currency, imageCredits, video
                     <div className="vs-head-copy">
                         <span className="mono vs-eyebrow">EL RETORNO DE TUS CRÉDITOS</span>
                         <h2 id="vs-title" className="vs-title">
-                            Una simulación cuesta menos que un café. <span>Un paciente nuevo, mucho más.</span>
+                            Una simulación cuesta <span>menos que un café.</span>
                         </h2>
                         <p className="lead vs-sub">
                             Cada crédito convierte una visita a tu web en un lead que ya se ha visto con su nueva sonrisa
@@ -111,10 +104,6 @@ export function ValueSection({ costPerCreditCents, currency, imageCredits, video
                         <span className="mono vs-price-label">TU COSTE REAL</span>
                         <strong className="vs-price-num"><span className="vs-approx">≈</span>{formatMoney(Math.round(simMinor), cur)}</strong>
                         <span className="vs-price-unit">por simulación</span>
-                        {videoCredits > 0 && (
-                            <span className="vs-price-alt">≈ {formatMoney(Math.round(videoMinor), cur)} por vídeo</span>
-                        )}
-                        <span className="vs-price-note">Con el paquete más conveniente</span>
                     </div>
                 </motion.header>
 
@@ -129,45 +118,13 @@ export function ValueSection({ costPerCreditCents, currency, imageCredits, video
                     <div className="vs-inputs">
                         <div className="vs-inputs-head">
                             <span className="mono vs-eyebrow">CALCULADORA</span>
-                            <h3 className="vs-h3">Haz la cuenta <span>con tus números</span></h3>
-                            <p className="vs-hint">Mueve los controles o escribe tu cifra. Todo son tus estimaciones.</p>
+                            <h3 className="vs-h3">¿Cuánto te deja <span>un paciente?</span></h3>
+                            <p className="vs-hint">Solo dos datos que ya conoces. Mueve el control o escribe tu cifra.</p>
                         </div>
 
                         <Field
-                            id="vs-visits"
-                            label="Visitas mensuales a tu web"
-                            value={visits}
-                            onChange={setVisits}
-                            min={100}
-                            max={20000}
-                            step={100}
-                            display={grouped(visits)}
-                        />
-                        <Field
-                            id="vs-try"
-                            label="Visitantes que prueban el simulador"
-                            value={tryPct}
-                            onChange={setTryPct}
-                            min={0.5}
-                            max={30}
-                            step={0.5}
-                            suffix="%"
-                            display={`${tryPct.toLocaleString('es')} %`}
-                        />
-                        <Field
-                            id="vs-close"
-                            label="Leads que terminan en tratamiento"
-                            value={closePct}
-                            onChange={setClosePct}
-                            min={1}
-                            max={60}
-                            step={1}
-                            suffix="%"
-                            display={`${closePct.toLocaleString('es')} %`}
-                        />
-                        <Field
                             id="vs-ticket"
-                            label="Valor medio de un tratamiento estético"
+                            label="¿Cuánto cobras un tratamiento estético?"
                             value={ticket}
                             onChange={setTicket}
                             min={ticketDefault / 10}
@@ -176,25 +133,45 @@ export function ValueSection({ costPerCreditCents, currency, imageCredits, video
                             suffix={cur.toUpperCase()}
                             display={moneyText(ticket)}
                         />
-                        <OptionalField
-                            id="vs-adcost"
-                            label="¿Cuánto te cuesta hoy un lead en publicidad?"
-                            value={adCost}
-                            onChange={setAdCost}
-                            suffix={cur.toUpperCase()}
+                        <Field
+                            id="vs-sims"
+                            label="Simulaciones al mes"
+                            value={sims}
+                            onChange={setSims}
+                            min={10}
+                            max={500}
+                            step={10}
+                            display={grouped(sims)}
                         />
+                        <div className="vs-field">
+                            <span className="vs-label" id="vs-pat-label">Si de esas simulaciones salen…</span>
+                            <div className="vs-chips" role="radiogroup" aria-labelledby="vs-pat-label">
+                                {[1, 2, 3, 5].map((n) => (
+                                    <button
+                                        key={n}
+                                        type="button"
+                                        role="radio"
+                                        aria-checked={patients === n}
+                                        className={`vs-chip${patients === n ? ' on' : ''}`}
+                                        onClick={() => setPatients(n)}
+                                    >
+                                        {n} {n === 1 ? 'paciente' : 'pacientes'}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
                     </div>
 
                     <div className="vs-results" aria-label="Resultado estimado al mes">
                         <span className="vs-results-orb" aria-hidden />
-                        <span className="mono vs-results-eyebrow">CADA MES, CON TUS NÚMEROS</span>
+                        <span className="mono vs-results-eyebrow">TU MES, EN NÚMEROS</span>
 
                         <dl className="vs-kpis">
                             <Kpi label="Leads con foto y WhatsApp">
-                                <NumberFlow value={leads} locales="es" format={{ useGrouping: 'always' }} />
+                                <NumberFlow value={sims} locales="es" format={{ useGrouping: 'always' }} />
                             </Kpi>
                             <Kpi label="Pacientes nuevos">
-                                <NumberFlow value={patients} locales="es" format={{ maximumFractionDigits: 1, useGrouping: 'always' }} />
+                                <NumberFlow value={patients} locales="es" format={{ useGrouping: 'always' }} />
                             </Kpi>
                             <Kpi label="Ingresos estimados" wide>
                                 <NumberFlow value={revenue} locales="es" format={moneyFmt(revenue)} />
@@ -256,21 +233,9 @@ export function ValueSection({ costPerCreditCents, currency, imageCredits, video
                             </div>
                         </div>
 
-                        {adSpend > 0 && (
-                            <div className="vs-ads">
-                                <span className="mono vs-ads-label">AHORRO FRENTE A PUBLICIDAD</span>
-                                <strong className="vs-ads-num">
-                                    <NumberFlow value={Math.max(saving, 0)} locales="es" format={moneyFmt(Math.max(saving, 0))} />
-                                </strong>
-                                <span className="vs-ads-copy">
-                                    Esos {grouped(leads)} leads te costarían {moneyText(adSpend)} en anuncios.
-                                </span>
-                            </div>
-                        )}
-
                         <p className="vs-foot">
-                            Estimación con tus propios números; los resultados reales dependen de tu web, tu oferta y tu
-                            seguimiento. Calculada con 1 simulación por lead.
+                            Cálculo orientativo con tus cifras: cada lead usa 1 simulación. Los resultados reales dependen de
+                            tu web, tu oferta y tu seguimiento.
                         </p>
                     </div>
                 </motion.div>
@@ -360,7 +325,6 @@ function Field(props: {
             <div className="vs-field-top">
                 <label htmlFor={`${id}-range`} className="vs-label">
                     {label}
-                    <span className="vs-tag">tu estimación</span>
                 </label>
                 <div className="vs-num">
                     <input
@@ -388,45 +352,6 @@ function Field(props: {
                 aria-valuetext={display}
                 style={{ ['--fill' as string]: `${fill}%` }}
             />
-        </div>
-    );
-}
-
-function OptionalField({
-    id,
-    label,
-    value,
-    onChange,
-    suffix,
-}: {
-    id: string;
-    label: string;
-    value: number;
-    onChange: (v: number) => void;
-    suffix: string;
-}) {
-    return (
-        <div className="vs-field vs-field-opt">
-            <div className="vs-field-top">
-                <label htmlFor={id} className="vs-label">
-                    {label}
-                    <span className="vs-tag">opcional</span>
-                </label>
-                <div className="vs-num">
-                    <input
-                        id={id}
-                        type="number"
-                        inputMode="decimal"
-                        min={0}
-                        step="any"
-                        placeholder="—"
-                        value={value > 0 ? value : ''}
-                        onChange={(e) => onChange(num(e.target.value))}
-                    />
-                    <span aria-hidden>{suffix}</span>
-                </div>
-            </div>
-            <p className="vs-hint">Si lo indicas, comparamos con lo que pagas por cada lead en anuncios.</p>
         </div>
     );
 }

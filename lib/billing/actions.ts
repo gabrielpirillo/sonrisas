@@ -10,6 +10,7 @@ import { getPlatformAdmin } from '@/lib/auth/platform';
 import { rateLimit } from '@/lib/security';
 import { appBaseUrl, getStripe, stripeEnabled, stripeMode } from '@/lib/billing/stripe';
 import { currencyForCountry, getActivePackage, listPackages, resolvePrice, upsertPackage, type CreditPackageRow } from '@/lib/billing/packages';
+import type { BillingCurrency } from '@/lib/billing/fx';
 import { fulfillCheckoutSession, type PurchaseRow } from '@/lib/billing/purchases';
 
 export interface PublicPackage {
@@ -44,11 +45,11 @@ export interface BillingOverview {
     canBuy: boolean;
     /** País de facturación (ISO-2) y moneda resultante. */
     billingCountry: string | null;
-    billingCurrency: 'eur' | 'ars' | 'usd';
+    billingCurrency: BillingCurrency;
 }
 
-const toPublic = (p: CreditPackageRow, country: string | null): PublicPackage => {
-    const { priceCents, currency } = resolvePrice(p, country);
+const toPublic = async (p: CreditPackageRow, country: string | null): Promise<PublicPackage> => {
+    const { priceCents, currency } = await resolvePrice(p, country);
     return { id: p.id, name: p.name, credits: p.credits, priceCents, currency, badge: p.badge, highlight: p.highlight };
 };
 
@@ -85,7 +86,7 @@ export async function getBillingOverview(): Promise<BillingOverview> {
     return {
         clinic: clinic ? { id: clinic.id, name: clinic.name, credit_balance: clinic.credit_balance } : null,
         costs: costs.rows,
-        packages: packages.map((p) => toPublic(p, clinic?.billing_country ?? null)),
+        packages: await Promise.all(packages.map((p) => toPublic(p, clinic?.billing_country ?? null))),
         purchases,
         recentLedger,
         stripeEnabled: stripeEnabled(),
@@ -134,7 +135,7 @@ export async function createCheckoutSession(packageId: string): Promise<{ url?: 
     const pkg = await getActivePackage(packageId);
     if (!pkg) return { error: 'Ese paquete ya no está disponible.' };
     // Importe en la moneda del país de facturación (calculado aquí, nunca en el navegador).
-    const { priceCents, currency } = resolvePrice(pkg, ctx.clinic.billing_country ?? null);
+    const { priceCents, currency } = await resolvePrice(pkg, ctx.clinic.billing_country ?? null);
     const base = appBaseUrl();
     if (!/^https:\/\//.test(base) && process.env.NODE_ENV === 'production') {
         return { error: 'Configuración de URL incompleta.' };

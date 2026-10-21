@@ -387,3 +387,15 @@
   .qoves-admin.sf-touch .vs-num { height: 46px; }
   .qoves-admin.sf-touch .vs-num input { width: 120px; }
 }
+
+/* Selector rápido de pacientes (calculadora simplificada) */
+.qoves-admin .vs-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.qoves-admin .vs-chip {
+    flex: 1 1 calc(50% - 8px); min-height: 44px; padding: 10px 14px;
+    border-radius: 12px; border: 1px solid var(--blue-line, #d3dee6); background: #fff;
+    font-size: 14px; font-weight: 500; color: var(--ink-2, #3a4650); cursor: pointer;
+    transition: background .2s ease, color .2s ease, border-color .2s ease, transform .2s ease;
+}
+.qoves-admin .vs-chip:hover { border-color: var(--blue-deep, #4a6a80); }
+.qoves-admin .vs-chip.on { background: var(--navy-1, #1b2630); border-color: transparent; color: #fff; transform: translateY(-1px); }
+@media (min-width: 640px) { .qoves-admin .vs-chip { flex: 1 1 0; } }
