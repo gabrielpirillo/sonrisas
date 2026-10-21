@@ -57,7 +57,8 @@
 
 @media (max-width: 900px) {
   .tf-grid { gap: 36px; }
-  .tf-media { min-height: 0; aspect-ratio: 4 / 5; }
+  /* Alto explícito (no solo aspect-ratio): en Safari iOS antiguos el comparador quedaba con alto 0. */
+  .tf-media { min-height: 0; height: min(125vw, 640px); aspect-ratio: 4 / 5; }
   .tf-txt { font-size: 15.5px; }
 }
 
@@ -103,7 +104,7 @@
   /* el icono "salta" al aparecer */
   .tf-on .tf-item .tf-ic { animation: tfPop 0.6s cubic-bezier(.34, 1.56, .64, 1) both; animation-delay: calc(0.35s + var(--i) * 0.08s); }
 
-  .tf-media { aspect-ratio: 4 / 4.6; }
+  .tf-media { height: calc((100vw - 48px) * 1.15); aspect-ratio: 4 / 4.6; }
 }
 @media (max-width: 360px) {
   .tf-list { gap: 8px; }
