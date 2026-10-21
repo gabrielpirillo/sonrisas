@@ -40,6 +40,8 @@ export const auth = betterAuth({
     database: pool,
     secret: process.env.BETTER_AUTH_SECRET || process.env.NEXTAUTH_SECRET,
     baseURL: process.env.BETTER_AUTH_URL || process.env.NEXTAUTH_URL,
+    // Dominios extra desde los que se puede iniciar sesión (p. ej. el subdominio de Brandboost).
+    trustedOrigins: (process.env.TRUSTED_ORIGINS || '').split(',').map((o) => o.trim()).filter(Boolean),
     emailAndPassword: {
         enabled: true,
         // El alta del primer usuario crea su organización/clínica; no hay verificación
