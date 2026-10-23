@@ -1,36 +1,124 @@
 import Link from "next/link";
 import { Wordmark } from "@/components/admin/qoves/LogoMark";
+import { COMPANY, LEGAL_DOCS } from "@/lib/legal/company";
+import { PrintButton } from "./PrintButton";
+import "./legal.css";
 
-const footLink = {
-    display: "inline-flex",
-    alignItems: "center",
-    minHeight: 44,
-    color: "var(--ink-2)",
-    textDecoration: "none",
-    fontSize: 14.5,
-} as const;
+export interface LegalSection {
+    /** Ancla (#id) de la sección. */
+    id: string;
+    title: string;
+    body: React.ReactNode;
+}
 
-/** Plantilla sobria para las páginas legales (términos y privacidad). */
-export function LegalPage({ title, updated, children }: { title: string; updated: string; children: React.ReactNode }) {
+/**
+ * Plantilla de las páginas legales: cabecera con marca, índice (plegable en
+ * móvil, fijo en escritorio), secciones numeradas con ancla, fecha de
+ * actualización, enlaces a todos los documentos y estilos de impresión.
+ */
+export function LegalPage({
+    title,
+    eyebrow = "Legal",
+    path,
+    updated = COMPANY.updated,
+    version,
+    intro,
+    sections,
+}: {
+    title: string;
+    eyebrow?: string;
+    /** Ruta de la página (marca el enlace activo del pie). */
+    path: string;
+    updated?: string;
+    /** Versión del documento (se muestra junto a la fecha). */
+    version?: string;
+    intro?: React.ReactNode;
+    sections: LegalSection[];
+}) {
+    const tocItems = sections.map((s) => (
+        <li key={s.id}>
+            <a href={`#${s.id}`}>{s.title}</a>
+        </li>
+    ));
+
     return (
-        <div style={{ minHeight: "100dvh", display: "flex", flexDirection: "column", background: "#fff", color: "var(--ink)" }}>
-            <header style={{ borderBottom: "1px solid var(--line)" }}>
-                <div style={{ maxWidth: 760, margin: "0 auto", padding: "10px 20px", minHeight: 64, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                    <Link href="/" aria-label="Smile Fast — inicio" style={{ display: "inline-flex", alignItems: "center", minHeight: 44 }}><Wordmark height={20} /></Link>
-                    <span style={{ fontSize: 13, color: "var(--ink-3)" }}>Actualizado: {updated}</span>
+        <div className="sf-lg">
+            <header className="sf-lg-head">
+                <div className="sf-lg-head-in">
+                    <Link href="/" aria-label="Smile Fast — inicio" className="sf-lg-home"><Wordmark height={20} /></Link>
+                    <div className="sf-lg-head-actions">
+                        <PrintButton />
+                    </div>
                 </div>
             </header>
-            <main className="sf-legal" style={{ flex: 1, width: "100%", maxWidth: 760, margin: "0 auto", padding: "40px 20px 64px", fontSize: 16, lineHeight: 1.7, color: "var(--ink-2)", overflowWrap: "break-word" }}>
-                <h1 style={{ fontSize: "clamp(30px, 8vw, 44px)", letterSpacing: "-0.04em", lineHeight: 1.05, fontWeight: 600, color: "var(--ink)", margin: "0 0 24px", textWrap: "balance" }}>{title}</h1>
-                {children}
-            </main>
-            <footer style={{ borderTop: "1px solid var(--line)", background: "var(--blue-tint, #f2f6f9)" }}>
-                <nav aria-label="Legal" style={{ maxWidth: 760, margin: "0 auto", padding: "8px 20px", display: "flex", flexWrap: "wrap", gap: "0 22px" }}>
-                    <Link href="/" style={footLink}>Volver al inicio</Link>
-                    <Link href="/terminos" style={footLink}>Términos de uso</Link>
-                    <Link href="/privacidad" style={footLink}>Privacidad</Link>
-                </nav>
+
+            <div className="sf-lg-layout">
+                <aside className="sf-lg-toc" aria-label="Índice">
+                    <details>
+                        <summary>Contenido ({sections.length} apartados)</summary>
+                        <nav aria-label="Índice del documento"><ol>{tocItems}</ol></nav>
+                    </details>
+                    <nav className="sf-lg-toc-desk" aria-label="Índice del documento">
+                        <p className="sf-lg-toc-title">Contenido</p>
+                        <ol>{tocItems}</ol>
+                    </nav>
+                </aside>
+
+                <main className="sf-lg-main">
+                    <p className="sf-lg-eyebrow">{eyebrow}</p>
+                    <h1>{title}</h1>
+                    <p className="sf-lg-meta">
+                        Última actualización: <time>{updated}</time>
+                        {version ? <> · Versión {version}</> : null}
+                    </p>
+                    {intro ? <div className="sf-lg-intro">{intro}</div> : null}
+                    {sections.map((s, i) => (
+                        <section key={s.id} id={s.id} className="sf-lg-sec" aria-labelledby={`${s.id}-t`}>
+                            <h2 id={`${s.id}-t`}>
+                                <span className="n">{i + 1}.</span>
+                                <span>{s.title}</span>
+                                <a className="anchor" href={`#${s.id}`} aria-label={`Enlace a «${s.title}»`}>#</a>
+                            </h2>
+                            {s.body}
+                        </section>
+                    ))}
+                </main>
+            </div>
+
+            <footer className="sf-lg-foot">
+                <div className="sf-lg-foot-in">
+                    <nav aria-label="Documentos legales">
+                        <Link href="/">Inicio</Link>
+                        {LEGAL_DOCS.map((d) => (
+                            <Link key={d.href} href={d.href} aria-current={d.href === path ? "page" : undefined}>{d.label}</Link>
+                        ))}
+                    </nav>
+                    <small>© {new Date().getFullYear()} {COMPANY.product} · un producto de {COMPANY.tradeName} ({COMPANY.legalName})</small>
+                </div>
             </footer>
         </div>
     );
+}
+
+/** Tabla legible con desplazamiento interno en móvil. */
+export function LegalTable({ head, rows }: { head: string[]; rows: React.ReactNode[][] }) {
+    return (
+        <div className="sf-lg-table" role="region" aria-label="Tabla" tabIndex={0}>
+            <table>
+                <thead>
+                    <tr>{head.map((h) => <th key={h} scope="col">{h}</th>)}</tr>
+                </thead>
+                <tbody>
+                    {rows.map((r, i) => (
+                        <tr key={i}>{r.map((c, j) => <td key={j}>{c}</td>)}</tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
+}
+
+/** Recuadro destacado. */
+export function LegalNote({ children }: { children: React.ReactNode }) {
+    return <div className="sf-lg-note">{children}</div>;
 }

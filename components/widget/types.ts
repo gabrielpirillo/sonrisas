@@ -28,6 +28,10 @@ export interface FormValues {
     phoneNumber: string;
     ageAccepted: boolean;
     termsAccepted: boolean;
+    /** Consentimiento explícito para tratar la foto (obligatorio). */
+    photoAccepted: boolean;
+    /** Comunicaciones comerciales de la clínica (opcional, desmarcado). */
+    marketingAccepted: boolean;
     /** Respuestas a los campos adicionales de la clínica (por id de campo). */
     custom: Record<string, string | boolean>;
 }

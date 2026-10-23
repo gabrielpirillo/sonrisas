@@ -2,9 +2,45 @@
 
 import { storage as minioStorage } from '@/lib/storage';
 import { fetchTrustedImage } from '@/lib/security';
+import { newObjectKey } from '@/lib/storage/refs';
+import { SIGNED_URL_TTL, signStoragePath } from '@/lib/signedUrl';
+import { resolveClinic } from '@/lib/billing/credits';
+import { db } from '@/lib/db';
 
-/** Solo letras, números, guion y guion bajo: evita rutas arbitrarias en el bucket. */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Solo letras, números, guion y guion bajo (para el sufijo de tipo). */
 const safeSegment = (v: string) => String(v || 'anon').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80) || 'anon';
+
+/**
+ * Clínica para el prefijo de la clave. Solo si el formulario trae el campo
+ * clinicKey (el widget siempre lo manda; vacío = clínica por defecto). La
+ * selfie desde el móvil no lo trae y queda sin prefijo de clínica.
+ */
+async function clinicIdForUpload(formData: FormData): Promise<string | null> {
+    if (!formData.has('clinicKey')) return null;
+    try {
+        const raw = formData.get('clinicKey');
+        const clinic = await resolveClinic(typeof raw === 'string' && raw ? raw.slice(0, 200) : null);
+        return clinic?.id ?? null;
+    } catch {
+        return null;
+    }
+}
+
+/** Clínica de un lead recién creado por el widget (ventana corta), o null. */
+async function clinicIdForLead(leadId: string): Promise<string | null> {
+    if (!UUID_RE.test(leadId || '')) return null;
+    try {
+        const row = await db.queryOne<{ clinic_id: string | null }>(
+            `SELECT clinic_id FROM leads WHERE id = $1 AND created_at > now() - interval '6 hours'`,
+            [leadId]
+        );
+        return row?.clinic_id ?? null;
+    } catch {
+        return null;
+    }
+}
 
 /**
  * Uploads a file to MinIO Storage.
@@ -22,19 +58,22 @@ export const uploadScan = async (formData: FormData): Promise<{ success: boolean
 
         const rawExt = (file.name?.split('.').pop() || 'jpg').toLowerCase();
         const fileExt = ['jpg', 'jpeg', 'png', 'webp', 'heic'].includes(rawExt) ? rawExt : 'jpg';
-        const filePath = `${safeSegment(userId)}/${Date.now()}.${fileExt}`;
+        // Clave no adivinable, con prefijo de clínica cuando se conoce.
+        const filePath = newObjectKey({ clinicId: await clinicIdForUpload(formData), folder: 'scans', ext: fileExt });
 
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        const publicUrl = await minioStorage.uploadFile(
+        await minioStorage.uploadFile(
             'uploads',
             filePath,
             buffer,
             file.type || 'image/jpeg'
         );
 
-        return { success: true, data: publicUrl, path: filePath };
+        // `data`: URL firmada (2 h) para el navegador; también es la prueba de
+        // posesión que piden el análisis/generación y /api/db.
+        return { success: true, data: signStoragePath('uploads', filePath, SIGNED_URL_TTL.widget), path: filePath };
     } catch (error: any) {
         console.error("[Storage] uploadScan critical error:", error);
         return { success: false, error: `Upload Failed: ${error.message || "Unknown error"}` };
@@ -46,7 +85,7 @@ export const uploadScan = async (formData: FormData): Promise<{ success: boolean
  */
 export const uploadGeneratedImage = async (imageUrlOrBase64: string, userId: string, type: string): Promise<string> => {
     try {
-        const fileName = `${safeSegment(userId)}/${Date.now()}_${safeSegment(type)}.png`;
+        const fileName = newObjectKey({ clinicId: await clinicIdForLead(userId), folder: safeSegment(type), ext: 'png' });
 
         let buffer: Buffer;
 
@@ -60,14 +99,14 @@ export const uploadGeneratedImage = async (imageUrlOrBase64: string, userId: str
             buffer = Buffer.from(arrayBuffer);
         }
 
-        const publicUrl = await minioStorage.uploadFile(
+        await minioStorage.uploadFile(
             'generated',
             fileName,
             buffer,
             'image/png'
         );
 
-        return publicUrl;
+        return signStoragePath('generated', fileName, SIGNED_URL_TTL.widget);
     } catch (error) {
         console.error("Critical Error in uploadGeneratedImage:", error);
         return imageUrlOrBase64; // Fail safe return original URL
@@ -89,18 +128,19 @@ export const uploadGeneratedImageAction = async (formData: FormData): Promise<st
             return "";
         }
 
-        const fileName = `${safeSegment(userId)}/${Date.now()}_${safeSegment(type)}.png`;
+        // userId es el id del lead: la clínica sale de la base de datos.
+        const fileName = newObjectKey({ clinicId: await clinicIdForLead(userId), folder: safeSegment(type), ext: 'png' });
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        const publicUrl = await minioStorage.uploadFile(
+        await minioStorage.uploadFile(
             'generated',
             fileName,
             buffer,
             'image/png'
         );
 
-        return publicUrl;
+        return signStoragePath('generated', fileName, SIGNED_URL_TTL.widget);
     } catch (error) {
         console.error("Critical Error in uploadGeneratedImageAction:", error);
         return "";

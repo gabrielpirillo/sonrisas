@@ -40,6 +40,10 @@ export interface Clinic {
     flexprice_wallet_id: string | null;
     status: 'active' | 'suspended';
     billing_country?: string | null;
+    /** Retención y baja (migración 017). */
+    retention_photos_days?: number;
+    retention_leads_days?: number;
+    deletion_requested_at?: string | Date | null;
 }
 
 const FLEX_EVENT_NAME: Record<BillableAction, string> = {

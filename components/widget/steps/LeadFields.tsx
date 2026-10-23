@@ -1,11 +1,12 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
+import { useId, useState, useSyncExternalStore } from "react";
 import { Check, WIcon } from "../WIcon";
 import { countries } from "../countries";
 import type { FormValues } from "../types";
 import { useWidgetConfig } from "../WidgetConfigContext";
 import { CustomFields } from "./CustomFields";
+import { PATIENT_CONSENT_TEXTS, PHOTO_PROCESSING_INFO } from "@/lib/legal/versions";
 
 interface LeadFieldsProps {
     formValues: FormValues;
@@ -43,6 +44,8 @@ const useCountryNames = () => useSyncExternalStore(noopSubscribe, clientCountryN
 export function LeadFields({ formValues, setFormValues, selectedCountry, setSelectedCountry, showMissing = false }: LeadFieldsProps) {
     const { config: { contact, features, customFields } } = useWidgetConfig();
     const countryNames = useCountryNames();
+    const [photoInfoOpen, setPhotoInfoOpen] = useState(false);
+    const photoInfoId = useId();
     const set = <K extends keyof FormValues>(k: K, v: FormValues[K]) =>
         setFormValues((prev) => ({ ...prev, [k]: v }));
 
@@ -59,9 +62,13 @@ export function LeadFields({ formValues, setFormValues, selectedCountry, setSele
         phone: showMissing && features.askPhone && !formValues.phoneNumber,
         age: showMissing && !formValues.ageAccepted,
         terms: showMissing && !formValues.termsAccepted,
+        photo: showMissing && !formValues.photoAccepted,
     };
 
-    const toggleKey = (k: "ageAccepted" | "termsAccepted") => (e: React.KeyboardEvent) => {
+    type ConsentKey = "ageAccepted" | "termsAccepted" | "photoAccepted" | "marketingAccepted";
+    const toggleKey = (k: ConsentKey) => (e: React.KeyboardEvent) => {
+        // Solo la propia casilla (no los enlaces/botones que lleva dentro).
+        if (e.target !== e.currentTarget) return;
         if (e.key === " " || e.key === "Enter") {
             e.preventDefault();
             set(k, !formValues[k]);
@@ -167,13 +174,13 @@ export function LeadFields({ formValues, setFormValues, selectedCountry, setSele
                     onClick={() => set("ageAccepted", !formValues.ageAccepted)}
                 >
                     <Check on={formValues.ageAccepted} />
-                    <span>Soy mayor de edad.</span>
+                    <span>{PATIENT_CONSENT_TEXTS.age}</span>
                 </label>
                 <label
                     className="wf-consent"
                     role="checkbox"
                     aria-checked={formValues.termsAccepted}
-                    aria-label="Acepto los términos y la privacidad"
+                    aria-label={PATIENT_CONSENT_TEXTS.terms_privacy}
                     aria-invalid={miss.terms || undefined}
                     data-missing={miss.terms || undefined}
                     tabIndex={0}
@@ -186,6 +193,79 @@ export function LeadFields({ formValues, setFormValues, selectedCountry, setSele
                         <a href={contact.termsUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}><u>términos</u></a>{" "}
                         y la{" "}
                         <a href={contact.privacyUrl} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}><u>privacidad</u></a>.
+                    </span>
+                </label>
+                {/* div (no label): un <label> reenviaría el clic al botón "Más info". */}
+                <div
+                    className="wf-consent"
+                    role="checkbox"
+                    aria-checked={formValues.photoAccepted}
+                    aria-label={PATIENT_CONSENT_TEXTS.photo_processing}
+                    aria-invalid={miss.photo || undefined}
+                    data-missing={miss.photo || undefined}
+                    tabIndex={0}
+                    onKeyDown={toggleKey("photoAccepted")}
+                    onClick={() => set("photoAccepted", !formValues.photoAccepted)}
+                >
+                    <Check on={formValues.photoAccepted} />
+                    <span>
+                        {PATIENT_CONSENT_TEXTS.photo_processing}{" "}
+                        <button
+                            type="button"
+                            aria-expanded={photoInfoOpen}
+                            aria-controls={photoInfoOpen ? photoInfoId : undefined}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                setPhotoInfoOpen((o) => !o);
+                            }}
+                            style={{
+                                background: "none",
+                                border: 0,
+                                padding: "6px 0",
+                                margin: "-6px 0",
+                                font: "inherit",
+                                color: "var(--blue-deep)",
+                                textDecoration: "underline",
+                                textUnderlineOffset: 2,
+                                cursor: "pointer",
+                                whiteSpace: "nowrap",
+                            }}
+                        >
+                            {photoInfoOpen ? "Menos info" : "Más info"}
+                        </button>
+                    </span>
+                </div>
+                {photoInfoOpen && (
+                    <p
+                        id={photoInfoId}
+                        role="note"
+                        style={{
+                            margin: "2px 0 6px 34px",
+                            padding: "10px 12px",
+                            borderRadius: 12,
+                            background: "var(--blue-tint)",
+                            color: "var(--ink-2)",
+                            fontSize: 12.5,
+                            lineHeight: 1.45,
+                        }}
+                    >
+                        {PHOTO_PROCESSING_INFO}
+                    </p>
+                )}
+                <label
+                    className="wf-consent"
+                    role="checkbox"
+                    aria-checked={formValues.marketingAccepted}
+                    aria-label={`${PATIENT_CONSENT_TEXTS.marketing} (opcional)`}
+                    tabIndex={0}
+                    onKeyDown={toggleKey("marketingAccepted")}
+                    onClick={() => set("marketingAccepted", !formValues.marketingAccepted)}
+                >
+                    <Check on={formValues.marketingAccepted} />
+                    <span>
+                        {PATIENT_CONSENT_TEXTS.marketing}{" "}
+                        <span style={{ color: "var(--ink-3)", fontSize: 12.5 }}>(opcional)</span>
                     </span>
                 </label>
             </div>

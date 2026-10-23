@@ -17,6 +17,8 @@ import {
 import { useState, useEffect, type ComponentType } from "react";
 import { LogoMark, Wordmark } from "@/components/admin/qoves/LogoMark";
 import { useMounted } from "@/components/panel/credits/useMounted";
+import { LegalAcceptanceBanner } from "@/components/legal/LegalAcceptanceBanner";
+import { LEGAL_DOCS } from "@/lib/legal/company";
 
 type Role = "admin" | "basic";
 type NavItem = { href: string; label: string; icon: ComponentType<{ size?: number; strokeWidth?: number }>; adminOnly?: boolean };
@@ -89,6 +91,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const [isPlatform, setIsPlatform] = useState(false);
     const [impersonating, setImpersonating] = useState(false);
     const [credits, setCredits] = useState<number | null>(null);
+    // Baja de la clínica pendiente: fecha del borrado definitivo.
+    const [deletionAt, setDeletionAt] = useState<string | null>(null);
+    const [meVersion, setMeVersion] = useState(0);
+    // Configuración avisa al solicitar/cancelar la baja para refrescar el banner.
+    useEffect(() => {
+        const bump = () => setMeVersion((v) => v + 1);
+        window.addEventListener("sf:clinic-deletion-changed", bump);
+        return () => window.removeEventListener("sf:clinic-deletion-changed", bump);
+    }, []);
     // Los menús Radix (Select/Sheet) solo se montan en el cliente: así el
     // servidor y el navegador no generan IDs distintos (error de hidratación).
     const mounted = useMounted();
@@ -109,6 +120,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 if (data?.user?.email) setEmail(data.user.email);
                 setIsPlatform(Boolean(data?.user?.isPlatformAdmin));
                 setImpersonating(Boolean(data?.user?.impersonating));
+                setDeletionAt(typeof data?.user?.clinicDeletionScheduledFor === "string" ? data.user.clinicDeletionScheduledFor : null);
                 const c = Number(data?.user?.credits);
                 setCredits(data?.user?.credits == null || !Number.isFinite(c) ? null : c);
             } catch (err) {
@@ -118,7 +130,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         return () => {
             cancelled = true;
         };
-    }, [activeOrgId, pathname]);
+    }, [activeOrgId, pathname, meVersion]);
 
     async function stopImpersonating() {
         await authClient.admin.stopImpersonating();
@@ -151,6 +163,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <button type="button" onClick={stopImpersonating}>
                     Salir de impersonación
                 </button>
+            </div>
+        ) : null;
+
+    const deletionBanner =
+        deletionAt ? (
+            <div className="sf-imp-banner sf-deletion-banner" role="alert">
+                <span>
+                    Esta clínica y todos sus datos se eliminarán el{" "}
+                    <strong>{new Date(deletionAt).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}</strong>.
+                </span>
+                {role === "admin" && !impersonating && (
+                    <Link href="/administracion/settings#baja-clinica">Ver o cancelar</Link>
+                )}
             </div>
         ) : null;
 
@@ -260,6 +285,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <LogOut size={16} strokeWidth={1.6} />
                 </button>
             </div>
+            <nav className="side-legal" aria-label="Legal">
+                {LEGAL_DOCS.map((d) => (
+                    <Link key={d.href} href={d.href} target="_blank" onClick={() => setOpen(false)}>{d.label}</Link>
+                ))}
+            </nav>
         </aside>
     );
 
@@ -270,6 +300,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="qoves-admin sf-shell sf-touch">
                 <div className="sf-shell-col">
                     {impersonationBanner}
+                    {deletionBanner}
                     <header className="sf-auth-bar">
                         <Wordmark tone="light" height={20} />
                         <Link href="/administracion/dashboard" className="sf-auth-back">
@@ -286,6 +317,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <div className="qoves-admin sf-shell sf-touch">
             <div className="sf-shell-col">
                 {impersonationBanner}
+                {deletionBanner}
+                {role === "admin" && !impersonating ? <LegalAcceptanceBanner clinicKey={activeOrgId} /> : null}
 
                 {/* Barra móvil (< 1024 px): cristal navy fijo arriba + menú lateral */}
                 <MobileTopBar

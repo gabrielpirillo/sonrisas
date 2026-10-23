@@ -10,6 +10,8 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import sharp from 'sharp';
 import { storage } from '@/lib/storage';
+import { isSafeKey } from '@/lib/storage/refs';
+import { SIGNED_URL_TTL, signStoragePath } from '@/lib/signedUrl';
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -29,7 +31,7 @@ export async function POST(req: NextRequest) {
     try {
         const { image_path } = await req.json();
 
-        if (!image_path) {
+        if (!image_path || typeof image_path !== 'string' || !isSafeKey(image_path)) {
             throw new Error('image_path is required');
         }
 
@@ -71,7 +73,8 @@ export async function POST(req: NextRequest) {
         const watermarkedPath = image_path.replace(/\.(jpe?g|png|webp)$/i, '') + '_watermarked.jpg';
         await storage.uploadFile('generated', watermarkedPath, watermarkedBuffer, 'image/jpeg');
 
-        const publicUrl = storage.getPublicUrl('generated', watermarkedPath);
+        // Ruta interna: URL firmada de corta duración (nunca una URL pública).
+        const publicUrl = signStoragePath('generated', watermarkedPath, SIGNED_URL_TTL.widget);
 
         return NextResponse.json(
             { success: true, watermarked_path: watermarkedPath, public_url: publicUrl },

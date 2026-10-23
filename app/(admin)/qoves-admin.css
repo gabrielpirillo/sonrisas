@@ -1090,6 +1090,35 @@
   color: inherit; font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px;
 }
 
+/* Aviso de nuevas versiones legales (no bloqueante) */
+.qoves-admin .sf-legal-banner {
+  display: flex; align-items: center; gap: 10px 14px; flex-wrap: wrap;
+  padding: 10px 16px; background: var(--blue-tint); border-bottom: 1px solid var(--blue-line);
+  color: var(--ink); font-size: 13.5px; line-height: 1.45;
+}
+.qoves-admin .sf-legal-banner .ic { color: var(--blue-deep); flex-shrink: 0; }
+.qoves-admin .sf-legal-banner p { margin: 0; flex: 1 1 320px; min-width: 0; }
+.qoves-admin .sf-legal-banner p span { color: var(--ink-2); }
+.qoves-admin .sf-legal-banner a { color: var(--blue-deep); text-underline-offset: 2px; }
+.qoves-admin .sf-legal-banner .act { display: flex; align-items: center; gap: 4px; margin-left: auto; }
+.qoves-admin .sf-legal-banner .ok {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 16px; border-radius: 999px;
+  border: none; background: var(--blue-deep); color: #fff; font: inherit; font-weight: 600; cursor: pointer;
+}
+.qoves-admin .sf-legal-banner .ok:disabled { opacity: 0.6; cursor: default; }
+.qoves-admin .sf-legal-banner .close {
+  display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px;
+  border: none; background: none; color: var(--ink-3); cursor: pointer; border-radius: 999px;
+}
+.qoves-admin .sf-legal-banner .close:hover { background: #fff; color: var(--ink); }
+@media (max-width: 600px) { .qoves-admin .sf-legal-banner .ic { display: none; } }
+/* Enlaces legales al pie del menú lateral */
+.qoves-admin .side-legal {
+  display: flex; flex-wrap: wrap; gap: 0 10px; padding: 0 18px 14px; font-size: 11px;
+}
+.qoves-admin .side-legal a { color: rgba(255, 255, 255, 0.5); text-decoration: none; min-height: 24px; display: inline-flex; align-items: center; }
+.qoves-admin .side-legal a:hover { color: #fff; }
+
 .qoves-admin .sf-auth-back:focus-visible { outline: 2px solid var(--blue-light); outline-offset: 2px; }
 
 /* La barra superior móvil y el menú lateral viven en components/admin/shell/topbar.css */
@@ -1302,4 +1331,11 @@
 .qoves-admin .kpi-card { container-type: inline-size; }
 @container (max-width: 300px) {
   .qoves-admin .kpi-card > div:first-child > div { flex-direction: column; align-items: flex-start !important; gap: 10px !important; }
+}
+
+/* Baja de la clínica pendiente (30 días para cancelar) */
+.qoves-admin .sf-deletion-banner { background: linear-gradient(90deg, #8f4f47, var(--danger)); }
+.qoves-admin .sf-deletion-banner a {
+  min-height: 32px; display: inline-flex; align-items: center; padding: 0 4px;
+  color: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px;
 }

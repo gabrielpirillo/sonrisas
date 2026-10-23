@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
         // 6. Log
         await db.query(
             `INSERT INTO audit_logs (action, details) VALUES ($1, $2)`,
-            ['VIDEO_EMAIL_SENT', JSON.stringify({ leadId, email: lead.email })]
+            ['VIDEO_EMAIL_SENT', JSON.stringify({ leadId })]
         );
 
         return NextResponse.json(

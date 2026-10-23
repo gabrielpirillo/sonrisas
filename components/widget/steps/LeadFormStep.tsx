@@ -62,6 +62,7 @@ export function LeadFormStep({
         (!features.askPhone || !!formValues.phoneNumber) &&
         formValues.ageAccepted &&
         formValues.termsAccepted &&
+        formValues.photoAccepted &&
         customFieldsComplete(customFields, formValues.custom);
 
     const fields = (

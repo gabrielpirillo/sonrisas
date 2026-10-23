@@ -148,7 +148,9 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
         phoneNumber: '',
         ageAccepted: false,
         custom: {},
-        termsAccepted: false
+        termsAccepted: false,
+        photoAccepted: false,
+        marketingAccepted: false
     });
 
     // ─── Animated Phrases ────────────────────────────────────
@@ -299,7 +301,13 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
                             email: formValues.email,
                             phone: widgetConfig.features.askPhone ? fullPhone.trim() : '',
                             clinic_key: clinicKey,
-                            custom_answers: formValues.custom
+                            custom_answers: formValues.custom,
+                            consents: {
+                                age: formValues.ageAccepted,
+                                terms_privacy: formValues.termsAccepted,
+                                photo_processing: formValues.photoAccepted,
+                                marketing: formValues.marketingAccepted
+                            }
                         }
                     })
                 });
@@ -327,13 +335,15 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
             const anonUserId = 'anon_' + crypto.randomUUID();
             setUserId(anonUserId);
             formData.append('userId', anonUserId);
+            // La clínica del widget (vacío = por defecto) para el prefijo de la clave.
+            formData.append('clinicKey', clinicKey || '');
 
-            let localScanUrl = null;
-            let localScanPath = null;
+            // URL firmada (caduca en 2 h): se usa para mostrar la foto y como
+            // referencia para el análisis y la generación.
+            let localScanUrl: string | null = null;
             const uploadRes = await uploadScan(formData);
             if (uploadRes.success && uploadRes.data) {
                 localScanUrl = uploadRes.data;
-                localScanPath = uploadRes.path;
                 setUploadedScanUrl(localScanUrl);
             } else {
                 console.warn("Fallo subida de imagen original:", uploadRes.error);
@@ -343,10 +353,8 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
 
             // 3. Analyze Image
             const analysisFormData = new FormData();
-            if (localScanPath) {
-                analysisFormData.append('imagePath', localScanPath);
-            } else if (localScanUrl) {
-                analysisFormData.append('imageUrl', localScanUrl);
+            if (localScanUrl) {
+                analysisFormData.append('imagePath', localScanUrl);
             } else {
                 const analysisFile = base64ToFile(base64, 'analysis_input.jpg');
                 analysisFormData.append('file', analysisFile);
@@ -378,10 +386,8 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
             const fallbackPrompt = naturalVariation.prompt_data.Subject || "Smile Design";
 
             const genFormData = new FormData();
-            if (localScanPath) {
-                genFormData.append('imagePath', localScanPath);
-            } else if (localScanUrl) {
-                genFormData.append('imageUrl', localScanUrl);
+            if (localScanUrl) {
+                genFormData.append('imagePath', localScanUrl);
             } else {
                 const genFile = base64ToFile(base64, 'generation_input.jpg');
                 genFormData.append('file', genFile);
@@ -444,6 +450,7 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
                                 lead_id: currentLeadId,
                                 type: 'image',
                                 status: 'completed',
+                                // URLs firmadas: el servidor comprueba la firma y guarda la ruta sin firma.
                                 input_path: localScanUrl || 'unknown',
                                 output_path: outputUrl,
                                 metadata: { source: 'widget_v1' }
@@ -588,6 +595,7 @@ export function useWidgetState(props: WidgetContainerProps = {}) {
         (!widgetConfig.features.askPhone || formValues.phoneNumber) &&
         formValues.ageAccepted &&
         formValues.termsAccepted &&
+        formValues.photoAccepted &&
         customFieldsComplete(widgetConfig.customFields, formValues.custom)
     );
 

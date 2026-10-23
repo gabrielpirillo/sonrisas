@@ -16,6 +16,7 @@ import {
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
 import https from 'https';
+import { storagePath } from './refs';
 
 // Singleton S3 client
 let s3: S3Client | null = null;
@@ -56,14 +57,13 @@ function getS3Client(): S3Client {
 }
 
 /**
- * Get the public URL for a file.
- * Returns a proxy URL through the app to avoid CORS issues
- * when MinIO is on a different domain.
+ * Ruta interna (SIN firma) de un objeto: /api/storage/{bucket}/{key}.
+ * Es lo que se guarda en la base de datos. No sirve para clientes sin sesión:
+ * para entregar una URL al navegador usar signStoragePath / signStoredRef
+ * (lib/signedUrl.ts). Ver lib/storage/refs.ts para el formato de las claves.
  */
 export function getPublicUrl(bucket: string, key: string): string {
-    // Use app proxy to avoid CORS: /api/storage/{bucket}/{key}
-    const appUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || '';
-    return `${appUrl}/api/storage/${bucket}/${key}`;
+    return storagePath(bucket, key);
 }
 
 /**
@@ -76,7 +76,8 @@ export function getDirectUrl(bucket: string, key: string): string {
 
 /**
  * Upload a file to storage.
- * Returns the public URL of the uploaded file.
+ * Returns the unsigned internal path (/api/storage/{bucket}/{key}); sign it
+ * before handing it to a browser.
  * 
  * @example
  * const url = await uploadFile('scans', 'user123/photo.jpg', buffer, 'image/jpeg');
@@ -251,3 +252,50 @@ export const storage = {
 };
 
 export default storage;
+
+/**
+ * Recorre TODOS los objetos de un bucket (paginado de 1000 en 1000), no solo
+ * los primeros 100. Lo usa el job de retención.
+ */
+export async function* iterateAllFiles(
+    bucket: string,
+    prefix?: string
+): AsyncGenerator<{ key: string; lastModified?: Date; size?: number }> {
+    const client = getS3Client();
+    let token: string | undefined;
+    do {
+        const response = await client.send(new ListObjectsV2Command({
+            Bucket: bucket,
+            Prefix: prefix,
+            MaxKeys: 1000,
+            ContinuationToken: token,
+        }));
+        for (const obj of response.Contents || []) {
+            if (obj.Key) yield { key: obj.Key, lastModified: obj.LastModified, size: obj.Size };
+        }
+        token = response.IsTruncated ? response.NextContinuationToken : undefined;
+    } while (token);
+}
+
+/**
+ * Borra muchas claves en lotes de 1000 (límite de DeleteObjects).
+ * Devuelve cuántas se pidieron borrar sin error. Borrar una clave inexistente
+ * no es un error en S3/MinIO.
+ */
+export async function deleteKeysBatched(bucket: string, keys: string[]): Promise<number> {
+    const unique = Array.from(new Set(keys.filter(Boolean)));
+    if (unique.length === 0) return 0;
+    const client = getS3Client();
+    let deleted = 0;
+    for (let i = 0; i < unique.length; i += 1000) {
+        const chunk = unique.slice(i, i + 1000);
+        const res = await client.send(new DeleteObjectsCommand({
+            Bucket: bucket,
+            Delete: { Objects: chunk.map((Key) => ({ Key })), Quiet: true },
+        }));
+        const errors = res.Errors?.length ?? 0;
+        if (errors > 0) console.error(`[storage] ${errors} objetos no se pudieron borrar en ${bucket}`);
+        deleted += chunk.length - errors;
+    }
+    return deleted;
+}

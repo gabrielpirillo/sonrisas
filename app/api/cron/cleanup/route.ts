@@ -1,54 +1,37 @@
 /**
- * API Route: Cleanup Storage
- * Converted from Supabase Edge Function: cleanup-storage
- * 
- * Deletes files older than 24 hours from the 'uploads' bucket.
- * Should be called via a cron job / scheduled task.
+ * API Route: job de retención de datos (lib/retention.ts).
+ *
+ * Borra selfies originales con más de 24 h, simulaciones y leads fuera del
+ * plazo de cada clínica y las clínicas cuya baja venció. También se ejecuta
+ * solo cada 6 h desde instrumentation.ts; esta ruta permite lanzarlo a mano o
+ * desde un cron externo.
+ *
+ * Auth: Authorization: Bearer <CRON_SECRET>. Sin secreto configurado, cerrado.
  */
+import { timingSafeEqual } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
-import { storage } from '@/lib/storage';
+import { runRetention } from '@/lib/retention';
+
+export const dynamic = 'force-dynamic';
+export const maxDuration = 300;
+
+function authorized(req: NextRequest): boolean {
+    const expectedToken = process.env.CRON_SECRET || process.env.API_SECRET;
+    if (!expectedToken) return false;
+    const got = Buffer.from(req.headers.get('Authorization') || '');
+    const want = Buffer.from(`Bearer ${expectedToken}`);
+    return got.length === want.length && timingSafeEqual(got, want);
+}
 
 export async function POST(req: NextRequest) {
+    if (!authorized(req)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     try {
-        // Simple auth check
-        const authHeader = req.headers.get('Authorization');
-        const expectedToken = process.env.CRON_SECRET || process.env.API_SECRET;
-
-        // Sin secreto configurado, el cron queda cerrado (antes quedaba abierto).
-        if (!expectedToken || authHeader !== `Bearer ${expectedToken}`) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        // List files in uploads bucket
-        const files = await storage.listFiles('uploads', undefined, 100);
-
-        const now = new Date();
-        const filesToDelete: string[] = [];
-
-        for (const file of files) {
-            if (file.key === '.emptyFolderPlaceholder') continue;
-
-            if (file.lastModified) {
-                const diffHours = (now.getTime() - file.lastModified.getTime()) / (1000 * 60 * 60);
-                if (diffHours > 24) {
-                    filesToDelete.push(file.key);
-                }
-            }
-        }
-
-        if (filesToDelete.length > 0) {
-            await storage.deleteFiles('uploads', filesToDelete);
-            return NextResponse.json({
-                message: `Deleted ${filesToDelete.length} files.`,
-            });
-        }
-
-        return NextResponse.json({ message: 'No files to delete.' });
-
-    } catch (error: any) {
-        return NextResponse.json(
-            { error: error.message },
-            { status: 400 }
-        );
+        const report = await runRetention();
+        return NextResponse.json({ ok: true, report });
+    } catch (error) {
+        console.error('[cron/cleanup] Error en la retención:', error);
+        return NextResponse.json({ error: 'Error interno' }, { status: 500 });
     }
 }

@@ -13,6 +13,9 @@ import { createHash, randomBytes, timingSafeEqual } from 'crypto';
 import { headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthContext, type AuthContext } from '@/lib/auth/context';
+import { downloadFileAsBuffer } from '@/lib/storage';
+import { STORAGE_ROUTE_PREFIX, isPublicObject, parseStorageRef } from '@/lib/storage/refs';
+import { verifySignedStorageUrl } from '@/lib/signedUrl';
 
 // ── Token interno ──────────────────────────────────────────────────────────
 const INTERNAL_HEADER = 'x-internal-token';
@@ -63,6 +66,18 @@ function trustedPrefixes(): string[] {
     return [...bases, ...storage];
 }
 
+/** { bucket, key } si la URL es de nuestro proxy /api/storage/ (relativa o de un origen propio). */
+function storageRefFromUrl(url: string) {
+    if (url.startsWith(STORAGE_ROUTE_PREFIX)) return parseStorageRef(url);
+    try {
+        const parsed = new URL(url);
+        const own = trustedPrefixes().some((p) => p.endsWith(STORAGE_ROUTE_PREFIX) && parsed.toString().startsWith(p));
+        return own ? parseStorageRef(url) : null;
+    } catch {
+        return null;
+    }
+}
+
 /** True si la URL apunta a nuestro propio almacenamiento. */
 export function isTrustedImageUrl(url: string): boolean {
     try {
@@ -75,8 +90,20 @@ export function isTrustedImageUrl(url: string): boolean {
     }
 }
 
-/** Descarga una imagen solo si es de nuestro almacenamiento; si no, lanza. */
+/**
+ * Descarga una imagen solo si es de nuestro almacenamiento; si no, lanza.
+ * Las URLs /api/storage/... (relativas o absolutas) se leen directamente del
+ * bucket, y solo si llevan una firma válida (o son públicas, p. ej. logos):
+ * así una server action no puede usarse para leer fotos ajenas por su clave.
+ */
 export async function fetchTrustedImage(url: string): Promise<ArrayBuffer> {
+    const storageRef = storageRefFromUrl(url);
+    if (storageRef) {
+        const ref = verifySignedStorageUrl(url) ?? (isPublicObject(storageRef.bucket, storageRef.key) ? storageRef : null);
+        if (!ref) throw new Error('URL de almacenamiento sin firma válida');
+        const buf = await downloadFileAsBuffer(ref.bucket, ref.key);
+        return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
+    }
     if (!isTrustedImageUrl(url)) throw new Error('Origen de imagen no permitido');
     const res = await fetch(url, { signal: AbortSignal.timeout(20_000) });
     if (!res.ok) throw new Error(`No se pudo descargar la imagen (${res.status})`);

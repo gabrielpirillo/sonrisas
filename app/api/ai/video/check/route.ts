@@ -10,7 +10,10 @@ import { db } from '@/lib/db';
 import { requireClinic } from '@/lib/security';
 import { pollVideo, type VideoProvider } from '@/lib/ai/video';
 import { storage } from '@/lib/storage';
+import { newObjectKey } from '@/lib/storage/refs';
 import { refund, confirm, type Clinic } from '@/lib/billing/credits';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Refund the reserved video credits for a failed generation (idempotent). */
 async function refundVideo(gen: any, reason: string) {
@@ -95,8 +98,11 @@ export async function POST(req: NextRequest) {
         if (polled.state === 'done') {
             const videoBuffer = polled.video;
 
-            const fileName = `video_${generation_id}.mp4`;
-            const filePath = `videos/${fileName}`;
+            // Clave con prefijo de la clínica; el id de la generación (UUID aleatorio)
+            // la hace no adivinable y estable si dos sondeos terminan a la vez.
+            const filePath = gen.clinic_id && UUID_RE.test(String(gen.clinic_id)) && UUID_RE.test(String(generation_id))
+                ? `c/${String(gen.clinic_id).toLowerCase()}/videos/${String(generation_id).toLowerCase()}.mp4`
+                : newObjectKey({ clinicId: gen.clinic_id, folder: 'videos', ext: 'mp4' });
             await storage.uploadFile('generated', filePath, videoBuffer, 'video/mp4');
 
             // 5. Update Database

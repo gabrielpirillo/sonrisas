@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { storage } from '@/lib/storage';
+import { newObjectKey, parseStorageRef } from '@/lib/storage/refs';
 import { reserve, refund } from '@/lib/billing/credits';
 import { requireClinic } from '@/lib/security';
 import { generateImage } from '@/lib/ai/gemini';
@@ -211,14 +212,12 @@ export async function POST(req: NextRequest) {
 
                 // Download source image
                 const imagePath = sourceGen.output_path;
-                let imageBuffer: Buffer;
 
-                if (imagePath.startsWith('http')) {
-                    const res = await fetch(imagePath);
-                    imageBuffer = Buffer.from(await res.arrayBuffer());
-                } else {
-                    imageBuffer = await storage.downloadFileAsBuffer('generated', imagePath);
-                }
+                // output_path puede ser ruta /api/storage/..., URL absoluta antigua o
+                // clave a secas: se lee directo del bucket (el proxy exige firma).
+                const sourceRef = parseStorageRef(imagePath, 'generated');
+                if (!sourceRef) throw new Error('Invalid source image path');
+                const imageBuffer = await storage.downloadFileAsBuffer(sourceRef.bucket, sourceRef.key);
 
                 const imgBase64 = imageBuffer.toString('base64');
                 const mimeType = 'image/jpeg';
@@ -250,7 +249,7 @@ export async function POST(req: NextRequest) {
                     logStep('bg:scene', `✅ Scene generated with ${scene.model}`);
 
                     const sceneExt = scene.mimeType === 'image/png' ? 'png' : 'jpg';
-                    const sceneFileName = `${lead_id}/scene_${Date.now()}.${sceneExt}`;
+                    const sceneFileName = newObjectKey({ clinicId: auth.ctx.clinic.id, folder: 'scenes', ext: sceneExt });
                     const sceneBuffer = Buffer.from(sceneImgBase64, 'base64');
                     try {
                         const sceneUrl = await storage.uploadFile('generated', sceneFileName, sceneBuffer, sceneImgMimeType);

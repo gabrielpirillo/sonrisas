@@ -893,6 +893,7 @@ function Testimonios({ onStart }) {
 const FT_COLS = [
   ["Producto", [["Cómo funciona", "#como"], ["Lo que ven tus visitantes", "#producto"], ["El recorrido", "#recorrido"], ["Análisis clínico", "#analisis"], ["Vídeo realista", "#video"]]],
   ["Para tu clínica", [["Beneficios", "#transformaciones"], ["Casos de uso", "#usos"], ["Resultados", "#resultados"], ["Preguntas frecuentes", "#faq"]]]];
+const FT_LEGAL = [["Privacidad", "/privacidad"], ["Términos", "/terminos"], ["Encargo de tratamiento", "/encargo-de-tratamiento"], ["Subencargados", "/subencargados"], ["Cookies", "/cookies"], ["Aviso legal", "/aviso-legal"]];
 const FT_BADGES = [
   ["Cumple RGPD", <><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6l7-3Z" /><path d="M9 12l2 2 4-4" /></>],
   ["Datos cifrados", <><rect x="4.5" y="10.5" width="15" height="10" rx="2" /><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5" /></>],
@@ -928,6 +929,10 @@ function SiteFooter({ onStart }) {
             <a href={CONTACT_HREF} {...extLink} className="ft-link">Contactar por WhatsApp<span aria-hidden="true">→</span></a>
             <a href="/acceso" className="ft-link">Acceso clínicas<span aria-hidden="true">→</span></a>
           </div>
+          <div className="ft-col">
+            <span className="mono ft-h">Legal</span>
+            {FT_LEGAL.map(([t, href]) => <a key={href} href={href} className="ft-link">{t}<span aria-hidden="true">→</span></a>)}
+          </div>
         </nav>
       </div>
 
@@ -938,7 +943,9 @@ function SiteFooter({ onStart }) {
         <span className="mono ft-made">HECHO PARA CLÍNICAS DENTALES</span>
         <nav className="ft-legal" aria-label="Legal">
           <a href="/privacidad">Privacidad</a>
-          <a href="/terminos">Términos de uso</a>
+          <a href="/terminos">Términos</a>
+          <a href="/cookies">Cookies</a>
+          <a href="/aviso-legal">Aviso legal</a>
         </nav>
         <button type="button" className="ft-top-btn" onClick={toTop}><span aria-hidden="true">↑</span> Volver arriba</button>
       </div>

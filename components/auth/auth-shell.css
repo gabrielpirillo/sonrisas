@@ -275,6 +275,19 @@
 .sf-auth-error svg { color: var(--danger); flex-shrink: 0; margin-top: 1px; }
 .sf-auth-hint { font-size: 12.5px; color: var(--ink-3); margin: -8px 0 0; line-height: 1.4; }
 .sf-auth-foot a { color: var(--ink-3); text-decoration: none; }
+.sf-auth-foot nav { display: flex; flex-wrap: wrap; gap: 0 14px; width: 100%; }
+.sf-auth-foot nav a { display: inline-flex; align-items: center; min-height: 32px; }
+/* Aceptación legal en "Crear cuenta" */
+.sf-auth-check {
+  display: flex; gap: 12px; align-items: flex-start; cursor: pointer;
+  font-size: 13.5px; line-height: 1.5; color: var(--ink-2);
+  padding: 4px 0;
+}
+.sf-auth-check input {
+  flex-shrink: 0; width: 20px; height: 20px; margin: 1px 0 0;
+  accent-color: var(--blue-deep); cursor: pointer;
+}
+.sf-auth-check a { color: var(--blue-deep); font-weight: 500; text-underline-offset: 2px; }
 .sf-auth-foot a:hover { color: var(--blue-deep); }
 
 /* ── Escaparate navy ─────────────────────────────────────── */

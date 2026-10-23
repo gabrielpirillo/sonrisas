@@ -8,6 +8,7 @@ import { AnimatePresence, MotionConfig, motion } from 'framer-motion';
 import { AlertCircle, ArrowRight, Building2, Loader2, Lock, Mail, User } from 'lucide-react';
 import { authClient } from '@/lib/auth/client';
 import { initBillingCountryAction } from '@/lib/billing/actions';
+import { recordSignupAcceptanceAction } from '@/lib/legal/actions';
 import { AuthShell } from '@/components/auth/AuthShell';
 import { AuthField } from '@/components/auth/AuthField';
 import { authErrorMessage } from '@/components/auth/authErrors';
@@ -59,6 +60,8 @@ export default function AccesoPage() {
     const [suEmail, setSuEmail] = useState('');
     const [suPass, setSuPass] = useState('');
     const [clinicName, setClinicName] = useState('');
+    // Aceptación obligatoria de términos + encargo de tratamiento (y lectura de la privacidad).
+    const [acceptedLegal, setAcceptedLegal] = useState(false);
 
     async function handleLogin(e: React.FormEvent) {
         e.preventDefault();
@@ -77,6 +80,10 @@ export default function AccesoPage() {
     async function handleSignup(e: React.FormEvent) {
         e.preventDefault();
         setFormError(null);
+        if (!acceptedLegal) {
+            setFormError('Para crear la cuenta debes aceptar los Términos y el Contrato de encargo de tratamiento.');
+            return;
+        }
         setLoading(true);
         try {
             const { error } = await authClient.signUp.email({ email: suEmail.trim(), password: suPass, name: name.trim() });
@@ -89,6 +96,8 @@ export default function AccesoPage() {
                 // País de facturación inicial (define la moneda): se puede cambiar en Créditos.
                 await initBillingCountryAction(detectCountry()).catch(() => {});
             }
+            // Registro de la aceptación legal (versión vigente, en el servidor).
+            await recordSignupAcceptanceAction(true).catch(() => {});
             toast.success('Cuenta y clínica creadas');
             router.push('/administracion/dashboard');
         } catch (err) {
@@ -171,8 +180,22 @@ export default function AccesoPage() {
                         <AuthField id="clinicName" label="Nombre de la clínica" icon={Building2} autoComplete="organization" autoCapitalize="words" enterKeyHint="next" placeholder="Clínica dental…" value={clinicName} onChange={(e) => setClinicName(e.target.value)} required />
                         <AuthField id="suEmail" label="Email" icon={Mail} type="email" autoComplete="email" enterKeyHint="next" placeholder="tu@clinica.com" value={suEmail} onChange={(e) => setSuEmail(e.target.value)} required />
                         <AuthField id="suPass" label="Contraseña" icon={Lock} type="password" autoComplete="new-password" enterKeyHint="go" placeholder="Mínimo 8 caracteres" value={suPass} onChange={(e) => setSuPass(e.target.value)} minLength={8} required />
+                        <label className="sf-auth-check" htmlFor="acceptLegal">
+                            <input
+                                id="acceptLegal"
+                                type="checkbox"
+                                checked={acceptedLegal}
+                                onChange={(e) => { setAcceptedLegal(e.target.checked); if (e.target.checked) setFormError(null); }}
+                                required
+                            />
+                            <span>
+                                Acepto los <Link href="/terminos" target="_blank">Términos</Link> y el{' '}
+                                <Link href="/encargo-de-tratamiento" target="_blank">Contrato de encargo de tratamiento</Link>{' '}
+                                y he leído la <Link href="/privacidad" target="_blank">Política de privacidad</Link>.
+                            </span>
+                        </label>
                         {errorBox}
-                        <button type="submit" className="sf-auth-btn" disabled={loading} aria-busy={loading || undefined}>
+                        <button type="submit" className="sf-auth-btn" disabled={loading || !acceptedLegal} aria-busy={loading || undefined}>
                             {loading ? <Loader2 size={18} className="animate-spin" /> : <>Crear cuenta y clínica <ArrowRight size={17} className="arrow" /></>}
                         </button>
                     </motion.form>

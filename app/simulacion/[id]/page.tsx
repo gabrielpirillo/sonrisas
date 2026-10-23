@@ -3,6 +3,16 @@ import { db } from '@/lib/db'
 import { notFound } from 'next/navigation'
 import { Wordmark } from '@/components/admin/qoves/LogoMark'
 import { BRAND_NAME } from '@/lib/brand'
+import type { Metadata } from 'next'
+import { SIGNED_URL_TTL, signStoredRef } from '@/lib/signedUrl'
+
+// La URL firmada caduca: nunca servir esta página desde caché.
+export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+  referrer: 'no-referrer',
+}
 
 export default async function SimulacionPage({
   params,
@@ -21,7 +31,9 @@ export default async function SimulacionPage({
 
   if (!lead?.video_path) return notFound()
 
-  const videoSrc = `/api/video/${id}`
+  // URL firmada (2 h) directa al almacenamiento; video_path es la clave en generated.
+  const videoSrc = signStoredRef(lead.video_path, SIGNED_URL_TTL.widget, 'generated')
+  if (!videoSrc) return notFound()
   const firstName = typeof lead.name === 'string' ? lead.name.trim().split(/\s+/)[0] : ''
 
   return (

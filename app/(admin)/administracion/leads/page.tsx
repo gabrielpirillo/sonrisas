@@ -2,12 +2,13 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
-import { ArrowRight, Clapperboard, Loader2, ScanFace, Search } from "lucide-react";
+import { ArrowRight, Clapperboard, Download, Loader2, ScanFace, Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { LeadDetailModal } from "@/components/admin/LeadDetailModal";
 import { PageHead } from "@/components/admin/qoves/PageHead";
 import { StatusPill, LEAD_STATUS } from "@/components/admin/qoves/StatusPill";
 import { LeadThumb } from "@/components/admin/qoves/LeadThumb";
+import { ErasePatientDialog, downloadPatientExport } from "@/components/admin/PatientDataActions";
 
 const GOAL_LABELS: Record<string, string> = {
     alignment: "Alineación",
@@ -49,6 +50,10 @@ export default function LeadsPage() {
     const [filter, setFilter] = useState("todos");
     const [deepLinkLead, setDeepLinkLead] = useState<string | null>(null);
     const [canInstall, setCanInstall] = useState(false);
+    // Owner/admin sin impersonación: puede exportar y eliminar datos de pacientes.
+    const [canManageData, setCanManageData] = useState(false);
+    const [eraseTarget, setEraseTarget] = useState<{ id: string; name?: string | null } | null>(null);
+    const [exportingId, setExportingId] = useState<string | null>(null);
 
     // Enlaces desde el resumen: ?estado=pending filtra, ?lead=<id> abre su ficha.
     useEffect(() => {
@@ -104,6 +109,22 @@ export default function LeadsPage() {
     }, []);
 
     useEffect(() => { fetchLeads(); }, [fetchLeads]);
+
+    useEffect(() => {
+        fetch("/api/me")
+            .then((r) => r.json())
+            .then((d) => setCanManageData(d?.user?.role === "admin" && !d?.user?.impersonating))
+            .catch(() => setCanManageData(false));
+    }, []);
+
+    const exportLead = async (lead: { id: string; name?: string | null }) => {
+        setExportingId(lead.id);
+        try {
+            await downloadPatientExport(lead);
+        } finally {
+            setExportingId(null);
+        }
+    };
 
     useEffect(() => {
         if (!deepLinkLead || loading) return;
@@ -324,7 +345,38 @@ export default function LeadsPage() {
                                                 </span>
                                             </td>
                                             <td><StatusPill status={lead.status} /></td>
-                                            <td className="col-hide-sm"><span className="row-go">Ver →</span></td>
+                                            <td className="col-hide-sm" style={canManageData ? { paddingLeft: 4, paddingRight: 14 } : undefined}>
+                                                <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                                                    {canManageData && (
+                                                        <>
+                                                            <button
+                                                                type="button"
+                                                                className="icon-btn"
+                                                                style={{ width: 32, height: 32 }}
+                                                                title="Exportar datos del paciente"
+                                                                aria-label={`Exportar datos de ${lead.name || "este paciente"}`}
+                                                                disabled={exportingId === lead.id}
+                                                                onClick={(e) => { e.stopPropagation(); void exportLead(lead); }}
+                                                                onKeyDown={(e) => e.stopPropagation()}
+                                                            >
+                                                                {exportingId === lead.id ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} strokeWidth={1.8} />}
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                className="icon-btn"
+                                                                style={{ width: 32, height: 32, color: "var(--danger)" }}
+                                                                title="Eliminar paciente y sus datos"
+                                                                aria-label={`Eliminar a ${lead.name || "este paciente"} y sus datos`}
+                                                                onClick={(e) => { e.stopPropagation(); setEraseTarget({ id: lead.id, name: lead.name }); }}
+                                                                onKeyDown={(e) => e.stopPropagation()}
+                                                            >
+                                                                <Trash2 size={15} strokeWidth={1.8} />
+                                                            </button>
+                                                        </>
+                                                    )}
+                                                    {!canManageData && <span className="row-go">Ver →</span>}
+                                                </span>
+                                            </td>
                                         </tr>
                                     );
                                 })}
@@ -339,6 +391,18 @@ export default function LeadsPage() {
                 open={!!selectedLead}
                 onOpenChange={(open) => !open && setSelectedLead(null)}
                 onLeadUpdated={() => { fetchLeads(); }}
+                canManageData={canManageData}
+            />
+
+            <ErasePatientDialog
+                lead={eraseTarget}
+                open={!!eraseTarget}
+                onOpenChange={(o) => { if (!o) setEraseTarget(null); }}
+                onErased={() => {
+                    setLeads((prev) => prev.filter((l) => l.id !== eraseTarget?.id));
+                    setEraseTarget(null);
+                    fetchLeads();
+                }}
             />
         </div>
     );

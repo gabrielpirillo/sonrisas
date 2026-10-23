@@ -6,11 +6,20 @@
  * - límite por IP para evitar abuso.
  * Las acciones de gestión (estado del lead, etc.) viven en /api/admin.
  */
+import { createHash } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { resolveClinic } from '@/lib/billing/credits';
 import { ipFromRequest, rateLimit } from '@/lib/security';
 import { normalizeWidgetConfig, validateCustomAnswers } from '@/lib/widgetConfig';
+import { verifySignedStorageUrl } from '@/lib/signedUrl';
+import { storagePath } from '@/lib/storage/refs';
+import {
+    PATIENT_CONSENT_TEXTS,
+    REQUIRED_CONSENTS,
+    consentVersion,
+    type ConsentKind,
+} from '@/lib/legal/versions';
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -28,6 +37,32 @@ const json = (body: unknown, status = 200) =>
 
 export async function OPTIONS() {
     return new NextResponse('ok', { headers: corsHeaders, status: 200 });
+}
+
+/**
+ * Huella de la IP para el registro de consentimientos: sha256(IP + secreto del
+ * servidor). Nunca se guarda la IP en claro.
+ */
+function hashIp(ip: string): string | null {
+    if (!ip || ip === 'unknown') return null;
+    const secret =
+        process.env.CONSENT_IP_SECRET ||
+        process.env.BETTER_AUTH_SECRET ||
+        process.env.NEXTAUTH_SECRET ||
+        '';
+    return createHash('sha256').update(`smilefast-consent:${ip}:${secret}`).digest('hex');
+}
+
+const CONSENT_KINDS: ConsentKind[] = ['age', 'terms_privacy', 'photo_processing', 'marketing'];
+
+/**
+ * El widget manda las URLs firmadas que le dimos; solo se guardan si la firma
+ * es válida (prueba de posesión) y siempre como ruta sin firma
+ * (/api/storage/<bucket>/<key>), que se vuelve a firmar al leer.
+ */
+function storedPathFromSigned(value: unknown): string {
+    const ref = verifySignedStorageUrl(value);
+    return ref ? storagePath(ref.bucket, ref.key) : 'unknown';
 }
 
 /** True si el lead existe y fue creado hace poco (sesión del widget). */
@@ -68,11 +103,32 @@ export async function POST(req: NextRequest) {
                 const fields = normalizeWidgetConfig((clinic as { widget_config?: unknown }).widget_config).customFields;
                 const custom = validateCustomAnswers(fields, custom_answers);
                 if (!custom.ok) return json({ error: custom.error }, 400);
-                await db.query(
-                    `INSERT INTO leads (id, name, email, phone, status, clinic_id, custom_data)
-                     VALUES ($1, $2, $3, $4, 'pending', $5, $6)`,
-                    [id, String(name).slice(0, 200), String(email).slice(0, 200), String(phone || '').slice(0, 40), clinic.id, JSON.stringify(custom.answers)]
-                );
+                // Consentimientos: los obligatorios deben llegar marcados (true estricto).
+                const consents = (data.consents && typeof data.consents === 'object' ? data.consents : {}) as Record<string, unknown>;
+                if (REQUIRED_CONSENTS.some((k) => consents[k] !== true)) {
+                    return json({
+                        error: 'Debes aceptar que eres mayor de edad, los términos y la privacidad, y el tratamiento de tu foto para continuar.',
+                        code: 'CONSENT_REQUIRED',
+                    }, 400);
+                }
+                const marketing = consents.marketing === true;
+                const ipHash = hashIp(ip);
+                const userAgent = (req.headers.get('user-agent') || '').slice(0, 300) || null;
+                await db.transaction(async (client) => {
+                    await client.query(
+                        `INSERT INTO leads (id, name, email, phone, status, clinic_id, custom_data, marketing_consent)
+                         VALUES ($1, $2, $3, $4, 'pending', $5, $6, $7)`,
+                        [id, String(name).slice(0, 200), String(email).slice(0, 200), String(phone || '').slice(0, 40), clinic.id, JSON.stringify(custom.answers), marketing]
+                    );
+                    // Texto y versión salen del servidor (lib/legal/versions), no del navegador.
+                    for (const kind of CONSENT_KINDS) {
+                        await client.query(
+                            `INSERT INTO lead_consents (lead_id, clinic_id, kind, granted, text, version, ip_hash, user_agent)
+                             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+                            [id, clinic.id, kind, kind === 'marketing' ? marketing : true, PATIENT_CONSENT_TEXTS[kind], consentVersion(kind), ipHash, userAgent]
+                        );
+                    }
+                });
                 return json({ success: true });
             }
 
@@ -84,7 +140,7 @@ export async function POST(req: NextRequest) {
                 await db.query(
                     `INSERT INTO generations (lead_id, clinic_id, type, status, input_path, output_path, metadata)
                      SELECT $1, l.clinic_id, $2, $3, $4, $5, $6 FROM leads l WHERE l.id = $1`,
-                    [lead_id, type, status, input_path, output_path, JSON.stringify(metadata || {})]
+                    [lead_id, type, status, storedPathFromSigned(input_path), storedPathFromSigned(output_path), JSON.stringify(metadata || {})]
                 );
                 return json({ success: true });
             }

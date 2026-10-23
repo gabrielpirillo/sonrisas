@@ -4,6 +4,21 @@ import { AnalysisResponse } from "@/types/gemini";
 import { logApiUsage, logAudit } from "./backendService";
 import { translateGeminiError } from "@/utils/errorTranslator";
 import { fetchTrustedImage, internalHeaders, ipFromHeaders, rateLimit } from "@/lib/security";
+import { verifySignedStorageUrl } from "@/lib/signedUrl";
+
+const INVALID_IMAGE_REF = "La foto ya no está disponible. Vuelve a subirla.";
+
+/**
+ * imagePath llega del navegador: se acepta solo como la URL firmada que
+ * devolvió uploadScan (bucket uploads). Así nadie puede pedir el análisis o
+ * la simulación de una foto ajena adivinando su clave.
+ * Devuelve la clave, "" si no se envió, o false si no es válida.
+ */
+function signedUploadKey(value: FormDataEntryValue | null): string | false {
+    if (!value) return "";
+    const ref = verifySignedStorageUrl(String(value));
+    return ref && ref.bucket === "uploads" ? ref.key : false;
+}
 
 interface ErrorDetail {
     title?: string;
@@ -115,14 +130,15 @@ export const analyzeImageAndGeneratePrompts = async (formData: FormData): Promis
         }
         const file = formData.get('file');
         const imageUrl = formData.get('imageUrl') as string;
-        const imagePath = formData.get('imagePath') as string;
+        const imagePath = signedUploadKey(formData.get('imagePath'));
+        if (imagePath === false) return { success: false, error: INVALID_IMAGE_REF };
 
         let data = "";
 
         // PRIORITY 1: if internal path exists, we don't need to send base64 data!
         if (imagePath) {
             console.log("[Gemini] Using internal path for analysis:", imagePath);
-        } else if (imageUrl && imageUrl.startsWith('http')) {
+        } else if (imageUrl && (imageUrl.startsWith('http') || imageUrl.startsWith('/api/storage/'))) {
             console.log("[Gemini] Fetching image from URL for analysis:", imageUrl);
             const arrayBuffer = await fetchTrustedImage(imageUrl);
             data = Buffer.from(arrayBuffer).toString('base64');
@@ -209,7 +225,8 @@ export const generateSmileVariation = async (formData: FormData): Promise<Servic
         }
         const file = formData.get('file');
         const imageUrl = formData.get('imageUrl') as string;
-        const imagePath = formData.get('imagePath') as string;
+        const imagePath = signedUploadKey(formData.get('imagePath'));
+        if (imagePath === false) return { success: false, error: INVALID_IMAGE_REF };
         const variationPrompt = formData.get('variationPrompt') as string;
         const aspectRatio = (formData.get('aspectRatio') as any) || "1:1";
         const userId = formData.get('userId') as string || "anon";
@@ -222,7 +239,7 @@ export const generateSmileVariation = async (formData: FormData): Promise<Servic
 
         if (imagePath) {
             console.log("[Gemini] Using internal path for generation:", imagePath);
-        } else if (imageUrl && imageUrl.startsWith('http')) {
+        } else if (imageUrl && (imageUrl.startsWith('http') || imageUrl.startsWith('/api/storage/'))) {
             console.log("[Gemini] Fetching image from URL for generation:", imageUrl);
             const arrayBuffer = await fetchTrustedImage(imageUrl);
             data = Buffer.from(arrayBuffer).toString('base64');

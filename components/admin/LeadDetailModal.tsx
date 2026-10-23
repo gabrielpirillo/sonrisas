@@ -18,7 +18,8 @@ import {
 import { BeforeAfterSlider } from "@/components/widget/BeforeAfterSlider";
 // Supabase client removed — using internal API routes
 import { toast } from "sonner";
-import { deleteLeadAction } from "@/app/(admin)/administracion/leads/actions";
+import { Download } from "lucide-react";
+import { ErasePatientDialog, downloadPatientExport } from "@/components/admin/PatientDataActions";
 import { StatusPill } from "@/components/admin/qoves/StatusPill";
 import { leadImageSrc } from "@/components/admin/qoves/LeadThumb";
 import { LEAD_STATUS } from "@/lib/brand";
@@ -76,6 +77,55 @@ function KVRow({ label, value, first = false }: { label: string; value: React.Re
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, padding: "12px 16px", borderTop: first ? "none" : "1px solid var(--line)" }}>
             <span className="mono" style={{ fontSize: 9, flexShrink: 0 }}>{label}</span>
             <span style={{ fontSize: 13.5, fontWeight: 500, color: "var(--ink)", textAlign: "right", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{value || "—"}</span>
+        </div>
+    );
+}
+
+type LeadConsent = { kind: string; granted: boolean; text: string; version: string; created_at: string };
+
+const CONSENT_LABELS: Record<string, string> = {
+    age: "Mayor de edad",
+    terms_privacy: "Términos y privacidad",
+    photo_processing: "Tratamiento de la foto",
+    marketing: "Novedades y promociones",
+};
+
+/** Consentimientos registrados al enviar el formulario (tabla lead_consents). */
+function ConsentsBlock({ consents, marketingFallback }: { consents: LeadConsent[] | null; marketingFallback: boolean }) {
+    if (consents === null) {
+        return <p style={{ fontSize: 13, color: "var(--ink-3)", padding: "12px 16px", margin: 0 }}>Cargando…</p>;
+    }
+    if (consents.length === 0) {
+        return (
+            <div>
+                <p style={{ fontSize: 13, color: "var(--ink-3)", margin: 0, padding: "12px 16px" }}>Sin registro detallado (lead anterior al registro de consentimientos).</p>
+                <KVRow label="Marketing" value={marketingFallback ? "Sí" : "No"} />
+            </div>
+        );
+    }
+    const date = new Date(consents[0].created_at).toLocaleString("es-ES", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    const marketing = consents.find((c) => c.kind === "marketing");
+    const accepted = consents.filter((c) => c.kind !== "marketing" && c.granted);
+    const versions = Array.from(new Set(consents.map((c) => c.version)));
+    return (
+        <div>
+            <KVRow first label="Fecha" value={date} />
+            <div style={{ padding: "12px 16px", borderTop: "1px solid var(--line)" }}>
+                <div className="mono" style={{ fontSize: 9, marginBottom: 6 }}>Aceptó</div>
+                <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 4 }}>
+                    {accepted.map((c) => (
+                        <li key={c.kind} title={c.text} style={{ fontSize: 13.5, color: "var(--ink)", display: "flex", gap: 6, alignItems: "baseline" }}>
+                            <span aria-hidden="true" style={{ color: "var(--blue-deep)" }}>✓</span>
+                            <span>{CONSENT_LABELS[c.kind] || c.kind}</span>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+            <KVRow label="Marketing" value={marketing ? (marketing.granted ? "Sí" : "No") : marketingFallback ? "Sí" : "No"} />
+            <div style={{ padding: "12px 16px", borderTop: "1px solid var(--line)" }}>
+                <div className="mono" style={{ fontSize: 9, marginBottom: 4 }}>Versión</div>
+                <div style={{ fontSize: 12, color: "var(--ink-3)", wordBreak: "break-word" }}>{versions.join(" · ")}</div>
+            </div>
         </div>
     );
 }
@@ -142,6 +192,8 @@ interface LeadDetailModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     onLeadUpdated?: () => void;
+    /** Owner/admin: puede exportar y eliminar los datos del paciente. */
+    canManageData?: boolean;
 }
 
 // ─── Video generation stages (simulated progress) ──────────────────────────
@@ -159,14 +211,14 @@ const TOTAL_ESTIMATED_MS = 115_000;
 const TICK_MS = 800;
 const MAX_AUTO_PROGRESS = 94;
 
-export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: LeadDetailModalProps) {
+export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated, canManageData = false }: LeadDetailModalProps) {
     const [loadingAction, setLoadingAction] = useState(false);
     const [generatingVideo, setGeneratingVideo] = useState(false);
     const [videoGen, setVideoGen] = useState<any>(null);
     const [viewMode, setViewMode] = useState<"video" | "images">("images");
     const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-    const [deleting, setDeleting] = useState(false);
+    const [exporting, setExporting] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
     // Progress state
@@ -220,6 +272,23 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
             };
         }
     }, []);
+
+    // Consentimientos del lead (registro RGPD), cargados al abrir.
+    const [consents, setConsents] = useState<LeadConsent[] | null>(null);
+    useEffect(() => {
+        if (!open || !lead?.id) return;
+        let active = true;
+        setConsents(null);
+        fetch('/api/admin', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'get_lead_consents', data: { lead_id: lead.id } }),
+        })
+            .then((r) => r.json())
+            .then((r) => { if (active) setConsents(Array.isArray(r.data) ? r.data : []); })
+            .catch(() => { if (active) setConsents([]); });
+        return () => { active = false; };
+    }, [lead?.id, open]);
 
     // Reset simple states when lead changes
     useEffect(() => {
@@ -597,24 +666,13 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
         }
     };
 
-    const handleDeleteLead = async () => {
+    const handleExportData = async () => {
         if (!lead?.id) return;
-        setDeleting(true);
+        setExporting(true);
         try {
-            const result = await deleteLeadAction(lead.id);
-            if (result.success) {
-                toast.success("Lead eliminado correctamente");
-                onLeadUpdated?.();
-                onOpenChange(false);
-            } else {
-                toast.error(result.error || "Error al eliminar el lead");
-            }
-        } catch (error: any) {
-            toast.error("Error crítico al eliminar");
-            console.error(error);
+            await downloadPatientExport(lead);
         } finally {
-            setDeleting(false);
-            setShowDeleteConfirm(false);
+            setExporting(false);
         }
     };
 
@@ -763,7 +821,7 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                                             <div className="relative h-full w-auto max-w-full aspect-[9/16] rounded-2xl overflow-hidden bg-navy-3 border border-white/10 shadow-[0_24px_48px_-24px_rgba(0,0,0,0.8)] flex">
                                                 {generation.input_path && generation.input_path !== "unknown" ? (
                                                     <BeforeAfterSlider
-                                                        beforeImage={generation.input_path}
+                                                        beforeImage={leadImageSrc(generation.input_path) ?? generation.input_path}
                                                         afterImage={leadImageSrc(generation.output_path) ?? generation.output_path}
                                                         className="w-full h-full"
                                                     />
@@ -943,6 +1001,13 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                                         </div>
                                     </div>
                                 )}
+
+                                <div className="space-y-2.5">
+                                    <h3 className="mono px-1" style={{ fontSize: 9 }}>Consentimientos</h3>
+                                    <div className="card overflow-hidden">
+                                        <ConsentsBlock consents={consents} marketingFallback={!!lead.marketing_consent} />
+                                    </div>
+                                </div>
                             </motion.div>
                         )}
 
@@ -1142,17 +1207,31 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                                     </div>
                                 ) : null}
 
-                                <div className="h-px bg-blue-line" />
-
-                                <button
-                                    type="button"
-                                    className="w-full h-12 px-5 inline-flex items-center gap-2.5 rounded-full border border-[#ecd3cf] bg-[var(--danger-soft)] text-[15px] font-medium text-[#8f4f47] hover:bg-[var(--danger)] hover:text-white hover:border-[var(--danger)] transition-colors disabled:opacity-60"
-                                    onClick={() => setShowDeleteConfirm(true)}
-                                    disabled={deleting}
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                    Eliminar lead
-                                </button>
+                                {canManageData && (
+                                    <>
+                                        <div className="h-px bg-blue-line" />
+                                        <div className="space-y-2.5">
+                                            <h3 className="mono px-1" style={{ fontSize: 9 }}>Datos del paciente</h3>
+                                            <button
+                                                type="button"
+                                                className="w-full h-12 px-5 inline-flex items-center gap-2.5 rounded-full border border-blue-line bg-white text-[15px] font-medium text-ink hover:border-blue-accent hover:text-blue-deep transition-colors disabled:opacity-60"
+                                                onClick={handleExportData}
+                                                disabled={exporting}
+                                            >
+                                                {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4 text-blue-deep" />}
+                                                Exportar datos del paciente
+                                            </button>
+                                            <button
+                                                type="button"
+                                                className="w-full h-12 px-5 inline-flex items-center gap-2.5 rounded-full border border-[#ecd3cf] bg-[var(--danger-soft)] text-[15px] font-medium text-[#8f4f47] hover:bg-[var(--danger)] hover:text-white hover:border-[var(--danger)] transition-colors disabled:opacity-60"
+                                                onClick={() => setShowDeleteConfirm(true)}
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                                Eliminar paciente y sus datos
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
                             </motion.div>
                         )}
                         </AnimatePresence>
@@ -1180,7 +1259,7 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                                 ) : generation ? (
                                     <motion.div key="d-images" {...mediaMotion} style={{ width: "100%", height: "100%", display: "flex" }}>
                                         {(generation.input_path && generation.input_path !== "unknown") ? (
-                                            <BeforeAfterSlider beforeImage={generation.input_path} afterImage={leadImageSrc(generation.output_path) ?? generation.output_path} className="w-full h-full" />
+                                            <BeforeAfterSlider beforeImage={leadImageSrc(generation.input_path) ?? generation.input_path} afterImage={leadImageSrc(generation.output_path) ?? generation.output_path} className="w-full h-full" />
                                         ) : (
                                             <ModalImage src={generation.output_path} alt={`Simulación de ${lead.name || "el paciente"}`} />
                                         )}
@@ -1344,6 +1423,12 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                                     </div>
                                 </motion.div>
                             )}
+                            <motion.div variants={rise} custom={2}>
+                                <div className="mono" style={{ fontSize: 9, marginBottom: 10 }}>CONSENTIMIENTOS</div>
+                                <div style={{ background: "#fff", border: "1px solid var(--blue-line)", borderRadius: 14, overflow: "hidden" }}>
+                                    <ConsentsBlock consents={consents} marketingFallback={!!lead.marketing_consent} />
+                                </div>
+                            </motion.div>
                             <motion.div variants={rise} custom={3}>
                                 <div className="mono" style={{ fontSize: 9, marginBottom: 10 }}>CAMBIAR ESTADO</div>
                                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
@@ -1362,46 +1447,28 @@ export function LeadDetailModal({ lead, open, onOpenChange, onLeadUpdated }: Lea
                                     {sendingPhoto ? <Loader2 className="animate-spin" size={17} /> : <Send size={17} />}
                                 </button>
                             )}
-                            <button className="btn btn-ghost" style={{ background: "#fff", width: 50, padding: 0, color: "var(--danger)" }} title="Eliminar lead" aria-label="Eliminar lead" onClick={() => setShowDeleteConfirm(true)} disabled={deleting}>
-                                <Trash2 size={17} />
-                            </button>
+                            {canManageData && (
+                                <>
+                                    <button className="btn btn-ghost" style={{ background: "#fff", width: 50, padding: 0 }} title="Exportar datos del paciente" aria-label="Exportar datos del paciente" onClick={handleExportData} disabled={exporting}>
+                                        {exporting ? <Loader2 className="animate-spin" size={17} /> : <Download size={17} />}
+                                    </button>
+                                    <button className="btn btn-ghost" style={{ background: "#fff", width: 50, padding: 0, color: "var(--danger)" }} title="Eliminar paciente y sus datos" aria-label="Eliminar paciente y sus datos" onClick={() => setShowDeleteConfirm(true)}>
+                                        <Trash2 size={17} />
+                                    </button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
                 </motion.div>
 
-                {/* Delete Confirmation Dialog (shared) */}
-                <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-                    <DialogContent className="sf-dialog w-[calc(100vw-24px)] max-w-[calc(100vw-24px)] sm:max-w-md rounded-[22px] border-[var(--blue-line)] p-0 overflow-hidden shadow-[0_40px_80px_-30px_rgba(19,27,34,0.6)]">
-                        <div className="qoves-admin sf-touch" style={{ padding: 24 }}>
-                            <DialogHeader>
-                                <div className="mx-auto sm:mx-0" style={{ width: 44, height: 44, borderRadius: 14, display: "grid", placeItems: "center", background: "var(--danger-soft)", color: "var(--danger)", marginBottom: 6 }}>
-                                    <Trash2 size={20} />
-                                </div>
-                                <DialogTitle style={{ fontSize: 19, fontWeight: 600, letterSpacing: "-0.02em", color: "var(--ink)", lineHeight: 1.25 }}>
-                                    ¿Eliminar a {lead.name || "este paciente"}?
-                                </DialogTitle>
-                                <DialogDescription style={{ color: "var(--ink-2)", lineHeight: 1.5 }}>
-                                    Se borrarán su ficha, sus simulaciones y sus vídeos. Esta acción no se puede deshacer.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2.5 mt-6 [&>button]:w-full sm:[&>button]:w-auto">
-                                <button className="btn btn-ghost btn-sm" onClick={() => setShowDeleteConfirm(false)} disabled={deleting}>
-                                    Cancelar
-                                </button>
-                                <button
-                                    className="btn btn-sm"
-                                    style={{ background: "var(--danger)", color: "#fff", boxShadow: "0 10px 22px -14px rgba(181,103,94,0.95)", opacity: deleting ? 0.7 : 1 }}
-                                    onClick={handleDeleteLead}
-                                    disabled={deleting}
-                                >
-                                    {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
-                                    Eliminar lead
-                                </button>
-                            </div>
-                        </div>
-                    </DialogContent>
-                </Dialog>
+                {/* Supresión: confirmación escribiendo ELIMINAR (compartida móvil/escritorio) */}
+                <ErasePatientDialog
+                    lead={lead}
+                    open={showDeleteConfirm}
+                    onOpenChange={setShowDeleteConfirm}
+                    onErased={() => { onLeadUpdated?.(); onOpenChange(false); }}
+                />
 
             </DialogContent>
         </Dialog>

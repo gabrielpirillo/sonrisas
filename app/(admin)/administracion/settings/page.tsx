@@ -1,6 +1,6 @@
 import { MembersManager } from "@/components/admin/MembersManager";
 import { getSession } from "@/lib/auth/session";
-import { isImpersonating, getAuthContext } from "@/lib/auth/context";
+import { isImpersonating, getAuthContext, hasOrgRole } from "@/lib/auth/context";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import Link from "next/link";
@@ -9,6 +9,8 @@ import { PageHead } from "@/components/admin/qoves/PageHead";
 import { getWidgetConfigByClinicId } from "@/lib/widgetConfig.server";
 import { DEFAULT_WIDGET_CONFIG } from "@/lib/widgetConfig";
 import "@/components/admin/widget-studio/widget-studio.css";
+import { DataRetentionSettings } from "@/components/admin/DataRetentionSettings";
+import { RETENTION_LIMITS, clinicDeletionDate } from "@/lib/retentionLimits";
 
 export default async function SettingsPage() {
     const session = await getSession();
@@ -16,7 +18,9 @@ export default async function SettingsPage() {
     if (await isImpersonating()) redirect("/administracion/dashboard");
     if (session.role !== "admin") redirect("/administracion/leads");
 
-    const clinic = (await getAuthContext())?.clinic ?? null;
+    const ctx = await getAuthContext();
+    const clinic = ctx?.clinic ?? null;
+    const isOwner = hasOrgRole(ctx?.role, ["owner"]);
 
     // Real usage — generations in the last 30 days
     let usage30 = 0;
@@ -76,6 +80,16 @@ export default async function SettingsPage() {
                             </Link>
                         </div>
                     </div>
+
+                    {clinic && (
+                        <DataRetentionSettings
+                            clinicName={clinic.name}
+                            photosDays={clinic.retention_photos_days ?? RETENTION_LIMITS.photos.default}
+                            leadsDays={clinic.retention_leads_days ?? RETENTION_LIMITS.leads.default}
+                            isOwner={isOwner}
+                            deletionScheduledFor={clinic.deletion_requested_at ? clinicDeletionDate(clinic.deletion_requested_at).toISOString() : null}
+                        />
+                    )}
                 </div>
 
                 {/* ── Right column ── */}

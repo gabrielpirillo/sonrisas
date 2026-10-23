@@ -18,7 +18,8 @@ import { topUp } from '@/lib/billing/credits';
 export interface PurchaseRow {
     id: string;
     created_at: string;
-    clinic_id: string;
+    /** NULL si la clínica se eliminó (la compra se conserva por contabilidad; ver migración 017). */
+    clinic_id: string | null;
     package_id: string;
     package_name: string;
     credits: number;
@@ -118,7 +119,8 @@ export async function fulfillCheckoutSession(sessionId: string): Promise<Fulfill
     const charge = typeof pi === 'object' && pi && typeof pi.latest_charge === 'object' ? (pi.latest_charge as Stripe.Charge) : null;
 
     let credited = false;
-    try {
+    // Clínica eliminada: no hay saldo al que acreditar (la compra queda registrada igual).
+    if (purchase.clinic_id) try {
         const result = await topUp({
             clinicId: purchase.clinic_id,
             credits: purchase.credits,
@@ -172,6 +174,7 @@ async function netClawedBack(client: import('pg').PoolClient, purchase: Purchase
  * registra en el ledger. Devuelve lo que realmente se descontó.
  */
 async function clawBack(client: import('pg').PoolClient, purchase: PurchaseRow, toRemove: number, key: string, meta: Record<string, unknown>): Promise<number> {
+    if (!purchase.clinic_id) return 0; // clínica eliminada: no hay saldo ni ledger
     const bal = await client.query<{ credit_balance: number }>('SELECT credit_balance FROM clinics WHERE id = $1 FOR UPDATE', [purchase.clinic_id]);
     const removable = Math.min(toRemove, bal.rows[0]?.credit_balance ?? 0);
     if (removable <= 0) return 0;
@@ -239,6 +242,7 @@ export async function handleRefundUpdated(refund: Stripe.Refund): Promise<void> 
             [purchase.id, refund.amount]
         );
         // Lo que descontó ese reembolso (proporcional), sin devolver más de lo descontado por reembolsos.
+        if (!purchase.clinic_id) return; // clínica eliminada: solo se ajusta el importe de la compra
         const proportional = Math.round(purchase.credits * Math.min(1, refund.amount / Math.max(1, purchase.amount_cents)));
         const back = Math.max(0, Math.min(proportional, await netClawedBack(client, purchase, ['stripe_refund', 'stripe_refund_reversal'])));
         // Se registra aunque sea 0 para que la clave idempotente cubra también el ajuste de importe de arriba.

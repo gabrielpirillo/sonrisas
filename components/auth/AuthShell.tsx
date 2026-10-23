@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ScanFace, Sparkles, UserRoundCheck } from "lucide-react";
 import { Wordmark } from "@/components/admin/qoves/LogoMark";
+import { LEGAL_DOCS } from "@/lib/legal/company";
 import "./auth-shell.css";
 
 const PHOTOS = ["/brand/auth/preview-after.jpg", "/brand/auth/trans-1-after.jpg", "/brand/auth/trans-2-after.jpg"];
@@ -115,6 +116,9 @@ export function AuthShell({
                 <div className="sf-auth-foot">
                     <span>© {new Date().getFullYear()} Smile Fast</span>
                     <span>Simulación de sonrisa con IA para clínicas dentales</span>
+                    <nav aria-label="Legal">
+                        {LEGAL_DOCS.map((d) => <Link key={d.href} href={d.href}>{d.label}</Link>)}
+                    </nav>
                 </div>
             </main>
             <Showcase />

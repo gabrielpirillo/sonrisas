@@ -9,6 +9,9 @@ import { getLeadForEmail } from '@/lib/leadAccess';
 import { escapeXml } from '@/lib/security';
 import nodemailer from 'nodemailer';
 import { storage } from '@/lib/storage';
+import { parseStorageRef } from '@/lib/storage/refs';
+import { clinicCanAccessObject } from '@/lib/storage/access';
+import { verifySignedStorageUrl } from '@/lib/signedUrl';
 import { brandedEmail, clinicName, emailNote, mailFrom } from '@/lib/emailTemplate';
 
 const corsHeaders = {
@@ -36,17 +39,21 @@ export async function POST(req: NextRequest) {
         const email = access.lead.email;
         const name = access.lead.name;
 
-        // Download image — try watermarked version first, fallback to original
-        // Extract path after bucket name (handles full URLs and relative paths)
-        let imagePath = imageUrl;
-        const generatedIdx = imageUrl.indexOf('/generated/');
-        if (generatedIdx !== -1) {
-            imagePath = imageUrl.substring(generatedIdx + '/generated/'.length);
+        // ¿Qué imagen? El widget manda la URL firmada que recibió (prueba de
+        // posesión); el panel manda la ruta guardada y se comprueba que el
+        // objeto es de su clínica. Nunca se acepta una clave suelta del widget.
+        let ref = verifySignedStorageUrl(imageUrl);
+        if (!ref && access.via === 'clinic' && access.lead.clinic_id) {
+            const stored = parseStorageRef(imageUrl, 'generated');
+            if (stored && (await clinicCanAccessObject(access.lead.clinic_id, stored.bucket, stored.key))) ref = stored;
         }
-        if (imagePath.includes('..') || imagePath.startsWith('/')) {
-            return NextResponse.json({ success: false, error: 'Ruta de imagen inválida' }, { headers: corsHeaders, status: 400 });
+        if (!ref || ref.bucket !== 'generated') {
+            return NextResponse.json({ success: false, error: 'Imagen no válida o caducada' }, { headers: corsHeaders, status: 403 });
         }
-        const watermarkedPath = imagePath.replace(/\.(jpg|png)$/i, '_watermarked.jpg');
+
+        // Primero la versión con marca de agua; si no existe, la original.
+        const imagePath = ref.key;
+        const watermarkedPath = imagePath.replace(/\.(jpe?g|png)$/i, '_watermarked.jpg');
 
         let imageBuffer: Buffer;
 

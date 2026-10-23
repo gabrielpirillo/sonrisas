@@ -7,6 +7,7 @@ import { ArrowDown, ArrowLeft, ChevronsLeftRight } from "lucide-react";
 import WidgetContainer from "@/components/widget/WidgetContainer";
 import { Wordmark } from "@/components/admin/qoves/LogoMark";
 import { whatsappLink } from "@/lib/brand";
+import { LEGAL_DOCS } from "@/lib/legal/company";
 
 const CONTACT_HREF = whatsappLink("Hola, quiero saber más sobre Smile Fast para mi clínica.");
 const SIGNUP_HREF = "/acceso?modo=registro";
@@ -225,8 +226,7 @@ function DemoContent() {
                 <div className="sfd-wrap">
                     <span>© {new Date().getFullYear()} Smile Fast</span>
                     <nav aria-label="Pie de página">
-                        <Link href="/privacidad">Privacidad</Link>
-                        <Link href="/terminos">Términos</Link>
+                        {LEGAL_DOCS.map((d) => <Link key={d.href} href={d.href}>{d.label}</Link>)}
                         <Link href="/acceso">Acceso para clínicas</Link>
                     </nav>
                 </div>

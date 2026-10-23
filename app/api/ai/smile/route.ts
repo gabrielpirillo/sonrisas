@@ -11,6 +11,8 @@ import { generateImage } from '@/lib/ai/gemini';
 import { randomUUID } from 'crypto';
 import { db } from '@/lib/db';
 import { storage } from '@/lib/storage';
+import { newObjectKey } from '@/lib/storage/refs';
+import { SIGNED_URL_TTL, signStoragePath } from '@/lib/signedUrl';
 import { resolveClinic, reserve, refund, confirm } from '@/lib/billing/credits';
 
 const corsHeaders = {
@@ -227,9 +229,12 @@ export async function POST(req: NextRequest) {
         // Upload generated image to storage (con la extensión real del formato devuelto)
         const imageBuffer = Buffer.from(generated.data, 'base64');
         const isPng = generated.mimeType === 'image/png';
-        const fileName = `smile_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${isPng ? 'png' : 'jpg'}`;
+        // Clave no adivinable con prefijo de la clínica (c/<clinicId>/smiles/<uuid>.<ext>).
+        const fileName = newObjectKey({ clinicId, folder: 'smiles', ext: isPng ? 'png' : 'jpg' });
 
-        const publicUrl = await storage.uploadFile('generated', fileName, imageBuffer, isPng ? 'image/png' : 'image/jpeg');
+        await storage.uploadFile('generated', fileName, imageBuffer, isPng ? 'image/png' : 'image/jpeg');
+        // URL firmada (2 h) para el widget; en la base de datos solo se guarda la clave.
+        const publicUrl = signStoragePath('generated', fileName, SIGNED_URL_TTL.widget);
 
         // If analysis_id provided, link it
         if (prompt_options?.analysis_id) {
@@ -247,7 +252,6 @@ export async function POST(req: NextRequest) {
             headers: internalHeaders(),
             body: JSON.stringify({
                 image_path: fileName,
-                original_public_url: publicUrl,
             }),
         }).catch(err => console.error('Background watermark trigger failed:', err));
 

@@ -5,10 +5,20 @@
 
 import { useCallback, useState } from "react";
 
-/** Normaliza generations.output_path a una URL servible. */
+/**
+ * Normaliza un valor guardado (generations.input_path/output_path) a una URL
+ * servible desde el panel. Las URLs de /api/storage/ se dejan RELATIVAS (mismo
+ * origen) para que el proxy autorice por la sesión de la clínica aunque se
+ * guardaran con otro dominio. Claves a secas → bucket generated.
+ */
 export function leadImageSrc(path?: string | null): string | null {
     if (!path || path === "unknown") return null;
-    if (/^(https?:)?\/\//.test(path) || path.startsWith("/") || path.startsWith("data:")) return path;
+    if (path.startsWith("data:") || path.startsWith("blob:")) return path;
+    if (/^(https?:)?\/\//.test(path)) {
+        const i = path.indexOf("/api/storage/");
+        return i !== -1 ? path.slice(i) : path;
+    }
+    if (path.startsWith("/")) return path;
     return `/api/storage/generated/${path}`;
 }
 
